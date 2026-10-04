@@ -1,12 +1,5 @@
 import React, { useState } from 'react';
-import {
-  Modal,
-  View,
-  Text,
-  TouchableOpacity,
-  ScrollView,
-  StyleSheet,
-} from 'react-native';
+import { Modal, View, Text, TouchableOpacity, ScrollView, StyleSheet } from 'react-native';
 import { colors, layout, spacing, typography } from '../../theme';
 import { useTranslation } from '../../i18n/LanguageContext';
 import { PermissionService } from '../../permissions/permissionService';
@@ -19,7 +12,12 @@ interface PermissionWizardModalProps {
   onOpenOemGuide: () => void;
 }
 
-const CATEGORIES: Array<{ key: PermissionCategory; titleKey: string; descKey: string; icon: string }> = [
+const CATEGORIES: Array<{
+  key: PermissionCategory;
+  titleKey: string;
+  descKey: string;
+  icon: string;
+}> = [
   { key: 'bluetooth', titleKey: 'perm.ble_title', descKey: 'perm.ble_desc', icon: '📡' },
   { key: 'location', titleKey: 'perm.location_title', descKey: 'perm.location_desc', icon: '📍' },
   { key: 'alerts', titleKey: 'perm.notif_title', descKey: 'perm.notif_desc', icon: '🔔' },
@@ -42,10 +40,10 @@ export const PermissionWizardModal: React.FC<PermissionWizardModalProps> = ({
 
   const handleGrant = async () => {
     await permissionService.requestCategory(activeCategory.key);
-    setRefreshCount((k) => k + 1);
+    setRefreshCount(k => k + 1);
 
     if (activeCategoryIdx < CATEGORIES.length - 1) {
-      setActiveCategoryIdx((idx) => idx + 1);
+      setActiveCategoryIdx(idx => idx + 1);
     } else {
       onClose();
     }
@@ -66,10 +64,7 @@ export const PermissionWizardModal: React.FC<PermissionWizardModalProps> = ({
           {CATEGORIES.map((cat, idx) => (
             <TouchableOpacity
               key={cat.key}
-              style={[
-                styles.categoryTab,
-                idx === activeCategoryIdx && styles.categoryTabActive,
-              ]}
+              style={[styles.categoryTab, idx === activeCategoryIdx && styles.categoryTabActive]}
               onPress={() => setActiveCategoryIdx(idx)}
             >
               <Text style={styles.catIcon}>{cat.icon}</Text>
@@ -86,7 +81,7 @@ export const PermissionWizardModal: React.FC<PermissionWizardModalProps> = ({
             <Text style={styles.catDesc}>{t(activeCategory.descKey)}</Text>
 
             <View style={styles.permList}>
-              {permissions.map((p) => {
+              {permissions.map(p => {
                 const status = permissionService.getStatus(p.key);
                 return (
                   <View key={p.key} style={styles.permItem}>
@@ -121,7 +116,8 @@ export const PermissionWizardModal: React.FC<PermissionWizardModalProps> = ({
               >
                 <Text style={styles.oemGuideTitle}>📱 Xiaomi / Samsung / Oppo / Vivo Guide</Text>
                 <Text style={styles.oemGuideSub}>
-                  Tap here to learn how to lock RescueNet in memory and enable autostart on your brand.
+                  Tap here to learn how to lock RescueNet in memory and enable autostart on your
+                  brand.
                 </Text>
               </TouchableOpacity>
             )}

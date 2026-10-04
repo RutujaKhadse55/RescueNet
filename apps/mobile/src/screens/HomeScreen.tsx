@@ -16,7 +16,7 @@ interface HomeScreenProps {
   onSosBroadcasted?: (triage: TriageStatus, needs: number) => void;
   isRegistered?: boolean;
   nearbyCount?: number;
-  onNavigateToTab?: (tab: 'map' | 'chat') => void;
+  onNavigateToTab?: (tab: 'map' | 'nearby') => void;
   demoMode?: boolean;
   onToggleDemoMode?: (val: boolean) => void;
 }
@@ -24,7 +24,7 @@ interface HomeScreenProps {
 export const HomeScreen: React.FC<HomeScreenProps> = ({
   onSosBroadcasted,
   isRegistered = false,
-  nearbyCount = 2,
+  nearbyCount = 0,
   onNavigateToTab,
   demoMode = false,
   onToggleDemoMode,
@@ -43,7 +43,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
   const holdProgress = useRef(
     Animated && typeof Animated.Value === 'function'
       ? new Animated.Value(0)
-      : ({ setValue: () => {}, interpolate: () => 0, stopAnimation: () => {} } as any)
+      : ({ setValue: () => {}, interpolate: () => 0, stopAnimation: () => {} } as any),
   ).current;
   const holdTimer = useRef<NodeJS.Timeout | null>(null);
   const resetTimerRef = useRef<NodeJS.Timeout | null>(null);
@@ -137,9 +137,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
             <Text style={styles.preparedBadgeText}>You're Prepared ✓</Text>
           </View>
         </View>
-        <Text style={styles.statusSubText}>
-          Location: Available • BLE Mesh: Ready
-        </Text>
+        <Text style={styles.statusSubText}>Location: Available • BLE Mesh: Ready</Text>
       </View>
 
       {/* Demo / Simulation Mode Banner */}
@@ -166,15 +164,26 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
         <View style={styles.activeSosCaseCard}>
           <View style={styles.activeSosHeaderRow}>
             <View style={styles.pulseDot} />
-            <Text style={styles.activeSosCaseTag}>
-              EMERGENCY BROADCAST LIVE
-            </Text>
+            <Text style={styles.activeSosCaseTag}>EMERGENCY BROADCAST LIVE</Text>
           </View>
           <Text style={styles.activeSosCaseTitle}>
-            Active Case: {selectedTriage === TriageStatus.CRITICAL ? '🚨 CODE RED (Immediate - Life Threat)' : selectedTriage === TriageStatus.INJURED ? '⚠️ CODE YELLOW (Delayed)' : '🟢 CODE GREEN (Minor)'}
+            Active Case:{' '}
+            {selectedTriage === TriageStatus.CRITICAL
+              ? '🚨 CODE RED (Immediate - Life Threat)'
+              : selectedTriage === TriageStatus.INJURED
+                ? '⚠️ CODE YELLOW (Delayed)'
+                : '🟢 CODE GREEN (Minor)'}
           </Text>
           <Text style={styles.activeSosCaseSub}>
-            Needs: {[needsMedical && 'Medical', needsTrapped && 'Trapped', needsFoodWater && 'Water/Food', needsShelter && 'Shelter'].filter(Boolean).join(', ') || 'Medical Attention'}
+            Needs:{' '}
+            {[
+              needsMedical && 'Medical',
+              needsTrapped && 'Trapped',
+              needsFoodWater && 'Water/Food',
+              needsShelter && 'Shelter',
+            ]
+              .filter(Boolean)
+              .join(', ') || 'Medical Attention'}
           </Text>
           <Text style={styles.activeSosDispatchedSub}>
             Dispatched via: Internet Uplink → Control Center Backend & Admin Dashboard
@@ -197,16 +206,11 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
           accessibilityLabel="SOS Emergency Button. Hold 3 seconds to broadcast."
         >
           <View
-            style={[
-              styles.holdFill,
-              { width: broadcastDone ? '100%' : isHolding ? '50%' : '0%' },
-            ]}
+            style={[styles.holdFill, { width: broadcastDone ? '100%' : isHolding ? '50%' : '0%' }]}
           />
 
           <View style={styles.sosButtonContent}>
-            <Text style={styles.sosMainText}>
-              {broadcastDone ? 'SOS SENT ✓' : 'SOS'}
-            </Text>
+            <Text style={styles.sosMainText}>{broadcastDone ? 'SOS SENT ✓' : 'SOS'}</Text>
             <Text style={styles.sosSubText}>
               {broadcastDone
                 ? 'Relaying via automatic emergency route'
@@ -215,10 +219,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
           </View>
         </TouchableOpacity>
 
-        <TouchableOpacity
-          style={styles.instantBypassBtn}
-          onPress={handleInstantEmergency}
-        >
+        <TouchableOpacity style={styles.instantBypassBtn} onPress={handleInstantEmergency}>
           <Text style={styles.instantBypassText}>⚡ 1-TAP INSTANT SOS</Text>
         </TouchableOpacity>
       </View>
@@ -226,7 +227,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
       {/* Triage Urgency */}
       <Text style={styles.sectionTitle}>Triage Urgency</Text>
       <View style={styles.triageGrid}>
-        {triageOptions.map((opt) => {
+        {triageOptions.map(opt => {
           const isSelected = selectedTriage === opt.status;
           return (
             <TouchableOpacity
@@ -259,9 +260,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
           onPress={() => setNeedsMedical(!needsMedical)}
         >
           <Text style={styles.needIcon}>🩹</Text>
-          <Text style={[styles.needLabel, needsMedical && styles.needLabelActive]}>
-            Medical
-          </Text>
+          <Text style={[styles.needLabel, needsMedical && styles.needLabelActive]}>Medical</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
@@ -269,9 +268,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
           onPress={() => setNeedsTrapped(!needsTrapped)}
         >
           <Text style={styles.needIcon}>🏗️</Text>
-          <Text style={[styles.needLabel, needsTrapped && styles.needLabelActive]}>
-            Trapped
-          </Text>
+          <Text style={[styles.needLabel, needsTrapped && styles.needLabelActive]}>Trapped</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
@@ -289,18 +286,14 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
           onPress={() => setNeedsShelter(!needsShelter)}
         >
           <Text style={styles.needIcon}>⛺</Text>
-          <Text style={[styles.needLabel, needsShelter && styles.needLabelActive]}>
-            Shelter
-          </Text>
+          <Text style={[styles.needLabel, needsShelter && styles.needLabelActive]}>Shelter</Text>
         </TouchableOpacity>
       </View>
 
       {/* Nearby Survivors Overview Card */}
       <View style={styles.nearbyOverviewCard}>
         <Text style={styles.nearbyOverviewTitle}>Nearby Survivors</Text>
-        <Text style={styles.nearbyOverviewCount}>
-          {nearbyCount} RescueNet users nearby
-        </Text>
+        <Text style={styles.nearbyOverviewCount}>{nearbyCount} RescueNet users nearby</Text>
 
         <View style={styles.nearbyButtonsRow}>
           <TouchableOpacity
@@ -312,9 +305,9 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
 
           <TouchableOpacity
             style={styles.nearbyNavBtn}
-            onPress={() => onNavigateToTab && onNavigateToTab('chat')}
+            onPress={() => onNavigateToTab && onNavigateToTab('nearby')}
           >
-            <Text style={styles.nearbyNavBtnText}>CHAT</Text>
+            <Text style={styles.nearbyNavBtnText}>VIEW NEARBY</Text>
           </TouchableOpacity>
         </View>
       </View>

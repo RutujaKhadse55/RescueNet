@@ -7,7 +7,11 @@ declare module 'fastify' {
   }
 }
 
-export function authenticate(req: FastifyRequest, reply: FastifyReply, done: (err?: Error) => void) {
+export function authenticate(
+  req: FastifyRequest,
+  reply: FastifyReply,
+  done: (err?: Error) => void,
+) {
   const authHeader = req.headers.authorization;
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
     reply.status(401).send({ error: 'Missing or malformed Authorization header' });

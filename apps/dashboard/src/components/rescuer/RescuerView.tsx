@@ -36,7 +36,9 @@ export const RescuerView: React.FC = () => {
   } = useRescueStore();
 
   const myTeamName = 'Rescue Team Alpha';
-  const assignedCases = sosList.filter((s) => s.assignedTeam === myTeamName && s.status !== 'Resolved');
+  const assignedCases = sosList.filter(
+    s => s.assignedTeam === myTeamName && s.status !== 'Resolved',
+  );
 
   const [activeCase, setActiveCase] = useState<SosIncident | null>(assignedCases[0] ?? null);
   const [chatInput, setChatInput] = useState('');
@@ -50,7 +52,7 @@ export const RescuerView: React.FC = () => {
     if (assignedCases.length > 0 && !activeCase) {
       setActiveCase(assignedCases[0] ?? null);
     } else if (activeCase) {
-      const refreshed = sosList.find((s) => s.id === activeCase.id);
+      const refreshed = sosList.find(s => s.id === activeCase.id);
       if (refreshed) setActiveCase(refreshed);
     }
   }, [sosList, assignedCases, activeCase]);
@@ -66,7 +68,7 @@ export const RescuerView: React.FC = () => {
     ]);
 
     if (activeCase.clusterMembers) {
-      activeCase.clusterMembers.forEach((m) => bounds.extend([m.lat, m.lon]));
+      activeCase.clusterMembers.forEach(m => bounds.extend([m.lat, m.lon]));
     }
 
     if (bounds.isValid()) {
@@ -87,7 +89,10 @@ export const RescuerView: React.FC = () => {
     }
 
     const map = L.map(mapContainerRef.current, {
-      center: [(activeCase.lat + rescuerLocation.lat) / 2, (activeCase.lon + rescuerLocation.lon) / 2],
+      center: [
+        (activeCase.lat + rescuerLocation.lat) / 2,
+        (activeCase.lon + rescuerLocation.lon) / 2,
+      ],
       zoom: 16,
       zoomControl: false,
     });
@@ -98,7 +103,9 @@ export const RescuerView: React.FC = () => {
     });
 
     tileLayer.on('tileerror', () => {
-      tileLayer.setUrl('https://services.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}');
+      tileLayer.setUrl(
+        'https://services.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}',
+      );
     });
 
     tileLayer.addTo(map);
@@ -132,7 +139,9 @@ export const RescuerView: React.FC = () => {
       iconAnchor: [17, 17],
     });
     L.marker([activeCase.lat, activeCase.lon], { icon: survivorIcon })
-      .bindPopup(`<strong>Target: ${activeCase.id}</strong><br/>${activeCase.survivorName}<br/>👥 ${activeCase.nearbyCount} survivors in cluster`)
+      .bindPopup(
+        `<strong>Target: ${activeCase.id}</strong><br/>${activeCase.survivorName}<br/>👥 ${activeCase.nearbyCount} survivors in cluster`,
+      )
       .addTo(map);
 
     // Draw route line between rescuer and survivor
@@ -303,7 +312,7 @@ export const RescuerView: React.FC = () => {
         role="navigation"
         aria-label="Rescuer Navigation"
       >
-        {navTabs.map((tab) => {
+        {navTabs.map(tab => {
           const isActive = rescuerNav === tab.id;
           return (
             <button
@@ -334,14 +343,22 @@ export const RescuerView: React.FC = () => {
       </div>
 
       {/* 3. Main Body Content */}
-      <div style={{ flex: 1, overflowY: 'auto', padding: '1.25rem', display: 'flex', flexDirection: 'column', gap: '1rem', background: '#f8fafc' }}>
-
+      <div
+        style={{
+          flex: 1,
+          overflowY: 'auto',
+          padding: '1.25rem',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '1rem',
+          background: '#f8fafc',
+        }}
+      >
         {/* ========================================================
             TAB 1: ASSIGNED CASES & CLUSTERS
         ======================================================== */}
         {rescuerNav === 'cases' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-            
             {assignedCases.length === 0 ? (
               <div
                 style={{
@@ -362,12 +379,20 @@ export const RescuerView: React.FC = () => {
                 <div style={{ fontSize: '1.15rem', fontWeight: 800, color: '#0f172a' }}>
                   No Active Assignments for Team Alpha
                 </div>
-                <div style={{ fontSize: '0.82rem', color: '#64748b', maxWidth: '420px', lineHeight: 1.5 }}>
-                  Your team is currently standing by. Switch to the <b>Admin / Control Center</b> tab to dispatch <b>Rescue Team Alpha</b> to pending survivor clusters.
+                <div
+                  style={{
+                    fontSize: '0.82rem',
+                    color: '#64748b',
+                    maxWidth: '420px',
+                    lineHeight: 1.5,
+                  }}
+                >
+                  Your team is currently standing by. Switch to the <b>Admin / Control Center</b>{' '}
+                  tab to dispatch <b>Rescue Team Alpha</b> to pending survivor clusters.
                 </div>
               </div>
             ) : (
-              assignedCases.map((incident) => {
+              assignedCases.map(incident => {
                 const isSelected = activeCase?.id === incident.id;
                 const members = incident.clusterMembers || [];
 
@@ -387,8 +412,23 @@ export const RescuerView: React.FC = () => {
                     }}
                   >
                     {/* Header: ID, Urgency & Status */}
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <div style={{ fontSize: '1.2rem', fontWeight: 900, color: '#dc2626', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                    <div
+                      style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                      }}
+                    >
+                      <div
+                        style={{
+                          fontSize: '1.2rem',
+                          fontWeight: 900,
+                          color: '#dc2626',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '0.4rem',
+                        }}
+                      >
                         <span>🚨</span>
                         <span>{incident.id}</span>
                         <span style={{ fontSize: '0.8rem', color: '#64748b', fontWeight: 600 }}>
@@ -413,47 +453,126 @@ export const RescuerView: React.FC = () => {
                     </div>
 
                     {/* Incident Telemetry Card */}
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', fontSize: '0.82rem', color: '#334155' }}>
+                    <div
+                      style={{
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '0.4rem',
+                        fontSize: '0.82rem',
+                        color: '#334155',
+                      }}
+                    >
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
                         <MapPin size={15} color="#dc2626" />
-                        <span><b>Survivor Location:</b> {incident.lat.toFixed(4)}, {incident.lon.toFixed(4)}</span>
+                        <span>
+                          <b>Survivor Location:</b> {incident.lat.toFixed(4)},{' '}
+                          {incident.lon.toFixed(4)}
+                        </span>
                       </div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', color: '#0369a1', fontWeight: 700 }}>
+                      <div
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '0.45rem',
+                          color: '#0369a1',
+                          fontWeight: 700,
+                        }}
+                      >
                         <Users size={15} color="#0284c7" />
-                        <span>👥 <b>Cluster Size: {members.length} people trapped nearby</b></span>
+                        <span>
+                          👥 <b>Cluster Size: {members.length} people trapped nearby</b>
+                        </span>
                       </div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', color: '#64748b' }}>
+                      <div
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '0.45rem',
+                          color: '#64748b',
+                        }}
+                      >
                         <Clock size={15} />
-                        <span>⏱ <b>SOS received:</b> {incident.timeReceived}</span>
+                        <span>
+                          ⏱ <b>SOS received:</b> {incident.timeReceived}
+                        </span>
                       </div>
                       {incident.notes && (
-                        <div style={{ background: '#fafaf9', padding: '0.5rem 0.75rem', borderRadius: '6px', border: '1px solid #e2e8f0', fontSize: '0.75rem', color: '#475569', fontStyle: 'italic' }}>
+                        <div
+                          style={{
+                            background: '#fafaf9',
+                            padding: '0.5rem 0.75rem',
+                            borderRadius: '6px',
+                            border: '1px solid #e2e8f0',
+                            fontSize: '0.75rem',
+                            color: '#475569',
+                            fontStyle: 'italic',
+                          }}
+                        >
                           "{incident.notes}"
                         </div>
                       )}
                     </div>
 
                     {/* PEOPLE IN THIS CLUSTER BREAKDOWN */}
-                    <div style={{ background: '#fafaf9', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '0.65rem 0.85rem' }}>
-                      <div style={{ fontSize: '0.75rem', fontWeight: 800, color: '#0f172a', marginBottom: '0.4rem' }}>
+                    <div
+                      style={{
+                        background: '#fafaf9',
+                        border: '1px solid #e2e8f0',
+                        borderRadius: '8px',
+                        padding: '0.65rem 0.85rem',
+                      }}
+                    >
+                      <div
+                        style={{
+                          fontSize: '0.75rem',
+                          fontWeight: 800,
+                          color: '#0f172a',
+                          marginBottom: '0.4rem',
+                        }}
+                      >
                         Survivors Awaiting Extraction ({members.length}):
                       </div>
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
                         {members.map((m, idx) => (
-                          <div key={m.id} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.72rem', color: '#334155', borderBottom: idx < members.length - 1 ? '1px dashed #e2e8f0' : 'none', paddingBottom: '3px' }}>
-                            <span><b>{idx + 1}. {m.name}</b> — {m.condition}</span>
-                            <span style={{ color: '#64748b' }}>{m.distanceMeters === 0 ? 'Center' : `${m.distanceMeters}m`}</span>
+                          <div
+                            key={m.id}
+                            style={{
+                              display: 'flex',
+                              justifyContent: 'space-between',
+                              fontSize: '0.72rem',
+                              color: '#334155',
+                              borderBottom:
+                                idx < members.length - 1 ? '1px dashed #e2e8f0' : 'none',
+                              paddingBottom: '3px',
+                            }}
+                          >
+                            <span>
+                              <b>
+                                {idx + 1}. {m.name}
+                              </b>{' '}
+                              — {m.condition}
+                            </span>
+                            <span style={{ color: '#64748b' }}>
+                              {m.distanceMeters === 0 ? 'Center' : `${m.distanceMeters}m`}
+                            </span>
                           </div>
                         ))}
                       </div>
                     </div>
 
                     {/* 4 Required Actions: VIEW LOCATION | NAVIGATE | ACKNOWLEDGE | CHAT */}
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '0.65rem', borderTop: '1px solid #e2e8f0', paddingTop: '0.85rem' }}>
-                      
+                    <div
+                      style={{
+                        display: 'grid',
+                        gridTemplateColumns: 'repeat(2, 1fr)',
+                        gap: '0.65rem',
+                        borderTop: '1px solid #e2e8f0',
+                        paddingTop: '0.85rem',
+                      }}
+                    >
                       {/* VIEW LOCATION */}
                       <button
-                        onClick={(e) => {
+                        onClick={e => {
                           e.stopPropagation();
                           setActiveCase(incident);
                           setRescuerNav('map');
@@ -480,7 +599,7 @@ export const RescuerView: React.FC = () => {
 
                       {/* NAVIGATE */}
                       <button
-                        onClick={(e) => {
+                        onClick={e => {
                           e.stopPropagation();
                           setActiveCase(incident);
                           startNavigation();
@@ -508,7 +627,7 @@ export const RescuerView: React.FC = () => {
 
                       {/* ACKNOWLEDGE */}
                       <button
-                        onClick={(e) => {
+                        onClick={e => {
                           e.stopPropagation();
                           acknowledgeSos(incident.id);
                         }}
@@ -535,7 +654,7 @@ export const RescuerView: React.FC = () => {
 
                       {/* CHAT */}
                       <button
-                        onClick={(e) => {
+                        onClick={e => {
                           e.stopPropagation();
                           setActiveCase(incident);
                           setRescuerNav('messages');
@@ -562,9 +681,11 @@ export const RescuerView: React.FC = () => {
                     </div>
 
                     {/* Complete Extraction Button */}
-                    <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '0.2rem' }}>
+                    <div
+                      style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '0.2rem' }}
+                    >
                       <button
-                        onClick={(e) => {
+                        onClick={e => {
                           e.stopPropagation();
                           markResolved(incident.id);
                         }}
@@ -592,7 +713,6 @@ export const RescuerView: React.FC = () => {
                 );
               })
             )}
-
           </div>
         )}
 
@@ -601,7 +721,6 @@ export const RescuerView: React.FC = () => {
         ======================================================== */}
         {rescuerNav === 'map' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem', height: '100%' }}>
-            
             {/* Live Navigation Telemetry Banner */}
             <div
               style={{
@@ -616,9 +735,19 @@ export const RescuerView: React.FC = () => {
               }}
             >
               <div>
-                <div style={{ fontSize: '0.72rem', color: '#64748b', fontWeight: 800 }}>TACTICAL INTERCEPT ROUTE</div>
-                <div style={{ fontSize: '0.95rem', fontWeight: 900, color: '#0f172a', marginTop: '0.1rem' }}>
-                  Target: <b>{activeCase?.id || 'None'}</b> ({activeCase?.clusterMembers.length} people)
+                <div style={{ fontSize: '0.72rem', color: '#64748b', fontWeight: 800 }}>
+                  TACTICAL INTERCEPT ROUTE
+                </div>
+                <div
+                  style={{
+                    fontSize: '0.95rem',
+                    fontWeight: 900,
+                    color: '#0f172a',
+                    marginTop: '0.1rem',
+                  }}
+                >
+                  Target: <b>{activeCase?.id || 'None'}</b> ({activeCase?.clusterMembers.length}{' '}
+                  people)
                 </div>
               </div>
 
@@ -683,8 +812,12 @@ export const RescuerView: React.FC = () => {
                 position: 'relative',
               }}
             >
-              <div ref={mapContainerRef} style={{ width: '100%', height: '100%' }} id="rescuer-route-map" />
-              
+              <div
+                ref={mapContainerRef}
+                style={{ width: '100%', height: '100%' }}
+                id="rescuer-route-map"
+              />
+
               <div
                 style={{
                   position: 'absolute',
@@ -703,8 +836,20 @@ export const RescuerView: React.FC = () => {
                   gap: '0.2rem',
                 }}
               >
-                <div>🟢 Unit Alpha: <b>{rescuerLocation.lat.toFixed(4)}, {rescuerLocation.lon.toFixed(4)}</b></div>
-                <div>🔴 Cluster Target: <b>{activeCase ? `${activeCase.lat.toFixed(4)}, ${activeCase.lon.toFixed(4)}` : 'N/A'}</b></div>
+                <div>
+                  🟢 Unit Alpha:{' '}
+                  <b>
+                    {rescuerLocation.lat.toFixed(4)}, {rescuerLocation.lon.toFixed(4)}
+                  </b>
+                </div>
+                <div>
+                  🔴 Cluster Target:{' '}
+                  <b>
+                    {activeCase
+                      ? `${activeCase.lat.toFixed(4)}, ${activeCase.lon.toFixed(4)}`
+                      : 'N/A'}
+                  </b>
+                </div>
               </div>
             </div>
 
@@ -740,7 +885,6 @@ export const RescuerView: React.FC = () => {
         ======================================================== */}
         {rescuerNav === 'messages' && (
           <div style={{ display: 'flex', flexDirection: 'column', height: '100%', gap: '0.75rem' }}>
-            
             {/* Header info */}
             <div
               style={{
@@ -755,9 +899,14 @@ export const RescuerView: React.FC = () => {
               }}
             >
               <div>
-                Active Channel: <strong style={{ color: '#0f172a' }}>{activeCase ? `${activeCase.survivorName} (${activeCase.id})` : 'Survivor A'}</strong>
+                Active Channel:{' '}
+                <strong style={{ color: '#0f172a' }}>
+                  {activeCase ? `${activeCase.survivorName} (${activeCase.id})` : 'Survivor A'}
+                </strong>
               </div>
-              <span style={{ fontSize: '0.72rem', color: '#16a34a', fontWeight: 800 }}>● Tactical Radio Link Connected</span>
+              <span style={{ fontSize: '0.72rem', color: '#16a34a', fontWeight: 800 }}>
+                ● Tactical Radio Link Connected
+              </span>
             </div>
 
             {/* Message Feed */}
@@ -775,7 +924,7 @@ export const RescuerView: React.FC = () => {
                 border: '1px solid #e2e8f0',
               }}
             >
-              {rescuerMessages.map((msg) => {
+              {rescuerMessages.map(msg => {
                 const isMe = msg.sender === 'rescuer';
                 return (
                   <div
@@ -794,13 +943,23 @@ export const RescuerView: React.FC = () => {
                       boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
                     }}
                   >
-                    <div style={{ fontSize: '0.68rem', fontWeight: 800, color: isMe ? '#dcfce7' : '#2563eb' }}>
+                    <div
+                      style={{
+                        fontSize: '0.68rem',
+                        fontWeight: 800,
+                        color: isMe ? '#dcfce7' : '#2563eb',
+                      }}
+                    >
                       {msg.senderName}
                     </div>
-                    <div style={{ fontSize: '0.82rem', lineHeight: 1.4 }}>
-                      {msg.text}
-                    </div>
-                    <div style={{ fontSize: '0.62rem', color: isMe ? 'rgba(255,255,255,0.7)' : '#94a3b8', alignSelf: 'flex-end' }}>
+                    <div style={{ fontSize: '0.82rem', lineHeight: 1.4 }}>{msg.text}</div>
+                    <div
+                      style={{
+                        fontSize: '0.62rem',
+                        color: isMe ? 'rgba(255,255,255,0.7)' : '#94a3b8',
+                        alignSelf: 'flex-end',
+                      }}
+                    >
                       {msg.timestamp}
                     </div>
                   </div>
@@ -809,13 +968,15 @@ export const RescuerView: React.FC = () => {
             </div>
 
             {/* Quick Tactical Replies */}
-            <div style={{ display: 'flex', gap: '0.4rem', overflowX: 'auto', paddingBottom: '0.2rem' }}>
+            <div
+              style={{ display: 'flex', gap: '0.4rem', overflowX: 'auto', paddingBottom: '0.2rem' }}
+            >
               {[
-                "We have received your SOS. Stay at your current location if safe.",
-                "En route, ETA ~3 minutes. Can you hear our siren?",
-                "Stay sheltered away from crumbling walls.",
-                "We have medical personnel and stretchers on site.",
-              ].map((chip) => (
+                'We have received your SOS. Stay at your current location if safe.',
+                'En route, ETA ~3 minutes. Can you hear our siren?',
+                'Stay sheltered away from crumbling walls.',
+                'We have medical personnel and stretchers on site.',
+              ].map(chip => (
                 <button
                   key={chip}
                   onClick={() => setChatInput(chip)}
@@ -840,8 +1001,8 @@ export const RescuerView: React.FC = () => {
               <input
                 type="text"
                 value={chatInput}
-                onChange={(e) => setChatInput(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && handleSendChat()}
+                onChange={e => setChatInput(e.target.value)}
+                onKeyDown={e => e.key === 'Enter' && handleSendChat()}
                 placeholder="Send tactical instructions to survivors..."
                 style={{
                   flex: 1,
@@ -873,7 +1034,6 @@ export const RescuerView: React.FC = () => {
             </div>
           </div>
         )}
-
       </div>
     </div>
   );

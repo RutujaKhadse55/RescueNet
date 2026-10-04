@@ -41,7 +41,7 @@ export interface IBleTransport {
     mode: BleMode,
     role: 'survivor' | 'rescuer' | 'gateway',
     flags: { hasSos: boolean; lowBattery: boolean; beaconOnly: boolean },
-    originFpPrefix: string
+    originFpPrefix: string,
   ): Promise<boolean>;
 
   stopAdvertising(): Promise<void>;
@@ -55,7 +55,10 @@ export interface IBleTransport {
   setScanMode(mode: ScanMode): Promise<void>;
 
   // Connection & Data Exchange
-  connectAndSync(deviceId: string, localSummaryHex: string): Promise<{ success: boolean; peerSummaryHex?: string }>;
+  connectAndSync(
+    deviceId: string,
+    localSummaryHex: string,
+  ): Promise<{ success: boolean; peerSummaryHex?: string }>;
   sendFragment(deviceId: string, fragmentBytesBase64: string): Promise<boolean>;
   disconnect(deviceId: string): Promise<void>;
 
@@ -68,14 +71,22 @@ export interface IBleTransport {
   // Event Listeners
   on(event: 'neighborDiscovered', callback: (neighbor: BleNeighbor) => void): () => void;
   on(event: 'neighborLost', callback: (event: { deviceId: string }) => void): () => void;
-  on(event: 'rssiSample', callback: (event: { deviceId: string; rssi: number }) => void): () => void;
-  on(event: 'fragmentReceived', callback: (event: { deviceId: string; fragmentBase64: string }) => void): () => void;
+  on(
+    event: 'rssiSample',
+    callback: (event: { deviceId: string; rssi: number }) => void,
+  ): () => void;
+  on(
+    event: 'fragmentReceived',
+    callback: (event: { deviceId: string; fragmentBase64: string }) => void,
+  ): () => void;
   on(event: 'bluetoothState', callback: (enabled: boolean) => void): () => void;
 
   onNeighborDiscovered(callback: (neighbor: BleNeighbor) => void): () => void;
   onNeighborLost(callback: (deviceId: string) => void): () => void;
   onRssiSample(callback: (deviceId: string, rssi: number) => void): () => void;
-  onPacketFragmentReceived(callback: (deviceId: string, fragmentBase64: string) => void): () => void;
+  onPacketFragmentReceived(
+    callback: (deviceId: string, fragmentBase64: string) => void,
+  ): () => void;
   onBluetoothStateChanged(callback: (enabled: boolean) => void): () => void;
 }
 
@@ -105,14 +116,15 @@ export class MockBleTransport implements IBleTransport {
   private neighborDiscoveredListeners: Array<(neighbor: BleNeighbor) => void> = [];
   private neighborLostListeners: Array<(event: { deviceId: string }) => void> = [];
   private rssiListeners: Array<(event: { deviceId: string; rssi: number }) => void> = [];
-  private fragmentListeners: Array<(event: { deviceId: string; fragmentBase64: string }) => void> = [];
+  private fragmentListeners: Array<(event: { deviceId: string; fragmentBase64: string }) => void> =
+    [];
   private btStateListeners: Array<(enabled: boolean) => void> = [];
 
   async startAdvertising(
     mode?: BleMode,
     _role?: 'survivor' | 'rescuer' | 'gateway',
     _flags?: { hasSos: boolean; lowBattery: boolean; beaconOnly: boolean },
-    _originFpPrefix?: string
+    _originFpPrefix?: string,
   ): Promise<boolean> {
     if (mode) this.currentAdvMode = mode;
     this.advertising = true;
@@ -159,7 +171,7 @@ export class MockBleTransport implements IBleTransport {
 
   async connectAndSync(
     _deviceId: string,
-    _localSummaryHex: string
+    _localSummaryHex: string,
   ): Promise<{ success: boolean; peerSummaryHex?: string }> {
     this.stats.connectAttempts++;
     this.stats.successfulExchanges++;
@@ -179,7 +191,7 @@ export class MockBleTransport implements IBleTransport {
 
   async enableBluetooth(): Promise<boolean> {
     this.btEnabled = true;
-    this.btStateListeners.forEach((cb) => cb(true));
+    this.btStateListeners.forEach(cb => cb(true));
     return true;
   }
 
@@ -194,49 +206,57 @@ export class MockBleTransport implements IBleTransport {
   // Simulation helpers for testing
   public simulateDiscoveredNeighbor(neighbor: BleNeighbor): void {
     this.neighbors.set(neighbor.deviceId, neighbor);
-    this.neighborDiscoveredListeners.forEach((cb) => cb(neighbor));
+    this.neighborDiscoveredListeners.forEach(cb => cb(neighbor));
   }
 
   public simulateFragmentReceived(deviceId: string, fragmentBase64: string): void {
     this.stats.bytesReceived += fragmentBase64.length;
-    this.fragmentListeners.forEach((cb) => cb({ deviceId, fragmentBase64 }));
+    this.fragmentListeners.forEach(cb => cb({ deviceId, fragmentBase64 }));
   }
 
   public simulateBluetoothState(enabled: boolean): void {
     this.btEnabled = enabled;
-    this.btStateListeners.forEach((cb) => cb(enabled));
+    this.btStateListeners.forEach(cb => cb(enabled));
   }
 
   on(event: 'neighborDiscovered', callback: (neighbor: BleNeighbor) => void): () => void;
   on(event: 'neighborLost', callback: (event: { deviceId: string }) => void): () => void;
-  on(event: 'rssiSample', callback: (event: { deviceId: string; rssi: number }) => void): () => void;
-  on(event: 'fragmentReceived', callback: (event: { deviceId: string; fragmentBase64: string }) => void): () => void;
+  on(
+    event: 'rssiSample',
+    callback: (event: { deviceId: string; rssi: number }) => void,
+  ): () => void;
+  on(
+    event: 'fragmentReceived',
+    callback: (event: { deviceId: string; fragmentBase64: string }) => void,
+  ): () => void;
   on(event: 'bluetoothState', callback: (enabled: boolean) => void): () => void;
   on(event: string, callback: any): () => void {
     if (event === 'neighborDiscovered') {
       this.neighborDiscoveredListeners.push(callback);
       return () => {
-        this.neighborDiscoveredListeners = this.neighborDiscoveredListeners.filter((c) => c !== callback);
+        this.neighborDiscoveredListeners = this.neighborDiscoveredListeners.filter(
+          c => c !== callback,
+        );
       };
     } else if (event === 'neighborLost') {
       this.neighborLostListeners.push(callback);
       return () => {
-        this.neighborLostListeners = this.neighborLostListeners.filter((c) => c !== callback);
+        this.neighborLostListeners = this.neighborLostListeners.filter(c => c !== callback);
       };
     } else if (event === 'rssiSample') {
       this.rssiListeners.push(callback);
       return () => {
-        this.rssiListeners = this.rssiListeners.filter((c) => c !== callback);
+        this.rssiListeners = this.rssiListeners.filter(c => c !== callback);
       };
     } else if (event === 'fragmentReceived') {
       this.fragmentListeners.push(callback);
       return () => {
-        this.fragmentListeners = this.fragmentListeners.filter((c) => c !== callback);
+        this.fragmentListeners = this.fragmentListeners.filter(c => c !== callback);
       };
     } else if (event === 'bluetoothState') {
       this.btStateListeners.push(callback);
       return () => {
-        this.btStateListeners = this.btStateListeners.filter((c) => c !== callback);
+        this.btStateListeners = this.btStateListeners.filter(c => c !== callback);
       };
     }
     return () => {};
@@ -247,15 +267,17 @@ export class MockBleTransport implements IBleTransport {
   }
 
   onNeighborLost(callback: (deviceId: string) => void): () => void {
-    return this.on('neighborLost', (e) => callback(e.deviceId));
+    return this.on('neighborLost', e => callback(e.deviceId));
   }
 
   onRssiSample(callback: (deviceId: string, rssi: number) => void): () => void {
-    return this.on('rssiSample', (e) => callback(e.deviceId, e.rssi));
+    return this.on('rssiSample', e => callback(e.deviceId, e.rssi));
   }
 
-  onPacketFragmentReceived(callback: (deviceId: string, fragmentBase64: string) => void): () => void {
-    return this.on('fragmentReceived', (e) => callback(e.deviceId, e.fragmentBase64));
+  onPacketFragmentReceived(
+    callback: (deviceId: string, fragmentBase64: string) => void,
+  ): () => void {
+    return this.on('fragmentReceived', e => callback(e.deviceId, e.fragmentBase64));
   }
 
   onBluetoothStateChanged(callback: (enabled: boolean) => void): () => void {
@@ -281,7 +303,7 @@ class NativeBleTransport implements IBleTransport {
     mode: BleMode,
     role: 'survivor' | 'rescuer' | 'gateway',
     flags: { hasSos: boolean; lowBattery: boolean; beaconOnly: boolean },
-    originFpPrefix: string
+    originFpPrefix: string,
   ): Promise<boolean> {
     if (!this.module) return this.fallbackMock.startAdvertising(mode, role, flags, originFpPrefix);
     return this.module.startAdvertising(mode, role, flags, originFpPrefix);
@@ -322,7 +344,10 @@ class NativeBleTransport implements IBleTransport {
     return this.module.setScanMode(mode);
   }
 
-  async connectAndSync(deviceId: string, localSummaryHex: string): Promise<{ success: boolean; peerSummaryHex?: string }> {
+  async connectAndSync(
+    deviceId: string,
+    localSummaryHex: string,
+  ): Promise<{ success: boolean; peerSummaryHex?: string }> {
     if (!this.module) return this.fallbackMock.connectAndSync(deviceId, localSummaryHex);
     return this.module.connectAndSync(deviceId, localSummaryHex);
   }
@@ -359,8 +384,14 @@ class NativeBleTransport implements IBleTransport {
 
   on(event: 'neighborDiscovered', callback: (neighbor: BleNeighbor) => void): () => void;
   on(event: 'neighborLost', callback: (event: { deviceId: string }) => void): () => void;
-  on(event: 'rssiSample', callback: (event: { deviceId: string; rssi: number }) => void): () => void;
-  on(event: 'fragmentReceived', callback: (event: { deviceId: string; fragmentBase64: string }) => void): () => void;
+  on(
+    event: 'rssiSample',
+    callback: (event: { deviceId: string; rssi: number }) => void,
+  ): () => void;
+  on(
+    event: 'fragmentReceived',
+    callback: (event: { deviceId: string; fragmentBase64: string }) => void,
+  ): () => void;
   on(event: 'bluetoothState', callback: (enabled: boolean) => void): () => void;
   on(event: string, callback: any): () => void {
     if (this.emitter) {
@@ -375,15 +406,17 @@ class NativeBleTransport implements IBleTransport {
   }
 
   onNeighborLost(callback: (deviceId: string) => void): () => void {
-    return this.on('neighborLost', (e) => callback(e.deviceId));
+    return this.on('neighborLost', e => callback(e.deviceId));
   }
 
   onRssiSample(callback: (deviceId: string, rssi: number) => void): () => void {
-    return this.on('rssiSample', (e) => callback(e.deviceId, e.rssi));
+    return this.on('rssiSample', e => callback(e.deviceId, e.rssi));
   }
 
-  onPacketFragmentReceived(callback: (deviceId: string, fragmentBase64: string) => void): () => void {
-    return this.on('fragmentReceived', (e) => callback(e.deviceId, e.fragmentBase64));
+  onPacketFragmentReceived(
+    callback: (deviceId: string, fragmentBase64: string) => void,
+  ): () => void {
+    return this.on('fragmentReceived', e => callback(e.deviceId, e.fragmentBase64));
   }
 
   onBluetoothStateChanged(callback: (enabled: boolean) => void): () => void {

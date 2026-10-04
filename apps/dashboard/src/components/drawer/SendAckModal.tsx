@@ -32,8 +32,14 @@ export const SendAckModal: React.FC<SendAckModalProps> = ({ clusterId, isOpen, o
   ];
 
   return (
-    <div className="modal-backdrop" onClick={onClose} role="dialog" aria-modal="true" aria-labelledby="modal-ack-title">
-      <div className="modal-box" onClick={(e) => e.stopPropagation()}>
+    <div
+      className="modal-backdrop"
+      onClick={onClose}
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="modal-ack-title"
+    >
+      <div className="modal-box" onClick={e => e.stopPropagation()}>
         <div className="modal-header">
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
             <ShieldCheck size={18} color="var(--accent-low)" />
@@ -43,7 +49,12 @@ export const SendAckModal: React.FC<SendAckModalProps> = ({ clusterId, isOpen, o
           </div>
           <button
             onClick={onClose}
-            style={{ background: 'transparent', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer' }}
+            style={{
+              background: 'transparent',
+              border: 'none',
+              color: 'var(--text-secondary)',
+              cursor: 'pointer',
+            }}
             aria-label="Close"
           >
             <X size={18} />
@@ -60,9 +71,9 @@ export const SendAckModal: React.FC<SendAckModalProps> = ({ clusterId, isOpen, o
                 id="select-ack-template"
                 className="form-select"
                 value={ackType}
-                onChange={(e) => setAckType(e.target.value)}
+                onChange={e => setAckType(e.target.value)}
               >
-                {templates.map((tpl) => (
+                {templates.map(tpl => (
                   <option key={tpl.id} value={tpl.id}>
                     {tpl.title} - "{tpl.text.slice(0, 35)}..."
                   </option>
@@ -82,7 +93,7 @@ export const SendAckModal: React.FC<SendAckModalProps> = ({ clusterId, isOpen, o
             >
               <strong>Survivor Display Text:</strong>
               <div style={{ marginTop: '0.25rem', fontStyle: 'italic', color: '#93c5fd' }}>
-                "{templates.find((t) => t.id === ackType)?.text}"
+                "{templates.find(t => t.id === ackType)?.text}"
               </div>
             </div>
 
@@ -97,13 +108,14 @@ export const SendAckModal: React.FC<SendAckModalProps> = ({ clusterId, isOpen, o
                 max="300"
                 className="form-input"
                 value={etaMinutes}
-                onChange={(e) => setEtaMinutes(Number(e.target.value))}
+                onChange={e => setEtaMinutes(Number(e.target.value))}
                 required
               />
             </div>
 
             <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
-              🔒 Outbound packet will be signed with Agency Ed25519 CA Key and broadcasted over BLE mesh and priority SMS.
+              🔒 Outbound packet will be signed with Agency Ed25519 CA Key and broadcasted over BLE
+              mesh and priority SMS.
             </div>
           </div>
 

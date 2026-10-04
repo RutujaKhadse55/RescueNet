@@ -23,7 +23,7 @@ export class MeshSyncController {
     transport: IBleTransport,
     db: DatabaseManager,
     localOriginFpPrefix: string,
-    getPrivateKey: () => Promise<Uint8Array>
+    getPrivateKey: () => Promise<Uint8Array>,
   ) {
     this.transport = transport;
     this.db = db;
@@ -63,7 +63,7 @@ export class MeshSyncController {
    */
   public async syncWithNeighbor(
     deviceId: string,
-    peerSummaryVector: SummaryVector
+    peerSummaryVector: SummaryVector,
   ): Promise<{ packetsSent: number; bytesTransferred: number }> {
     // 1. Build local summary vector and in-memory store for selectToSend
     const allPackets = await this.db.packets.getAllPackets();
@@ -124,7 +124,8 @@ export class MeshSyncController {
         }
 
         // Spray-and-wait: halves copies for relayed non-SOS packets
-        const newCopies = p.is_sos === 1 ? p.copies_left : Math.max(1, Math.floor(p.copies_left / 2));
+        const newCopies =
+          p.is_sos === 1 ? p.copies_left : Math.max(1, Math.floor(p.copies_left / 2));
         await this.db.packets.insertPacket({
           ...p,
           copies_left: newCopies,
@@ -168,20 +169,23 @@ export class MeshSyncController {
     }
   }
 
-  private async ingestCompletedPacket(packetBytes: Uint8Array, fromNeighbor: string): Promise<void> {
+  private async ingestCompletedPacket(
+    packetBytes: Uint8Array,
+    fromNeighbor: string,
+  ): Promise<void> {
     if (packetBytes.length < HEADER_SIZE) return;
 
     const packetType = packetBytes[1];
     const isSos = packetType === 0x01 || packetType === 0x04 ? 1 : 0;
     const packetIdHex = Array.from(packetBytes.subarray(5, 13))
-      .map((b) => b.toString(16).padStart(2, '0'))
+      .map(b => b.toString(16).padStart(2, '0'))
       .join('');
     const originFpHex = Array.from(packetBytes.subarray(13, 21))
-      .map((b) => b.toString(16).padStart(2, '0'))
+      .map(b => b.toString(16).padStart(2, '0'))
       .join('');
 
     const rawHex = Array.from(packetBytes)
-      .map((b) => b.toString(16).padStart(2, '0'))
+      .map(b => b.toString(16).padStart(2, '0'))
       .join('');
 
     await this.db.packets.insertPacket({

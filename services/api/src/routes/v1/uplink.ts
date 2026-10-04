@@ -6,7 +6,8 @@ export async function uplinkRoutes(server: FastifyInstance) {
     '/uplink',
     {
       schema: {
-        description: 'Idempotent bulk upload of mesh packets from connected survivor phones or gateways',
+        description:
+          'Idempotent bulk upload of mesh packets from connected survivor phones or gateways',
         tags: ['Uplink'],
         body: {
           type: 'object',
@@ -25,7 +26,7 @@ export async function uplinkRoutes(server: FastifyInstance) {
       req: FastifyRequest<{
         Body: { deviceId?: string; packets: string[] };
       }>,
-      reply: FastifyReply
+      reply: FastifyReply,
     ) => {
       const { deviceId, packets } = req.body;
 
@@ -58,6 +59,6 @@ export async function uplinkRoutes(server: FastifyInstance) {
       const result = await ingestService.ingestBatch(rawBytePackets, 'internet', deviceId);
 
       return reply.status(200).send(result);
-    }
+    },
   );
 }

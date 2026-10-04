@@ -1,12 +1,5 @@
 import React, { useState } from 'react';
-import {
-  Modal,
-  View,
-  Text,
-  TouchableOpacity,
-  ScrollView,
-  StyleSheet,
-} from 'react-native';
+import { Modal, View, Text, TouchableOpacity, ScrollView, StyleSheet } from 'react-native';
 import { colors, layout, spacing, typography } from '../../theme';
 import { OEM_GUIDES } from '../../permissions/oemGuides';
 
@@ -17,13 +10,14 @@ interface OemGuideModalProps {
 
 export const OemGuideModal: React.FC<OemGuideModalProps> = ({ visible, onClose }) => {
   const [selectedBrand, setSelectedBrand] = useState<string>('xiaomi');
-  const guide = OEM_GUIDES[selectedBrand] ?? OEM_GUIDES.xiaomi ?? {
-    brand: 'xiaomi',
-    displayName: 'Xiaomi',
-    uiSystem: 'MIUI',
-    steps: [],
-    warningNote: '',
-  };
+  const guide = OEM_GUIDES[selectedBrand] ??
+    OEM_GUIDES.xiaomi ?? {
+      brand: 'xiaomi',
+      displayName: 'Xiaomi',
+      uiSystem: 'MIUI',
+      steps: [],
+      warningNote: '',
+    };
 
   return (
     <Modal visible={visible} animationType="slide" transparent={false} onRequestClose={onClose}>
@@ -42,7 +36,7 @@ export const OemGuideModal: React.FC<OemGuideModalProps> = ({ visible, onClose }
           style={styles.brandBar}
           contentContainerStyle={styles.brandBarContent}
         >
-          {Object.keys(OEM_GUIDES).map((brandKey) => {
+          {Object.keys(OEM_GUIDES).map(brandKey => {
             const item = OEM_GUIDES[brandKey];
             if (!item) return null;
             const isSelected = selectedBrand === brandKey;

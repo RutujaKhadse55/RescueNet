@@ -37,7 +37,7 @@ export class SecurityService {
     }
 
     if (storedHash.startsWith('scrypt$')) {
-      return new Promise((resolve) => {
+      return new Promise(resolve => {
         const parts = storedHash.split('$');
         const salt = parts[1]!;
         const originalHex = parts[2]!;

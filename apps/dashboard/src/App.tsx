@@ -1,27 +1,15 @@
 import React from 'react';
-import {
-  ShieldAlert,
-  Building2,
-  Compass,
-  RotateCcw,
-  Smartphone,
-  CheckCircle2,
-} from 'lucide-react';
+import { ShieldAlert, Building2, Compass, RotateCcw, Smartphone, CheckCircle2 } from 'lucide-react';
 import { useRescueStore, Role } from './store/rescueStore';
 import { AdminControlCenter } from './components/admin/AdminControlCenter';
 import { RescuerView } from './components/rescuer/RescuerView';
 
 export function App() {
-  const {
-    currentRole,
-    setRole,
-    sosList,
-    resetDemo,
-  } = useRescueStore();
+  const { currentRole, setRole, sosList, resetDemo } = useRescueStore();
 
-  const pendingSosCount = sosList.filter((s) => s.status === 'Pending').length;
+  const pendingSosCount = sosList.filter(s => s.status === 'Pending').length;
   const teamAlphaAssignedCount = sosList.filter(
-    (s) => s.assignedTeam === 'Rescue Team Alpha' && s.status !== 'Resolved',
+    s => s.assignedTeam === 'Rescue Team Alpha' && s.status !== 'Resolved',
   ).length;
 
   return (
@@ -70,7 +58,14 @@ export function App() {
             <ShieldAlert size={20} color="#dc2626" />
           </div>
           <div>
-            <div style={{ fontSize: '1.05rem', fontWeight: 900, letterSpacing: '-0.02em', color: '#0f172a' }}>
+            <div
+              style={{
+                fontSize: '1.05rem',
+                fontWeight: 900,
+                letterSpacing: '-0.02em',
+                color: '#0f172a',
+              }}
+            >
               RescueNet Command
             </div>
             <div style={{ fontSize: '0.7rem', color: '#64748b' }}>
@@ -185,7 +180,9 @@ export function App() {
             }}
           >
             <Smartphone size={14} color="#0284c7" />
-            <span>Survivor Client on <b>Android APK</b></span>
+            <span>
+              Survivor Client on <b>Android APK</b>
+            </span>
           </div>
 
           <button

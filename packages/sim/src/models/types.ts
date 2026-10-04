@@ -3,10 +3,7 @@
  */
 
 export type SimulationStrategy =
-  | 'plain_flooding'
-  | 'epidemic_ttl'
-  | 'spray_and_wait'
-  | 'rescuenet_full';
+  'plain_flooding' | 'epidemic_ttl' | 'spray_and_wait' | 'rescuenet_full';
 
 export type NodeRole = 'survivor' | 'carrier' | 'rescuer' | 'gateway';
 

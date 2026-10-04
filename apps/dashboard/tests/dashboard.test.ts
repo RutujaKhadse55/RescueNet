@@ -64,7 +64,7 @@ describe('apps/dashboard state and core logic', () => {
       const clusters = useDashboardStore.getState().clusters;
       expect(clusters.length).toBeGreaterThanOrEqual(5);
 
-      const criticalCluster = clusters.find((c) => c.priority_score >= 0.8);
+      const criticalCluster = clusters.find(c => c.priority_score >= 0.8);
       expect(criticalCluster).toBeDefined();
       expect(criticalCluster?.priority_band).toBe('critical');
       expect(criticalCluster?.declared_people).toBeGreaterThan(0);
@@ -76,7 +76,7 @@ describe('apps/dashboard state and core logic', () => {
 
       useDashboardStore.getState().assignTeam(clusterId, teamId, 20);
 
-      const updated = useDashboardStore.getState().clusters.find((c) => c.id === clusterId);
+      const updated = useDashboardStore.getState().clusters.find(c => c.id === clusterId);
       expect(updated?.state).toBe('assigned');
       expect(updated?.assigned_team_id).toBe(teamId);
       expect(updated?.eta_minutes).toBe(20);
@@ -89,7 +89,7 @@ describe('apps/dashboard state and core logic', () => {
 
       // Test trigger undo
       useDashboardStore.getState().triggerUndo();
-      const reverted = useDashboardStore.getState().clusters.find((c) => c.id === clusterId);
+      const reverted = useDashboardStore.getState().clusters.find(c => c.id === clusterId);
       expect(reverted?.state).toBe('new');
       expect(reverted?.assigned_team_id).toBeNull();
     });
@@ -100,12 +100,14 @@ describe('apps/dashboard state and core logic', () => {
 
       useDashboardStore.getState().changeClusterState(clusterId, 'false_alarm', reason);
 
-      const updated = useDashboardStore.getState().clusters.find((c) => c.id === clusterId);
+      const updated = useDashboardStore.getState().clusters.find(c => c.id === clusterId);
       expect(updated?.state).toBe('false_alarm');
       expect(updated?.false_alarm_reason).toBe(reason);
 
       // Audit log recorded
-      const audit = useDashboardStore.getState().auditLogs.find((a) => a.action === 'mark_false_alarm');
+      const audit = useDashboardStore
+        .getState()
+        .auditLogs.find(a => a.action === 'mark_false_alarm');
       expect(audit).toBeDefined();
       expect(audit?.target_id).toBe(clusterId);
     });
@@ -114,8 +116,8 @@ describe('apps/dashboard state and core logic', () => {
       const clusterId = '55555555-5555-5555-5555-555555555501';
       useDashboardStore.getState().dispatchAck(clusterId, 'help_on_way', 15);
 
-      const updated = useDashboardStore.getState().clusters.find((c) => c.id === clusterId);
-      const ackEvent = (updated?.timeline || []).find((e) => e.event_type === 'ack_sent');
+      const updated = useDashboardStore.getState().clusters.find(c => c.id === clusterId);
+      const ackEvent = (updated?.timeline || []).find(e => e.event_type === 'ack_sent');
       expect(ackEvent).toBeDefined();
       expect(ackEvent?.notes).toContain('help_on_way');
     });
@@ -132,7 +134,7 @@ describe('apps/dashboard state and core logic', () => {
       });
 
       const clusters = useDashboardStore.getState().clusters;
-      const found = clusters.find((c) => c.id === newId);
+      const found = clusters.find(c => c.id === newId);
       expect(found).toBeDefined();
       expect(found?.priority_score).toBe(0.98);
       expect(found?.declared_people).toBe(18);
@@ -141,15 +143,17 @@ describe('apps/dashboard state and core logic', () => {
 
     it('supports cluster merging and splitting', () => {
       const parentId = '55555555-5555-5555-5555-555555555501';
-      const initialPeople = useDashboardStore.getState().clusters.find((c) => c.id === parentId)!.declared_people;
+      const initialPeople = useDashboardStore
+        .getState()
+        .clusters.find(c => c.id === parentId)!.declared_people;
 
       useDashboardStore.getState().splitCluster(parentId);
 
       const clusters = useDashboardStore.getState().clusters;
       expect(clusters.length).toBeGreaterThan(SEED_CLUSTERS.length);
-      const splitClusters = clusters.filter((c) => c.id.startsWith('split_'));
+      const splitClusters = clusters.filter(c => c.id.startsWith('split_'));
       expect(splitClusters.length).toBeGreaterThan(0);
-      const updatedParent = clusters.find((c) => c.id === parentId)!;
+      const updatedParent = clusters.find(c => c.id === parentId)!;
       expect(updatedParent.declared_people).toBeLessThan(initialPeople);
     });
 

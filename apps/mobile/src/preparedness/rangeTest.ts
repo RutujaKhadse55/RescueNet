@@ -11,7 +11,11 @@ export class BleRangeTester {
   /**
    * Estimates distance from RSSI and txPower (-59 dBm reference at 1m, path loss exponent n=2.5)
    */
-  public static calculateDistance(rssi: number, txPowerAt1m: number = -59, n: number = 2.5): number {
+  public static calculateDistance(
+    rssi: number,
+    txPowerAt1m: number = -59,
+    n: number = 2.5,
+  ): number {
     if (rssi === 0) return -1;
     const ratio = (txPowerAt1m - rssi) / (10 * n);
     return Math.round(Math.pow(10, ratio) * 10) / 10;
@@ -24,11 +28,11 @@ export class BleRangeTester {
   public static async runTest(
     simulatedRssi: number = -76,
     pingCount: number = 5,
-    onProgress?: (current: number, total: number) => void
+    onProgress?: (current: number, total: number) => void,
   ): Promise<RangeTestResult> {
     let received = 0;
     for (let i = 1; i <= pingCount; i++) {
-      await new Promise((resolve) => setTimeout(resolve, 80));
+      await new Promise(resolve => setTimeout(resolve, 80));
       // Simulate minor signal jitter
       const jitter = (Math.random() - 0.5) * 6;
       const currentRssi = simulatedRssi + jitter;

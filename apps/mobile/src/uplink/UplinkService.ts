@@ -74,7 +74,7 @@ export class UplinkService {
     governor: ConnectivityGovernor,
     meshEngine?: MeshEngine,
     config?: Partial<UplinkConfig>,
-    customFetch?: typeof fetch
+    customFetch?: typeof fetch,
   ) {
     this.db = db;
     this.governor = governor;
@@ -190,7 +190,7 @@ export class UplinkService {
     // 1. Collect un-uplinked packets (SOS first; data-saver = SOS only)
     const unuplinked = await this.db.packets.getUnuplinkedPackets(
       this.config.batchSizeLimit,
-      this.config.dataSaver
+      this.config.dataSaver,
     );
 
     if (unuplinked.length === 0) {
@@ -206,7 +206,7 @@ export class UplinkService {
     }
 
     // 2. Serialise as hex strings
-    const packetsPayload: string[] = unuplinked.map((p) => {
+    const packetsPayload: string[] = unuplinked.map(p => {
       if (/^[0-9a-fA-F]+$/.test(p.raw_bytes)) return p.raw_bytes;
       return Buffer.from(p.raw_bytes, 'base64').toString('hex');
     });
@@ -231,7 +231,7 @@ export class UplinkService {
         'http://10.0.2.2:3000/v1/uplink',
         'http://localhost:3000/v1/uplink',
         'http://127.0.0.1:3000/v1/uplink',
-      ])
+      ]),
     );
 
     for (const url of candidateUrls) {
@@ -277,9 +277,9 @@ export class UplinkService {
 
     // 4. Parse per-packet results
     const perPacket: PerPacketResult[] = (resJson.results ?? []) as PerPacketResult[];
-    let accepted = perPacket.filter((r) => r.status === 'accepted').length;
-    let duplicate = perPacket.filter((r) => r.status === 'duplicate').length;
-    let rejected = perPacket.filter((r) => r.status === 'rejected').length;
+    let accepted = perPacket.filter(r => r.status === 'accepted').length;
+    let duplicate = perPacket.filter(r => r.status === 'duplicate').length;
+    let rejected = perPacket.filter(r => r.status === 'rejected').length;
     // Fallback to aggregate counts if server doesn't return per-packet detail
     if (perPacket.length === 0) {
       accepted = resJson.accepted ?? 0;
@@ -357,6 +357,6 @@ export class UplinkService {
 
   private _hexToBytes(hex: string): Uint8Array {
     const pairs = hex.match(/.{1,2}/g) ?? [];
-    return new Uint8Array(pairs.map((b) => parseInt(b, 16)));
+    return new Uint8Array(pairs.map(b => parseInt(b, 16)));
   }
 }

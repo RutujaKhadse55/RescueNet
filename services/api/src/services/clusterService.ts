@@ -22,23 +22,21 @@ export class ClusterService {
    * Retrieves clusters for an incident with filtering, sorted by priority_score DESC
    */
   public static async getClusters(filters: ClusterFilterParams): Promise<any[]> {
-    const res = await db.query(
-      `SELECT * FROM clusters ORDER BY priority_score DESC;`
-    );
+    const res = await db.query(`SELECT * FROM clusters ORDER BY priority_score DESC;`);
 
     let rows = res.rows;
     if (filters.incidentId) {
-      rows = rows.filter((r) => r.incident_id === filters.incidentId);
+      rows = rows.filter(r => r.incident_id === filters.incidentId);
     }
     if (filters.state) {
-      rows = rows.filter((r) => r.state === filters.state);
+      rows = rows.filter(r => r.state === filters.state);
     }
     if (filters.minPriority !== undefined) {
-      rows = rows.filter((r) => r.priority_score >= filters.minPriority!);
+      rows = rows.filter(r => r.priority_score >= filters.minPriority!);
     }
     if (filters.search) {
       const q = filters.search.toLowerCase();
-      rows = rows.filter((r) => r.id.toLowerCase().includes(q));
+      rows = rows.filter(r => r.id.toLowerCase().includes(q));
     }
 
     return rows;
@@ -50,7 +48,7 @@ export class ClusterService {
   public static async getClusterDetails(
     clusterId: string,
     requestingUserId?: string,
-    clientIp?: string
+    clientIp?: string,
   ): Promise<any> {
     const clRes = await db.query(`SELECT * FROM clusters WHERE id = $1;`, [clusterId]);
     if (clRes.rows.length === 0) return null;
@@ -60,16 +58,17 @@ export class ClusterService {
     await AuditService.logCoordinateAccess(clusterId, requestingUserId, clientIp);
 
     // Fetch members
-    const membersRes = await db.query(
-      `SELECT * FROM cluster_members WHERE cluster_id = $1;`,
-      [clusterId]
-    );
+    const membersRes = await db.query(`SELECT * FROM cluster_members WHERE cluster_id = $1;`, [
+      clusterId,
+    ]);
 
     // Fetch timeline events
-    const events = (db as any).getDb().cluster_events?.filter((e: any) => e.cluster_id === clusterId) || [];
+    const events =
+      (db as any).getDb().cluster_events?.filter((e: any) => e.cluster_id === clusterId) || [];
 
     // Fetch trust signals
-    const signals = (db as any).getDb().trust_signals?.filter((s: any) => s.cluster_id === clusterId) || [];
+    const signals =
+      (db as any).getDb().trust_signals?.filter((s: any) => s.cluster_id === clusterId) || [];
 
     return {
       ...cluster,
@@ -89,7 +88,7 @@ export class ClusterService {
       falseAlarmReason?: string;
       mergeWithId?: string;
     },
-    userId?: string
+    userId?: string,
   ): Promise<any> {
     const clRes = await db.query(`SELECT * FROM clusters WHERE id = $1;`, [clusterId]);
     if (clRes.rows.length === 0) return null;
@@ -135,13 +134,13 @@ export class ClusterService {
     clusterId: string,
     teamId: string,
     assignedByUserId: string,
-    etaMinutes: number = 30
+    etaMinutes: number = 30,
   ): Promise<any> {
     const assignmentId = `asgn_${Date.now()}`;
     await db.query(
       `INSERT INTO assignments (id, cluster_id, team_id, assigned_by, eta_minutes, status, assigned_at)
        VALUES ($1, $2, $3, $4, $5, 'assigned', now());`,
-      [assignmentId, clusterId, teamId, assignedByUserId, etaMinutes]
+      [assignmentId, clusterId, teamId, assignedByUserId, etaMinutes],
     );
 
     await db.query(`UPDATE clusters SET state = 'assigned', updated_at = now() WHERE id = $1;`, [

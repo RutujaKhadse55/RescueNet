@@ -9,11 +9,7 @@
  *    priority queues, battery-aware backoff (BEACON_ONLY at <=15%).
  */
 
-import {
-  SimNode,
-  SimPacketCopy,
-  SimulationStrategy,
-} from '../models/types';
+import { SimNode, SimPacketCopy, SimulationStrategy } from '../models/types';
 import { BatteryModel } from '../models/battery';
 
 export class StrategyExecutor {
@@ -27,7 +23,7 @@ export class StrategyExecutor {
     strategy: SimulationStrategy,
     sender: SimNode,
     receiver: SimNode,
-    _nowSec: number
+    _nowSec: number,
   ): { gatewayDeliveries: SimPacketCopy[]; transmissions: number; bytesSent: number } {
     const gatewayDeliveries: SimPacketCopy[] = [];
     let transmissions = 0;

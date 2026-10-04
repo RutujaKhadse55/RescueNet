@@ -21,30 +21,28 @@ export class NeighborRepository {
       `INSERT OR REPLACE INTO neighbors (
         fp, last_rssi, last_seen, battery, role, mac_rotating
       ) VALUES (?, ?, ?, ?, ?, ?);`,
-      [n.fp, n.last_rssi, n.last_seen, n.battery, n.role, n.mac_rotating]
+      [n.fp, n.last_rssi, n.last_seen, n.battery, n.role, n.mac_rotating],
     );
   }
 
   async getNeighbor(fp: string): Promise<NeighborRecord | null> {
-    const res = await this.driver.execute<NeighborRecord>(
-      `SELECT * FROM neighbors WHERE fp = ?;`,
-      [fp]
-    );
+    const res = await this.driver.execute<NeighborRecord>(`SELECT * FROM neighbors WHERE fp = ?;`, [
+      fp,
+    ]);
     return res.rows[0] ?? null;
   }
 
   async getAllNeighbors(limit: number = 50): Promise<NeighborRecord[]> {
     const res = await this.driver.execute<NeighborRecord>(
-      `SELECT * FROM neighbors ORDER BY last_seen DESC LIMIT ${limit};`
+      `SELECT * FROM neighbors ORDER BY last_seen DESC LIMIT ${limit};`,
     );
     return res.rows;
   }
 
   async removeStaleNeighbors(thresholdIso: string): Promise<number> {
-    const res = await this.driver.execute(
-      `DELETE FROM neighbors WHERE last_seen < ?;`,
-      [thresholdIso]
-    );
+    const res = await this.driver.execute(`DELETE FROM neighbors WHERE last_seen < ?;`, [
+      thresholdIso,
+    ]);
     return res.rowsAffected;
   }
 }

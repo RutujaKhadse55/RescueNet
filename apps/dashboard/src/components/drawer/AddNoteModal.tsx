@@ -25,8 +25,14 @@ export const AddNoteModal: React.FC<AddNoteModalProps> = ({ clusterId, isOpen, o
   };
 
   return (
-    <div className="modal-backdrop" onClick={onClose} role="dialog" aria-modal="true" aria-labelledby="modal-note-title">
-      <div className="modal-box" onClick={(e) => e.stopPropagation()}>
+    <div
+      className="modal-backdrop"
+      onClick={onClose}
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="modal-note-title"
+    >
+      <div className="modal-box" onClick={e => e.stopPropagation()}>
         <div className="modal-header">
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
             <StickyNote size={18} color="#f59e0b" />
@@ -36,7 +42,12 @@ export const AddNoteModal: React.FC<AddNoteModalProps> = ({ clusterId, isOpen, o
           </div>
           <button
             onClick={onClose}
-            style={{ background: 'transparent', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer' }}
+            style={{
+              background: 'transparent',
+              border: 'none',
+              color: 'var(--text-secondary)',
+              cursor: 'pointer',
+            }}
             aria-label="Close"
           >
             <X size={18} />
@@ -55,7 +66,7 @@ export const AddNoteModal: React.FC<AddNoteModalProps> = ({ clusterId, isOpen, o
                 rows={4}
                 placeholder="e.g. Survivor communicated via mesh ping that building stairwell is flooded; rooftop ladder required."
                 value={note}
-                onChange={(e) => setNote(e.target.value)}
+                onChange={e => setNote(e.target.value)}
                 required
               />
             </div>

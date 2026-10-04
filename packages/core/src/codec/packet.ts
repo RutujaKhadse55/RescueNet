@@ -456,7 +456,7 @@ export async function createAndSignAck(
   },
   crypto: ICrypto,
   packetId?: Uint8Array,
-  originFp?: Uint8Array
+  originFp?: Uint8Array,
 ): Promise<Uint8Array> {
   const pId = packetId ?? crypto.randomBytes(8);
   const fp = originFp ?? (await crypto.blake2b(params.keyPair.publicKey, 8));
@@ -861,7 +861,23 @@ export function encodeClusterSummary(packet: ClusterSummaryPacketData): Uint8Arr
   const memberHashesCount = packet.body.memberFingerprintHashes.length;
   // Header(21) + idLen(1) + idBytes(N) + memberCount(1) + hashes(4*M) + people(2) + lat(4) + lon(4) + rad(2) + status(1) + needs(1) + battery(1) + first(4) + last(4) + seq(2) + pubkey(32) + sig(64)
   const totalLen =
-    HEADER_SIZE + 1 + idBytes.length + 1 + memberHashesCount * 4 + 2 + 4 + 4 + 2 + 1 + 1 + 1 + 4 + 4 + 2 + 32 + 64;
+    HEADER_SIZE +
+    1 +
+    idBytes.length +
+    1 +
+    memberHashesCount * 4 +
+    2 +
+    4 +
+    4 +
+    2 +
+    1 +
+    1 +
+    1 +
+    4 +
+    4 +
+    2 +
+    32 +
+    64;
 
   const buffer = new Uint8Array(totalLen);
   const view = new DataView(buffer.buffer, buffer.byteOffset, buffer.byteLength);
@@ -913,7 +929,9 @@ export function decodeClusterSummary(buffer: Uint8Array): ClusterSummaryPacketDa
   const view = new DataView(buffer.buffer, buffer.byteOffset, buffer.byteLength);
   const header = decodeHeader(view);
   if (header.type !== PacketType.CLUSTER_SUMMARY) {
-    throw new Error(`Expected CLUSTER_SUMMARY packet type 0x06, got 0x0${header.type.toString(16)}`);
+    throw new Error(
+      `Expected CLUSTER_SUMMARY packet type 0x06, got 0x0${header.type.toString(16)}`,
+    );
   }
 
   let offset = HEADER_SIZE;
@@ -1023,7 +1041,23 @@ export async function createAndSignClusterSummary(
 
   const encoder = new TextEncoder();
   const idBytes = encoder.encode(params.clusterId);
-  const preimageLen = 19 + 1 + idBytes.length + 1 + params.memberFingerprintHashes.length * 4 + 2 + 4 + 4 + 2 + 1 + 1 + 1 + 4 + 4 + 2 + 32;
+  const preimageLen =
+    19 +
+    1 +
+    idBytes.length +
+    1 +
+    params.memberFingerprintHashes.length * 4 +
+    2 +
+    4 +
+    4 +
+    2 +
+    1 +
+    1 +
+    1 +
+    4 +
+    4 +
+    2 +
+    32;
   const preimage = new Uint8Array(preimageLen);
   const pView = new DataView(preimage.buffer, preimage.byteOffset, preimage.byteLength);
 
@@ -1073,4 +1107,3 @@ export async function createAndSignClusterSummary(
     },
   });
 }
-

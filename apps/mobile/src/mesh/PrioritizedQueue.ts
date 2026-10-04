@@ -43,7 +43,7 @@ export class PrioritizedQueue {
 
     // Sort existing packets for eviction:
     // Highest rank number (lowest priority) first, then oldest received_at first
-    const evictable = all.filter((p) => !this.isImmuneFromEviction(p));
+    const evictable = all.filter(p => !this.isImmuneFromEviction(p));
 
     if (evictable.length === 0) {
       // Entire queue is filled with immune active SOS/ACK packets; cannot evict

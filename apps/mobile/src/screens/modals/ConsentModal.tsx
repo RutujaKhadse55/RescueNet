@@ -94,7 +94,9 @@ export const ConsentModal: React.FC<ConsentModalProps> = ({ visible, onConsentGi
               <View style={styles.switchRow}>
                 <View style={styles.switchTextCol}>
                   <Text style={styles.switchLabel}>Share Battery Level</Text>
-                  <Text style={styles.switchSubtext}>Helps search teams prioritize dying nodes</Text>
+                  <Text style={styles.switchSubtext}>
+                    Helps search teams prioritize dying nodes
+                  </Text>
                 </View>
                 <Switch
                   value={shareBatteryLevel}
@@ -199,7 +201,7 @@ export const ConsentModal: React.FC<ConsentModalProps> = ({ visible, onConsentGi
           {currentStep > 1 && (
             <TouchableOpacity
               style={styles.secondaryButton}
-              onPress={() => setCurrentStep((s) => s - 1)}
+              onPress={() => setCurrentStep(s => s - 1)}
               accessibilityLabel="Previous consent step"
             >
               <Text style={styles.secondaryButtonText}>Back</Text>
@@ -209,7 +211,7 @@ export const ConsentModal: React.FC<ConsentModalProps> = ({ visible, onConsentGi
           {currentStep < 4 ? (
             <TouchableOpacity
               style={styles.primaryButton}
-              onPress={() => setCurrentStep((s) => s + 1)}
+              onPress={() => setCurrentStep(s => s + 1)}
               accessibilityLabel="Continue to next consent step"
             >
               <Text style={styles.primaryButtonText}>Continue</Text>

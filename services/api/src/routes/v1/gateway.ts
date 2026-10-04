@@ -7,7 +7,8 @@ export async function gatewayRoutes(server: FastifyInstance) {
     '/gateway/outbox',
     {
       schema: {
-        description: 'Retrieves pending signed ACKs and priority seed packets for mesh gateways to blast via BLE',
+        description:
+          'Retrieves pending signed ACKs and priority seed packets for mesh gateways to blast via BLE',
         tags: ['Gateway'],
       },
     },
@@ -18,14 +19,15 @@ export async function gatewayRoutes(server: FastifyInstance) {
         packets: outbox,
         serverTime: Math.floor(Date.now() / 1000),
       });
-    }
+    },
   );
 
   server.post(
     '/gateway/heartbeat',
     {
       schema: {
-        description: 'Gateway telemetry heartbeat reporting battery, location, and radio mesh density',
+        description:
+          'Gateway telemetry heartbeat reporting battery, location, and radio mesh density',
         tags: ['Gateway'],
         body: {
           type: 'object',
@@ -42,16 +44,21 @@ export async function gatewayRoutes(server: FastifyInstance) {
     },
     async (
       req: FastifyRequest<{
-        Body: { gatewayId: string; batteryPercent?: number; connectedPeers?: number; latitude?: number; longitude?: number };
+        Body: {
+          gatewayId: string;
+          batteryPercent?: number;
+          connectedPeers?: number;
+          latitude?: number;
+          longitude?: number;
+        };
       }>,
-      reply: FastifyReply
+      reply: FastifyReply,
     ) => {
       const { gatewayId, batteryPercent } = req.body;
 
-      await db.query(
-        `UPDATE devices SET last_seen_at = now(), is_gateway = true WHERE id = $1;`,
-        [gatewayId]
-      );
+      await db.query(`UPDATE devices SET last_seen_at = now(), is_gateway = true WHERE id = $1;`, [
+        gatewayId,
+      ]);
 
       return reply.send({
         status: 'ok',
@@ -59,6 +66,6 @@ export async function gatewayRoutes(server: FastifyInstance) {
         batteryPercent: batteryPercent ?? 100,
         serverTime: Math.floor(Date.now() / 1000),
       });
-    }
+    },
   );
 }

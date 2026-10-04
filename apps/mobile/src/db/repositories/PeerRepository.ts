@@ -31,21 +31,18 @@ export class PeerRepository {
         p.last_location_lat ?? null,
         p.last_location_lon ?? null,
         p.last_seen,
-      ]
+      ],
     );
   }
 
   async getPeer(fp: string): Promise<PeerRecord | null> {
-    const res = await this.driver.execute<PeerRecord>(
-      `SELECT * FROM peers WHERE fp = ?;`,
-      [fp]
-    );
+    const res = await this.driver.execute<PeerRecord>(`SELECT * FROM peers WHERE fp = ?;`, [fp]);
     return res.rows[0] ?? null;
   }
 
   async getAllPeers(): Promise<PeerRecord[]> {
     const res = await this.driver.execute<PeerRecord>(
-      `SELECT * FROM peers ORDER BY last_seen DESC;`
+      `SELECT * FROM peers ORDER BY last_seen DESC;`,
     );
     return res.rows;
   }

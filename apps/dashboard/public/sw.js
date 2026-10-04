@@ -4,36 +4,29 @@
  */
 
 const CACHE_NAME = 'rescuenet-dashboard-v1';
-const STATIC_ASSETS = [
-  '/',
-  '/index.html',
-  '/src/main.tsx',
-  '/src/index.css',
-];
+const STATIC_ASSETS = ['/', '/index.html', '/src/main.tsx', '/src/index.css'];
 
-self.addEventListener('install', (event) => {
+self.addEventListener('install', event => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => {
+    caches.open(CACHE_NAME).then(cache => {
       return cache.addAll(STATIC_ASSETS).catch(() => {
         // Some dev files may vary in dev mode
       });
-    })
+    }),
   );
   self.skipWaiting();
 });
 
-self.addEventListener('activate', (event) => {
+self.addEventListener('activate', event => {
   event.waitUntil(
-    caches.keys().then((keys) => {
-      return Promise.all(
-        keys.filter((key) => key !== CACHE_NAME).map((key) => caches.delete(key))
-      );
-    })
+    caches.keys().then(keys => {
+      return Promise.all(keys.filter(key => key !== CACHE_NAME).map(key => caches.delete(key)));
+    }),
   );
   self.clients.claim();
 });
 
-self.addEventListener('fetch', (event) => {
+self.addEventListener('fetch', event => {
   // Only handle GET requests
   if (event.request.method !== 'GET') return;
 
@@ -43,39 +36,41 @@ self.addEventListener('fetch', (event) => {
   if (url.pathname.startsWith('/v1/')) {
     event.respondWith(
       fetch(event.request)
-        .then((response) => {
+        .then(response => {
           if (response.status === 200) {
             const clone = response.clone();
-            caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
+            caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone));
           }
           return response;
         })
         .catch(() => {
-          return caches.match(event.request).then((cached) => {
+          return caches.match(event.request).then(cached => {
             if (cached) return cached;
             return new Response(JSON.stringify({ offline: true, error: 'Network unavailable' }), {
               status: 200,
               headers: { 'Content-Type': 'application/json' },
             });
           });
-        })
+        }),
     );
     return;
   }
 
   // Stale-while-revalidate for static assets
   event.respondWith(
-    caches.match(event.request).then((cached) => {
+    caches.match(event.request).then(cached => {
       const fetchPromise = fetch(event.request)
-        .then((networkResponse) => {
+        .then(networkResponse => {
           if (networkResponse && networkResponse.status === 200) {
-            caches.open(CACHE_NAME).then((cache) => cache.put(event.request, networkResponse.clone()));
+            caches
+              .open(CACHE_NAME)
+              .then(cache => cache.put(event.request, networkResponse.clone()));
           }
           return networkResponse;
         })
         .catch(() => cached);
 
       return cached || fetchPromise;
-    })
+    }),
   );
 });

@@ -54,7 +54,7 @@ export class DatabaseManager {
   public static async create(
     forceInMemory: boolean = false,
     customKeyStore?: IKeyStore,
-    customCrypto?: ICrypto
+    customCrypto?: ICrypto,
   ): Promise<DatabaseManager> {
     const keystore = customKeyStore || new AndroidKeyStoreService();
     const crypto = customCrypto || (await SodiumCrypto.getInstance());
@@ -64,7 +64,7 @@ export class DatabaseManager {
     if (!dbKey) {
       const randomKeyBytes = crypto.randomBytes(32);
       dbKey = Array.from(randomKeyBytes)
-        .map((b) => b.toString(16).padStart(2, '0'))
+        .map(b => b.toString(16).padStart(2, '0'))
         .join('');
       await keystore.setItem('sqlcipher_encryption_key', dbKey);
     }

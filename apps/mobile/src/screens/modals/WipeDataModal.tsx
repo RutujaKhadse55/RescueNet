@@ -1,11 +1,5 @@
 import React from 'react';
-import {
-  Modal,
-  View,
-  Text,
-  TouchableOpacity,
-  StyleSheet,
-} from 'react-native';
+import { Modal, View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { colors, layout, spacing, typography } from '../../theme';
 
 interface WipeDataModalProps {
@@ -32,9 +26,13 @@ export const WipeDataModal: React.FC<WipeDataModalProps> = ({
           </Text>
 
           <View style={styles.list}>
-            <Text style={styles.listItem}>• Delete your Ed25519 root identity and rotating pseudonyms</Text>
+            <Text style={styles.listItem}>
+              • Delete your Ed25519 root identity and rotating pseudonyms
+            </Text>
             <Text style={styles.listItem}>• Erase your 32-byte SMS secret</Text>
-            <Text style={styles.listItem}>• Wipe all local mesh packets, neighbors, and cluster caches</Text>
+            <Text style={styles.listItem}>
+              • Wipe all local mesh packets, neighbors, and cluster caches
+            </Text>
             <Text style={styles.listItem}>• Delete all peer-to-peer chat conversations</Text>
             <Text style={styles.listItem}>• Reset your consent preferences</Text>
           </View>

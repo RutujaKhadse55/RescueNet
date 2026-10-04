@@ -49,7 +49,7 @@ export const DEFAULT_MESH_POLICY: MeshPolicy = {
   maxLowTrustPacketsPerOriginPerMinute: 2,
 
   maxQueueCapacity: 1_000,
-  congestionThresholdRatio: 0.70,
+  congestionThresholdRatio: 0.7,
 
   sosRetentionSeconds: 72 * 3600,
   chatRetentionSeconds: 6 * 3600,

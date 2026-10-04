@@ -17,15 +17,14 @@ export class SettingsRepository {
     const updatedAt = new Date().toISOString();
     await this.driver.execute(
       `INSERT OR REPLACE INTO settings (key, value, updated_at) VALUES (?, ?, ?);`,
-      [key, value, updatedAt]
+      [key, value, updatedAt],
     );
   }
 
   async get(key: string): Promise<string | null> {
-    const res = await this.driver.execute<SettingRecord>(
-      `SELECT * FROM settings WHERE key = ?;`,
-      [key]
-    );
+    const res = await this.driver.execute<SettingRecord>(`SELECT * FROM settings WHERE key = ?;`, [
+      key,
+    ]);
     return res.rows[0]?.value ?? null;
   }
 

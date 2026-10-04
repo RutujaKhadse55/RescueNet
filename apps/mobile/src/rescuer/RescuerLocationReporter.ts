@@ -38,7 +38,7 @@ export class RescuerLocationReporter {
     rescuerService: RescuerCredentialService,
     connectivityGovernor?: ConnectivityGovernor,
     serverBaseUrl: string = 'http://localhost:3000',
-    intervalMs: number = 30000 // 30 seconds
+    intervalMs: number = 30000, // 30 seconds
   ) {
     this.locationProvider = locationProvider;
     this.db = db;
@@ -73,7 +73,10 @@ export class RescuerLocationReporter {
     }
   }
 
-  public async reportCurrentPosition(): Promise<{ success: boolean; mode: 'uplink' | 'sms' | 'skipped' }> {
+  public async reportCurrentPosition(): Promise<{
+    success: boolean;
+    mode: 'uplink' | 'sms' | 'skipped';
+  }> {
     if (!this.rescuerService.isRescuer()) {
       return { success: false, mode: 'skipped' };
     }

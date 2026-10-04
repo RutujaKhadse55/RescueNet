@@ -7,16 +7,16 @@ describe('Preparedness Self-Test & Readiness Scoring', () => {
   test('calculates 100% score and Disaster Ready tier when all criteria met', () => {
     const perfectInputs: ReadinessInputs = {
       permissionsGrantedPercentage: 100, // 20 pts
-      batteryOptimizationExempt: true,    // 10 pts
-      bluetoothEnabled: true,             // 10 pts
-      locationEnabled: true,              // 10 pts
-      bleAdvertisingSupported: true,      // 10 pts
-      codedPhySupported: true,            // 5 pts
-      smsAvailable: true,                 // 5 pts
-      identityRegistered: true,           // 10 pts
-      mapPackDownloaded: true,            // 10 pts
-      controlRoomNumbersSynced: true,     // 5 pts
-      emergencyContactsSet: true,         // 5 pts
+      batteryOptimizationExempt: true, // 10 pts
+      bluetoothEnabled: true, // 10 pts
+      locationEnabled: true, // 10 pts
+      bleAdvertisingSupported: true, // 10 pts
+      codedPhySupported: true, // 5 pts
+      smsAvailable: true, // 5 pts
+      identityRegistered: true, // 10 pts
+      mapPackDownloaded: true, // 10 pts
+      controlRoomNumbersSynced: true, // 5 pts
+      emergencyContactsSet: true, // 5 pts
     };
 
     const evalResult = calculateReadinessScore(perfectInputs);
@@ -28,17 +28,17 @@ describe('Preparedness Self-Test & Readiness Scoring', () => {
 
   test('calculates partial score and Appropriate Tier when items missing', () => {
     const degradedInputs: ReadinessInputs = {
-      permissionsGrantedPercentage: 50,  // 10 pts
-      batteryOptimizationExempt: false,   // 0 pts
-      bluetoothEnabled: true,             // 10 pts
-      locationEnabled: true,              // 10 pts
-      bleAdvertisingSupported: true,      // 10 pts
-      codedPhySupported: false,           // 0 pts
-      smsAvailable: true,                 // 5 pts
-      identityRegistered: false,          // 0 pts
-      mapPackDownloaded: false,           // 0 pts
-      controlRoomNumbersSynced: true,     // 5 pts
-      emergencyContactsSet: false,        // 0 pts
+      permissionsGrantedPercentage: 50, // 10 pts
+      batteryOptimizationExempt: false, // 0 pts
+      bluetoothEnabled: true, // 10 pts
+      locationEnabled: true, // 10 pts
+      bleAdvertisingSupported: true, // 10 pts
+      codedPhySupported: false, // 0 pts
+      smsAvailable: true, // 5 pts
+      identityRegistered: false, // 0 pts
+      mapPackDownloaded: false, // 0 pts
+      controlRoomNumbersSynced: true, // 5 pts
+      emergencyContactsSet: false, // 0 pts
     };
 
     const evalResult = calculateReadinessScore(degradedInputs);

@@ -25,13 +25,12 @@ export async function devicesRoutes(server: FastifyInstance) {
         },
       },
     },
-    async (
-      req: any,
-      reply: FastifyReply
-    ) => {
+    async (req: any, reply: FastifyReply) => {
       const masterKey = req.body.pubkey || req.body.master_public_key;
       if (!masterKey) {
-        return reply.status(400).send({ error: 'Missing public key (pubkey or master_public_key)' });
+        return reply
+          .status(400)
+          .send({ error: 'Missing public key (pubkey or master_public_key)' });
       }
       const keyPool = req.body.keyPool || req.body.ephemeral_public_keys || [];
       const platform = req.body.platform || 'android';
@@ -45,7 +44,7 @@ export async function devicesRoutes(server: FastifyInstance) {
       await db.query(
         `INSERT INTO devices (id, pubkey, fp, sms_secret, platform, app_version, trust_score, registered_at)
          VALUES ($1, $2, $3, $4, $5, $6, 0.7, now());`,
-        [deviceId, pubkeyBuf, fpBuf, smsSecret, platform, appVersion]
+        [deviceId, pubkeyBuf, fpBuf, smsSecret, platform, appVersion],
       );
 
       // Pre-register key pool if provided
@@ -56,21 +55,21 @@ export async function devicesRoutes(server: FastifyInstance) {
           await db.query(
             `INSERT INTO device_key_pool (device_id, pubkey, fp, valid_from, valid_to)
              VALUES ($1, $2, $3, now(), now() + interval '30 days');`,
-            [deviceId, kBuf, kFp]
+            [deviceId, kBuf, kFp],
           );
         }
       }
 
       // Fetch SMS control-room numbers
       const smsRes = await db.query(
-        `SELECT e164, label FROM sms_gateway_numbers WHERE active = true ORDER BY priority ASC;`
+        `SELECT e164, label FROM sms_gateway_numbers WHERE active = true ORDER BY priority ASC;`,
       );
 
       return reply.status(201).send({
         deviceId,
         smsSecret: smsSecret.toString('hex'),
         agencyCaKey: config.AGENCY_CA_PUBLIC_KEY,
-        controlRoomSmsNumbers: smsRes.rows.map((r) => r.e164),
+        controlRoomSmsNumbers: smsRes.rows.map(r => r.e164),
         config: {
           clustering: {
             epsMeters: 40,
@@ -90,7 +89,7 @@ export async function devicesRoutes(server: FastifyInstance) {
           },
         },
       });
-    }
+    },
   );
 
   // Configuration endpoint
@@ -127,6 +126,6 @@ export async function devicesRoutes(server: FastifyInstance) {
         retentionDays: config.RETENTION_DAYS,
         smsProvider: config.SMS_PROVIDER,
       });
-    }
+    },
   );
 }

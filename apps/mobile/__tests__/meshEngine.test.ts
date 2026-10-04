@@ -16,7 +16,10 @@ describe('Phase 7: Store-and-forward Mesh Engine', () => {
     FakeBleNetwork.clear();
   });
 
-  async function createEngineNode(nodeId: string, role: 'survivor' | 'rescuer' | 'gateway' = 'survivor') {
+  async function createEngineNode(
+    nodeId: string,
+    role: 'survivor' | 'rescuer' | 'gateway' = 'survivor',
+  ) {
     const keystore = new InMemoryKeyStore();
     const db = await DatabaseManager.create(true, keystore, crypto);
     const transport = new FakeTransport(nodeId);
@@ -78,7 +81,7 @@ describe('Phase 7: Store-and-forward Mesh Engine', () => {
       },
       crypto,
       packetId,
-      originFp
+      originFp,
     );
 
     const packetIdHex = await nodeA.engine.createAndStorePacket(sosBytes);
@@ -94,7 +97,7 @@ describe('Phase 7: Store-and-forward Mesh Engine', () => {
 
     // Verify signature on Node B
     const rawBytesOnB = new Uint8Array(
-      pktOnB!.raw_bytes.match(/.{1,2}/g)!.map((byte) => parseInt(byte, 16))
+      pktOnB!.raw_bytes.match(/.{1,2}/g)!.map(byte => parseInt(byte, 16)),
     );
     const sigValidOnB = await verifySosPacket(rawBytesOnB, crypto);
     expect(sigValidOnB).toBe(true);
@@ -111,7 +114,7 @@ describe('Phase 7: Store-and-forward Mesh Engine', () => {
 
     // Verify signature on Node C
     const rawBytesOnC = new Uint8Array(
-      pktOnC!.raw_bytes.match(/.{1,2}/g)!.map((byte) => parseInt(byte, 16))
+      pktOnC!.raw_bytes.match(/.{1,2}/g)!.map(byte => parseInt(byte, 16)),
     );
     const sigValidOnC = await verifySosPacket(rawBytesOnC, crypto);
     expect(sigValidOnC).toBe(true);
@@ -155,7 +158,7 @@ describe('Phase 7: Store-and-forward Mesh Engine', () => {
         sequenceNumber: 1,
         keyPair: nodeA.keyPair,
       },
-      crypto
+      crypto,
     );
 
     await nodeA.engine.createAndStorePacket(sosBytes);
@@ -189,7 +192,7 @@ describe('Phase 7: Store-and-forward Mesh Engine', () => {
         sequenceNumber: 1,
         keyPair: nodeA.keyPair,
       },
-      crypto
+      crypto,
     );
 
     // First ingestion
@@ -232,7 +235,7 @@ describe('Phase 7: Store-and-forward Mesh Engine', () => {
       },
       crypto,
       crypto.randomBytes(8),
-      originFp
+      originFp,
     );
     const res1 = await nodeA.engine.ingestPacket(pkt1);
     expect(res1.accepted).toBe(true);
@@ -255,7 +258,7 @@ describe('Phase 7: Store-and-forward Mesh Engine', () => {
       },
       crypto,
       crypto.randomBytes(8),
-      originFp
+      originFp,
     );
     const res2 = await nodeA.engine.ingestPacket(pkt2);
     expect(res2.accepted).toBe(false);
@@ -291,7 +294,7 @@ describe('Phase 7: Store-and-forward Mesh Engine', () => {
         },
         crypto,
         crypto.randomBytes(8),
-        originFp
+        originFp,
       );
       const res = await nodeA.engine.ingestPacket(pkt);
       expect(res.accepted).toBe(true);
@@ -315,7 +318,7 @@ describe('Phase 7: Store-and-forward Mesh Engine', () => {
       },
       crypto,
       crypto.randomBytes(8),
-      originFp
+      originFp,
     );
     const res11 = await nodeA.engine.ingestPacket(pkt11);
     expect(res11.accepted).toBe(false);
@@ -345,7 +348,7 @@ describe('Phase 7: Store-and-forward Mesh Engine', () => {
         sequenceNumber: 1,
         keyPair: nodeA.keyPair,
       },
-      crypto
+      crypto,
     );
 
     // Corrupt signature (last 64 bytes)
@@ -389,7 +392,7 @@ describe('Phase 7: Store-and-forward Mesh Engine', () => {
         sequenceNumber: 1,
         keyPair: nodeA.keyPair,
       },
-      crypto
+      crypto,
     );
     await nodeA.engine.createAndStorePacket(sosBytes);
 
@@ -444,7 +447,7 @@ describe('Phase 7: Store-and-forward Mesh Engine', () => {
         sequenceNumber: 1,
         keyPair: nodeA.keyPair,
       },
-      crypto
+      crypto,
     );
     await nodeA.engine.createAndStorePacket(sosBytes);
 
@@ -501,7 +504,7 @@ describe('Phase 7: Store-and-forward Mesh Engine', () => {
         sequenceNumber: 1,
         keyPair,
       },
-      crypto
+      crypto,
     );
     await engine1.createAndStorePacket(sos);
 

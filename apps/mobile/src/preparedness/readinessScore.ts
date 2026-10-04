@@ -43,7 +43,7 @@ export function calculateReadinessScore(inputs: ReadinessInputs): ReadinessEvalu
     {
       id: 'battery_exempt',
       name: 'Battery Optimization Exemption',
-      description: 'System won\'t terminate background mesh relays during outages',
+      description: "System won't terminate background mesh relays during outages",
       points: 10,
       achieved: inputs.batteryOptimizationExempt,
       category: 'config',
@@ -146,7 +146,7 @@ export function calculateReadinessScore(inputs: ReadinessInputs): ReadinessEvalu
     tier = 'Moderate';
   }
 
-  const missingCount = items.filter((i) => !i.achieved).length;
+  const missingCount = items.filter(i => !i.achieved).length;
 
   return {
     score,

@@ -47,7 +47,7 @@ export const BottomTabBar: React.FC<BottomTabBarProps> = ({
       labelKey: 'tab.chat',
       icon: '💬',
       badgeCount: unreadChatCount,
-      accessibilityHint: 'Open peer-to-peer encrypted mesh chat',
+      accessibilityHint: 'Open tactical emergency mesh chat with rescue responders',
     },
     {
       key: 'map',
@@ -65,7 +65,7 @@ export const BottomTabBar: React.FC<BottomTabBarProps> = ({
 
   return (
     <View style={styles.container} accessibilityRole="tablist">
-      {tabs.map((tab) => {
+      {tabs.map(tab => {
         const isActive = currentTab === tab.key;
         return (
           <TouchableOpacity
@@ -103,12 +103,17 @@ const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
     height: 64,
-    backgroundColor: colors.surface,
+    backgroundColor: '#ffffff',
     borderTopWidth: 1,
-    borderTopColor: colors.border,
+    borderTopColor: '#e2e8f0',
     alignItems: 'center',
     justifyContent: 'space-around',
-    paddingHorizontal: 4,
+    paddingHorizontal: 8,
+    elevation: 8,
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: -2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 4,
   },
   tabButton: {
     flex: 1,
@@ -121,13 +126,13 @@ const styles = StyleSheet.create({
     position: 'relative',
   },
   icon: {
-    fontSize: 20,
+    fontSize: 21,
   },
   badge: {
     position: 'absolute',
     top: -4,
     right: -10,
-    backgroundColor: colors.sosRed,
+    backgroundColor: '#dc2626',
     borderRadius: layout.borderRadiusFull,
     minWidth: 16,
     height: 16,
@@ -136,28 +141,28 @@ const styles = StyleSheet.create({
     paddingHorizontal: 3,
   },
   badgeText: {
-    color: colors.textInverse,
+    color: '#ffffff',
     fontSize: 9,
     fontWeight: typography.fontWeights.heavy,
   },
   tabLabel: {
-    fontSize: typography.fontSizes.caption,
-    marginTop: 2,
+    fontSize: 11,
+    marginTop: 3,
   },
   activeLabel: {
-    color: colors.textPrimary,
-    fontWeight: typography.fontWeights.bold,
+    color: '#0f172a',
+    fontWeight: '800',
   },
   inactiveLabel: {
-    color: colors.textSecondary,
-    fontWeight: typography.fontWeights.regular,
+    color: '#64748b',
+    fontWeight: '500',
   },
   activeIndicator: {
     position: 'absolute',
     bottom: 2,
-    width: 24,
+    width: 28,
     height: 3,
-    backgroundColor: colors.info,
+    backgroundColor: '#2563eb',
     borderRadius: 2,
   },
 });

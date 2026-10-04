@@ -1,12 +1,5 @@
 import React, { useState } from 'react';
-import {
-  Modal,
-  View,
-  Text,
-  TouchableOpacity,
-  ScrollView,
-  StyleSheet,
-} from 'react-native';
+import { Modal, View, Text, TouchableOpacity, ScrollView, StyleSheet } from 'react-native';
 import { colors, layout, spacing, typography } from '../../theme';
 import { MapPackManager, INDIAN_DISASTER_MAP_REGIONS } from '../../maps/mapPackManager';
 
@@ -29,10 +22,10 @@ export const MapDownloadModal: React.FC<MapDownloadModalProps> = ({
   const handleStartDownload = async (regionId: string) => {
     setDownloadingRegionId(regionId);
     await mapManager.startDownload(regionId, () => {
-      setRefreshCount((k) => k + 1);
+      setRefreshCount(k => k + 1);
     });
     setDownloadingRegionId(null);
-    setRefreshCount((k) => k + 1);
+    setRefreshCount(k => k + 1);
     if (onMapDownloaded) {
       onMapDownloaded();
     }
@@ -41,12 +34,12 @@ export const MapDownloadModal: React.FC<MapDownloadModalProps> = ({
   const handlePause = (regionId: string) => {
     mapManager.pauseDownload(regionId);
     setDownloadingRegionId(null);
-    setRefreshCount((k) => k + 1);
+    setRefreshCount(k => k + 1);
   };
 
   const handleDelete = (regionId: string) => {
     mapManager.deleteMapPack(regionId);
-    setRefreshCount((k) => k + 1);
+    setRefreshCount(k => k + 1);
   };
 
   return (
@@ -66,7 +59,7 @@ export const MapDownloadModal: React.FC<MapDownloadModalProps> = ({
           </Text>
 
           <View style={styles.regionList}>
-            {INDIAN_DISASTER_MAP_REGIONS.map((region) => {
+            {INDIAN_DISASTER_MAP_REGIONS.map(region => {
               const state = mapManager.getStatus(region.id);
               const storage = mapManager.checkStorage(region.id);
               const sizeMb = (region.sizeBytes / 1_000_000).toFixed(1);

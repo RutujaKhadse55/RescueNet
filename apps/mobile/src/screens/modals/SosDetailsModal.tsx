@@ -28,15 +28,15 @@ export const SosDetailsModal: React.FC<SosDetailsModalProps> = ({
   const { t } = useTranslation();
 
   const [triage, setTriage] = useState<TriageStatus>(
-    initialDetails?.triage ?? TriageStatus.CRITICAL
+    initialDetails?.triage ?? TriageStatus.CRITICAL,
   );
   const [peopleCount, setPeopleCount] = useState<number>(initialDetails?.peopleCount ?? 1);
   const [needsMask, setNeedsMask] = useState<number>(
-    initialDetails?.needsMask ?? NeedsBitmask.MEDICAL
+    initialDetails?.needsMask ?? NeedsBitmask.MEDICAL,
   );
   const [shortNote, setShortNote] = useState<string>(initialDetails?.shortNote ?? '');
   const [contactName, setContactName] = useState<string>(
-    initialDetails?.emergencyContactName ?? ''
+    initialDetails?.emergencyContactName ?? '',
   );
   const [secondsRemaining, setSecondsRemaining] = useState<number>(10);
 
@@ -48,7 +48,7 @@ export const SosDetailsModal: React.FC<SosDetailsModalProps> = ({
     }
 
     const timer = setInterval(() => {
-      setSecondsRemaining((prev) => {
+      setSecondsRemaining(prev => {
         if (prev <= 1) {
           clearInterval(timer);
           handleSend();
@@ -62,7 +62,7 @@ export const SosDetailsModal: React.FC<SosDetailsModalProps> = ({
   }, [visible, triage, peopleCount, needsMask, shortNote, contactName]);
 
   const toggleNeed = (flag: number) => {
-    setNeedsMask((prev) => prev ^ flag);
+    setNeedsMask(prev => prev ^ flag);
   };
 
   const handleSend = () => {
@@ -95,12 +95,15 @@ export const SosDetailsModal: React.FC<SosDetailsModalProps> = ({
               { label: 'Trapped', value: TriageStatus.TRAPPED, color: '#F97316', icon: '🏚️' },
               { label: 'Injured', value: TriageStatus.INJURED, color: '#EAB308', icon: '🩹' },
               { label: 'Safe', value: TriageStatus.SAFE, color: '#22C55E', icon: '🛡️' },
-            ].map((item) => (
+            ].map(item => (
               <TouchableOpacity
                 key={item.value}
                 style={[
                   styles.triageButton,
-                  triage === item.value && { borderColor: item.color, backgroundColor: `${item.color}22` },
+                  triage === item.value && {
+                    borderColor: item.color,
+                    backgroundColor: `${item.color}22`,
+                  },
                 ]}
                 onPress={() => setTriage(item.value)}
                 accessibilityLabel={`Status: ${item.label}`}
@@ -124,7 +127,7 @@ export const SosDetailsModal: React.FC<SosDetailsModalProps> = ({
           <View style={styles.counterRow}>
             <TouchableOpacity
               style={styles.counterBtn}
-              onPress={() => setPeopleCount((p) => Math.max(1, p - 1))}
+              onPress={() => setPeopleCount(p => Math.max(1, p - 1))}
               accessibilityLabel="Decrease number of people"
             >
               <Text style={styles.counterBtnText}>-</Text>
@@ -132,7 +135,7 @@ export const SosDetailsModal: React.FC<SosDetailsModalProps> = ({
             <Text style={styles.counterValue}>{peopleCount}</Text>
             <TouchableOpacity
               style={styles.counterBtn}
-              onPress={() => setPeopleCount((p) => Math.min(50, p + 1))}
+              onPress={() => setPeopleCount(p => Math.min(50, p + 1))}
               accessibilityLabel="Increase number of people"
             >
               <Text style={styles.counterBtnText}>+</Text>
@@ -144,10 +147,14 @@ export const SosDetailsModal: React.FC<SosDetailsModalProps> = ({
           <View style={styles.needsGrid}>
             {[
               { label: 'Medical Assistance', flag: NeedsBitmask.MEDICAL, icon: '💊' },
-              { label: 'Food & Drinking Water', flag: NeedsBitmask.WATER | NeedsBitmask.FOOD, icon: '💧' },
+              {
+                label: 'Food & Drinking Water',
+                flag: NeedsBitmask.WATER | NeedsBitmask.FOOD,
+                icon: '💧',
+              },
               { label: 'Search & Extraction', flag: NeedsBitmask.EVACUATION, icon: '🧗' },
               { label: 'Warmth & Shelter', flag: NeedsBitmask.SHELTER, icon: '⛺' },
-            ].map((item) => {
+            ].map(item => {
               const selected = (needsMask & item.flag) !== 0;
               return (
                 <TouchableOpacity
@@ -171,7 +178,7 @@ export const SosDetailsModal: React.FC<SosDetailsModalProps> = ({
           <TextInput
             style={styles.textInput}
             value={shortNote}
-            onChangeText={(txt) => setShortNote(txt.slice(0, 24))}
+            onChangeText={txt => setShortNote(txt.slice(0, 24))}
             placeholder="e.g. Floor 2 under pillar"
             placeholderTextColor="#6B7280"
             maxLength={24}

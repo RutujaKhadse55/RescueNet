@@ -69,7 +69,7 @@ export class SosController {
   constructor(
     db: DatabaseManager,
     identityService: IdentityService,
-    locationProvider: ILocationProvider
+    locationProvider: ILocationProvider,
   ) {
     this.db = db;
     this.identityService = identityService;
@@ -79,7 +79,7 @@ export class SosController {
   public static getInstance(
     db?: DatabaseManager,
     identityService?: IdentityService,
-    locationProvider?: ILocationProvider
+    locationProvider?: ILocationProvider,
   ): SosController {
     if (db && identityService && locationProvider) {
       SosController.instance = new SosController(db, identityService, locationProvider);
@@ -106,13 +106,13 @@ export class SosController {
 
   public async injectRawPacket(packetBytes: Uint8Array): Promise<string> {
     const packetIdHex = Array.from(packetBytes.slice(5, 13))
-      .map((b) => b.toString(16).padStart(2, '0'))
+      .map(b => b.toString(16).padStart(2, '0'))
       .join('');
     const rawHex = Array.from(packetBytes)
-      .map((b) => b.toString(16).padStart(2, '0'))
+      .map(b => b.toString(16).padStart(2, '0'))
       .join('');
     const originFpHex = Array.from(packetBytes.slice(13, 21))
-      .map((b) => b.toString(16).padStart(2, '0'))
+      .map(b => b.toString(16).padStart(2, '0'))
       .join('');
 
     await this.db.packets.insertPacket({
@@ -141,7 +141,7 @@ export class SosController {
     uplinked: boolean,
     acked: boolean,
     message?: string,
-    channel?: 'INTERNET' | 'SMS' | 'BLE_MESH'
+    channel?: 'INTERNET' | 'SMS' | 'BLE_MESH',
   ): void {
     this.state.hasUplinked = uplinked;
     this.state.hasControlRoomAck = acked;
@@ -154,8 +154,9 @@ export class SosController {
    * Triggers emergency SOS with a 5-second cancelable false-trigger guard window
    */
   public async triggerSos(
-    triggerType: 'button_hold' | 'instant_tap' | 'power_x5' | 'volume_sequence' | 'shake' | 'notification',
-    details?: Partial<SosDetails>
+    triggerType:
+      'button_hold' | 'instant_tap' | 'power_x5' | 'volume_sequence' | 'shake' | 'notification',
+    details?: Partial<SosDetails>,
   ): Promise<void> {
     if (this.state.phase === 'ACTIVE_BROADCASTING') {
       return; // Already actively broadcasting
@@ -269,17 +270,17 @@ export class SosController {
           privateKey: identity.privateKey,
         },
       },
-      crypto
+      crypto,
     );
 
     const packetIdHex = Array.from(signedPacketBytes.slice(5, 13))
-      .map((b) => b.toString(16).padStart(2, '0'))
+      .map(b => b.toString(16).padStart(2, '0'))
       .join('');
     const rawHex = Array.from(signedPacketBytes)
-      .map((b) => b.toString(16).padStart(2, '0'))
+      .map(b => b.toString(16).padStart(2, '0'))
       .join('');
     const originFpHex = Array.from(signedPacketBytes.slice(13, 21))
-      .map((b) => b.toString(16).padStart(2, '0'))
+      .map(b => b.toString(16).padStart(2, '0'))
       .join('');
 
     // Persist to local packets table with Spray-and-Wait L=6 and source = self
@@ -349,7 +350,10 @@ export class SosController {
       }
     }, intervalMs);
 
-    if (this.periodicRebroadcastTimer && typeof this.periodicRebroadcastTimer.unref === 'function') {
+    if (
+      this.periodicRebroadcastTimer &&
+      typeof this.periodicRebroadcastTimer.unref === 'function'
+    ) {
       this.periodicRebroadcastTimer.unref();
     }
   }
@@ -357,7 +361,7 @@ export class SosController {
   public onStateChange(listener: (state: SosState) => void): () => void {
     this.stateListeners.push(listener);
     return () => {
-      this.stateListeners = this.stateListeners.filter((l) => l !== listener);
+      this.stateListeners = this.stateListeners.filter(l => l !== listener);
     };
   }
 

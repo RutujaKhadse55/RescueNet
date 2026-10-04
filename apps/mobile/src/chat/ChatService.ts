@@ -18,7 +18,14 @@
 import crypto from 'crypto';
 import { DatabaseManager } from '../db/DatabaseManager';
 import { MeshEngine } from '../mesh/MeshEngine';
-import { ICrypto, KeyPair, PacketType, encodeChat, decodeChat, ChatPacketData } from '@rescuenet/core';
+import {
+  ICrypto,
+  KeyPair,
+  PacketType,
+  encodeChat,
+  decodeChat,
+  ChatPacketData,
+} from '@rescuenet/core';
 
 // -- Types --------------------------------------------------------------------
 
@@ -42,30 +49,78 @@ export interface ChatMessage {
 }
 
 export enum SkillOffers {
-  NONE         = 0,
-  DOCTOR       = 1 << 0,
-  FIRST_AID    = 1 << 1,
-  BOAT         = 1 << 2,
-  VEHICLE      = 1 << 3,
-  FOOD         = 1 << 4,
-  WATER        = 1 << 5,
-  POWER_BANK   = 1 << 6,
-  TORCH        = 1 << 7,
-  ROPE         = 1 << 8,
-  CARRY_CHILD  = 1 << 9,
+  NONE = 0,
+  DOCTOR = 1 << 0,
+  FIRST_AID = 1 << 1,
+  BOAT = 1 << 2,
+  VEHICLE = 1 << 3,
+  FOOD = 1 << 4,
+  WATER = 1 << 5,
+  POWER_BANK = 1 << 6,
+  TORCH = 1 << 7,
+  ROPE = 1 << 8,
+  CARRY_CHILD = 1 << 9,
 }
 
 // -- Quick Replies -------------------------------------------------------------
 
 export const QUICK_REPLIES: Record<number, Record<string, string>> = {
-  1: { en: 'I am safe',                hi: '??? ???????? ???',            mr: '?? ???????? ???',          ml: '??? ????????????',      kn: '???? ??????????????????' },
-  2: { en: 'Need a doctor',            hi: '?????? ?? ?????? ??',          mr: '?????????? ??? ???',       ml: '??????? ???????????',   kn: '?????? ?????????' },
-  3: { en: 'I have water',             hi: '???? ??? ???? ??',             mr: '????????? ???? ???',        ml: '????? ????? ???????????', kn: '???????? ??????' },
-  4: { en: 'Path blocked',             hi: '?????? ??? ??',                mr: '????? ??? ???',             ml: '??? ????????????????',  kn: '???? ????????' },
-  5: { en: 'Path clear',               hi: '?????? ???? ??',               mr: '????? ????? ???',           ml: '??? ??????????',         kn: '???? ???????????' },
-  6: { en: 'Can you hear me?',         hi: '???? ?? ???? ??? ???? ????',  mr: '?????? ??? ??? ???? ???',  ml: '?????????? ??????????', kn: '???????????????' },
-  7: { en: 'Moving to higher ground',  hi: '???? ????? ?? ?? ??? ???',   mr: '??? ???? ??? ???',          ml: '?????? ????????????',    kn: '?????? ???????? ???????????????' },
-  8: { en: 'Help is coming',           hi: '??? ? ??? ??',                 mr: '??? ??? ???',               ml: '????? ???????',          kn: '???? ?????????' },
+  1: {
+    en: 'I am safe',
+    hi: '??? ???????? ???',
+    mr: '?? ???????? ???',
+    ml: '??? ????????????',
+    kn: '???? ??????????????????',
+  },
+  2: {
+    en: 'Need a doctor',
+    hi: '?????? ?? ?????? ??',
+    mr: '?????????? ??? ???',
+    ml: '??????? ???????????',
+    kn: '?????? ?????????',
+  },
+  3: {
+    en: 'I have water',
+    hi: '???? ??? ???? ??',
+    mr: '????????? ???? ???',
+    ml: '????? ????? ???????????',
+    kn: '???????? ??????',
+  },
+  4: {
+    en: 'Path blocked',
+    hi: '?????? ??? ??',
+    mr: '????? ??? ???',
+    ml: '??? ????????????????',
+    kn: '???? ????????',
+  },
+  5: {
+    en: 'Path clear',
+    hi: '?????? ???? ??',
+    mr: '????? ????? ???',
+    ml: '??? ??????????',
+    kn: '???? ???????????',
+  },
+  6: {
+    en: 'Can you hear me?',
+    hi: '???? ?? ???? ??? ???? ????',
+    mr: '?????? ??? ??? ???? ???',
+    ml: '?????????? ??????????',
+    kn: '???????????????',
+  },
+  7: {
+    en: 'Moving to higher ground',
+    hi: '???? ????? ?? ?? ??? ???',
+    mr: '??? ???? ??? ???',
+    ml: '?????? ????????????',
+    kn: '?????? ???????? ???????????????',
+  },
+  8: {
+    en: 'Help is coming',
+    hi: '??? ? ??? ??',
+    mr: '??? ??? ???',
+    ml: '????? ???????',
+    kn: '???? ?????????',
+  },
 };
 
 // -- Peer ---------------------------------------------------------------------
@@ -85,15 +140,15 @@ export interface PeerProfile {
 // -- Config --------------------------------------------------------------------
 
 export interface ChatConfig {
-  maxMessageLength: number;       // ~100 chars per chunk
-  maxChunksPerMessage: number;    // 3
-  maxRateLimitPer10Min: number;   // 10
+  maxMessageLength: number; // ~100 chars per chunk
+  maxChunksPerMessage: number; // 3
+  maxRateLimitPer10Min: number; // 10
   chatByteBudgetFraction: number; // 0.20
   allowRescuerUplink: boolean;
   shareNicknameAndSkills: boolean;
   userNickname: string;
   userSkills: number;
-  safeModeOnly: boolean;          // quick-reply-only safe mode
+  safeModeOnly: boolean; // quick-reply-only safe mode
 }
 
 // -- Service -------------------------------------------------------------------
@@ -118,7 +173,7 @@ export class ChatService {
     cryptoInstance: ICrypto,
     userKeyPair: KeyPair,
     meshEngine?: MeshEngine,
-    config?: Partial<ChatConfig>
+    config?: Partial<ChatConfig>,
   ) {
     this.db = db;
     this.crypto = cryptoInstance;
@@ -128,7 +183,7 @@ export class ChatService {
       maxMessageLength: 100,
       maxChunksPerMessage: 3,
       maxRateLimitPer10Min: 10,
-      chatByteBudgetFraction: 0.20,
+      chatByteBudgetFraction: 0.2,
       allowRescuerUplink: false,
       shareNicknameAndSkills: false,
       userNickname: 'Survivor',
@@ -172,12 +227,16 @@ export class ChatService {
     if (p) p.isBlocked = false;
   }
 
-  public isPeerMuted(fp: string): boolean   { return this.mutedPeers.has(fp); }
-  public isPeerBlocked(fp: string): boolean { return this.blockedPeers.has(fp); }
+  public isPeerMuted(fp: string): boolean {
+    return this.mutedPeers.has(fp);
+  }
+  public isPeerBlocked(fp: string): boolean {
+    return this.blockedPeers.has(fp);
+  }
 
   /** Returns non-blocked discovered peers */
   public getDiscoveredPeers(): PeerProfile[] {
-    return Array.from(this.peers.values()).filter((p) => !p.isBlocked);
+    return Array.from(this.peers.values()).filter(p => !p.isBlocked);
   }
 
   public reportMessage(msgId: string): void {
@@ -233,19 +292,19 @@ export class ChatService {
 
     // Layout: header(21) + skills(2) + seq(2) + pubkey(32) + sig(64) = 121 bytes
     const helloBytes = new Uint8Array(121);
-    helloBytes[0] = 1;    // version
+    helloBytes[0] = 1; // version
     helloBytes[1] = 0x07; // HELLO
-    helloBytes[2] = 0;    // flags
-    helloBytes[3] = 3;    // TTL = 3 hops
-    helloBytes[4] = 0;    // Hop = 0
+    helloBytes[2] = 0; // flags
+    helloBytes[3] = 3; // TTL = 3 hops
+    helloBytes[4] = 0; // Hop = 0
 
-    crypto.randomFillSync(helloBytes.subarray(5, 13));        // packetId
+    crypto.randomFillSync(helloBytes.subarray(5, 13)); // packetId
     helloBytes.set(this.userKeyPair.publicKey.subarray(0, 8), 13); // originFp
 
     const view = new DataView(helloBytes.buffer, helloBytes.byteOffset);
     view.setUint16(21, this.config.userSkills, true);
     view.setUint16(23, 1, true); // seq
-    helloBytes.set(this.userKeyPair.publicKey, 25);            // pubkey (32 bytes)
+    helloBytes.set(this.userKeyPair.publicKey, 25); // pubkey (32 bytes)
 
     // Sign header + body (everything except sig)
     const preimage = helloBytes.subarray(0, 57);
@@ -295,9 +354,7 @@ export class ChatService {
     // Rate-limit: 10 messages per 10 minutes on local channel
     const now = Date.now();
     if (params.channel === 'local') {
-      this.recentOutboundTimestamps = this.recentOutboundTimestamps.filter(
-        (t) => now - t < 600_000
-      );
+      this.recentOutboundTimestamps = this.recentOutboundTimestamps.filter(t => now - t < 600_000);
       if (this.recentOutboundTimestamps.length >= this.config.maxRateLimitPer10Min) {
         return { success: false, messageIds: [], error: 'rate_limit_exceeded' };
       }
@@ -307,18 +364,22 @@ export class ChatService {
     const myFpHex = Buffer.from(myFpBytes).toString('hex');
 
     // Split text into chunks (max 100 chars, up to 3 parts)
-    const text = params.quickReplyCode !== undefined
-      ? `[QR:${params.quickReplyCode}]`
-      : params.content;
+    const text =
+      params.quickReplyCode !== undefined ? `[QR:${params.quickReplyCode}]` : params.content;
 
     const chunks: string[] = [];
     if (text.length <= this.config.maxMessageLength) {
       chunks.push(text);
     } else {
-      const total = Math.min(this.config.maxChunksPerMessage, Math.ceil(text.length / this.config.maxMessageLength));
+      const total = Math.min(
+        this.config.maxChunksPerMessage,
+        Math.ceil(text.length / this.config.maxMessageLength),
+      );
       for (let i = 0; i < total; i++) {
         const start = i * this.config.maxMessageLength;
-        chunks.push(`[${i + 1}/${total}] ${text.substring(start, start + this.config.maxMessageLength)}`);
+        chunks.push(
+          `[${i + 1}/${total}] ${text.substring(start, start + this.config.maxMessageLength)}`,
+        );
       }
     }
 
@@ -328,17 +389,20 @@ export class ChatService {
       let ciphertext: Uint8Array;
 
       if (params.channel === 'direct' && params.recipientPubKey) {
-        ciphertext = this.encryptDirectMessage(Buffer.from(chunkText, 'utf-8'), params.recipientPubKey);
+        ciphertext = this.encryptDirectMessage(
+          Buffer.from(chunkText, 'utf-8'),
+          params.recipientPubKey,
+        );
       } else {
         ciphertext = Buffer.from(chunkText, 'utf-8');
       }
 
       const recipientFpBytes = params.recipientFp
-        ? new Uint8Array(params.recipientFp.match(/.{1,2}/g)!.map((b) => parseInt(b, 16)))
+        ? new Uint8Array(params.recipientFp.match(/.{1,2}/g)!.map(b => parseInt(b, 16)))
         : new Uint8Array(8).fill(0xff); // broadcast
 
       const packetIdBytes = this.crypto.randomBytes(8);
-      
+
       const chatData: ChatPacketData = {
         header: {
           version: 1,
@@ -407,7 +471,7 @@ export class ChatService {
 
       const myFpBytes = this.userKeyPair.publicKey.subarray(0, 8);
       const isForMe = Buffer.compare(decoded.body.recipientFp, myFpBytes) === 0;
-            const isEncrypted = (decoded.header.flags & 0x02) !== 0;
+      const isEncrypted = (decoded.header.flags & 0x02) !== 0;
 
       let channel: ChatChannelType = 'local';
       let contentText = '';
@@ -419,7 +483,10 @@ export class ChatService {
           return null;
         }
         try {
-          const decrypted = this.decryptDirectMessage(decoded.body.ciphertext, decoded.body.publicKey);
+          const decrypted = this.decryptDirectMessage(
+            decoded.body.ciphertext,
+            decoded.body.publicKey,
+          );
           contentText = Buffer.from(decrypted).toString('utf-8');
         } catch {
           return null;
@@ -521,14 +588,16 @@ export class ChatService {
   private decryptDirectMessage(bundle: Uint8Array, _senderPubKey: Uint8Array): Uint8Array {
     if (bundle.length < 44) throw new Error('Ciphertext too short');
     const salt = bundle.subarray(0, 16);
-    const iv   = bundle.subarray(16, 28);
-    const tag  = bundle.subarray(28, 44);
-    const enc  = bundle.subarray(44);
-    const key = crypto.createHash('sha256').update(this.userKeyPair.publicKey).update(salt).digest();
+    const iv = bundle.subarray(16, 28);
+    const tag = bundle.subarray(28, 44);
+    const enc = bundle.subarray(44);
+    const key = crypto
+      .createHash('sha256')
+      .update(this.userKeyPair.publicKey)
+      .update(salt)
+      .digest();
     const decipher = crypto.createDecipheriv('aes-256-gcm', key, iv);
     decipher.setAuthTag(tag);
     return Buffer.concat([decipher.update(enc), decipher.final()]);
   }
 }
-
-

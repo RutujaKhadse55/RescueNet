@@ -58,7 +58,7 @@ export const MiniMap: React.FC<MiniMapProps> = ({
     }).addTo(map);
 
     // Member markers
-    members.forEach((m) => {
+    members.forEach(m => {
       const memberIcon = L.divIcon({
         className: 'mini-member-icon',
         html: `
@@ -69,7 +69,9 @@ export const MiniMap: React.FC<MiniMapProps> = ({
       });
 
       L.marker([m.lat, m.lon], { icon: memberIcon })
-        .bindTooltip(`Device: ${m.device_id}<br/>Battery: ${m.battery}%<br/>People: ${m.reported_people}`)
+        .bindTooltip(
+          `Device: ${m.device_id}<br/>Battery: ${m.battery}%<br/>People: ${m.reported_people}`,
+        )
         .addTo(map);
     });
 

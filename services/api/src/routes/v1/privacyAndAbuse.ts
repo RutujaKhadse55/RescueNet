@@ -12,7 +12,8 @@ export async function privacyAndAbuseRoutes(server: FastifyInstance) {
     {
       preHandler: [authenticate, requireRole(['admin', 'dispatcher'])],
       schema: {
-        description: 'Bans a compromised or abusive public key from submitting packets to the mesh and API',
+        description:
+          'Bans a compromised or abusive public key from submitting packets to the mesh and API',
         tags: ['Abuse'],
         body: {
           type: 'object',
@@ -24,21 +25,24 @@ export async function privacyAndAbuseRoutes(server: FastifyInstance) {
         },
       },
     },
-    async (
-      req: any,
-      reply: FastifyReply
-    ) => {
+    async (req: any, reply: FastifyReply) => {
       const { pubkey, reason } = req.body;
       const cleanKey = pubkey.toLowerCase().trim();
       bannedKeys.add(cleanKey);
 
-      await db.query(
-        `INSERT INTO events (event_type, details) VALUES ($1, $2);`,
-        ['abuse_key_banned', JSON.stringify({ pubkey: cleanKey, reason: reason || 'abusive_behavior', bannedBy: req.user?.userId })]
-      ).catch(() => {});
+      await db
+        .query(`INSERT INTO events (event_type, details) VALUES ($1, $2);`, [
+          'abuse_key_banned',
+          JSON.stringify({
+            pubkey: cleanKey,
+            reason: reason || 'abusive_behavior',
+            bannedBy: req.user?.userId,
+          }),
+        ])
+        .catch(() => {});
 
       return reply.send({ success: true, bannedKey: cleanKey, message: 'Key banned successfully' });
-    }
+    },
   );
 
   // 2. List currently banned keys
@@ -56,7 +60,7 @@ export async function privacyAndAbuseRoutes(server: FastifyInstance) {
         count: bannedKeys.size,
         bannedKeys: Array.from(bannedKeys),
       });
-    }
+    },
   );
 
   // 3. Unban a key
@@ -81,7 +85,7 @@ export async function privacyAndAbuseRoutes(server: FastifyInstance) {
       const cleanKey = pubkey.toLowerCase().trim();
       bannedKeys.delete(cleanKey);
       return reply.send({ success: true, unbannedKey: cleanKey });
-    }
+    },
   );
 
   // 4. Privacy Control: Data-Subject Deletion Request
@@ -89,7 +93,8 @@ export async function privacyAndAbuseRoutes(server: FastifyInstance) {
     '/privacy/deletion-request',
     {
       schema: {
-        description: 'Data subject deletion request under personal data protection legislation. Purges all records for a device or fingerprint.',
+        description:
+          'Data subject deletion request under personal data protection legislation. Purges all records for a device or fingerprint.',
         tags: ['Privacy'],
         body: {
           type: 'object',
@@ -101,10 +106,7 @@ export async function privacyAndAbuseRoutes(server: FastifyInstance) {
         },
       },
     },
-    async (
-      req: any,
-      reply: FastifyReply
-    ) => {
+    async (req: any, reply: FastifyReply) => {
       const { originFp } = req.body;
       const fpBuf = Buffer.from(originFp.replace(/[^a-f0-9]/gi, ''), 'hex');
 
@@ -118,16 +120,18 @@ export async function privacyAndAbuseRoutes(server: FastifyInstance) {
       // 3. Purge survivor and chat records
       await db.query(`DELETE FROM chat_uplinks WHERE origin_fp = $1;`, [fpBuf]).catch(() => {});
 
-      await db.query(
-        `INSERT INTO events (event_type, details) VALUES ($1, $2);`,
-        ['privacy_data_subject_deleted', JSON.stringify({ originFp, timestamp: new Date().toISOString() })]
-      ).catch(() => {});
+      await db
+        .query(`INSERT INTO events (event_type, details) VALUES ($1, $2);`, [
+          'privacy_data_subject_deleted',
+          JSON.stringify({ originFp, timestamp: new Date().toISOString() }),
+        ])
+        .catch(() => {});
 
       return reply.send({
         success: true,
         originFp,
         message: 'All personal data, identifiers, and telemetry purged for data subject.',
       });
-    }
+    },
   );
 }

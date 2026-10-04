@@ -23,7 +23,7 @@ describe('Phase 6: Disaster Location Provider & Fallbacks', () => {
 
   it('falls back to cached fix with inflated accuracy when GPS query times out', async () => {
     const initialFix = {
-      latitude: 19.0760,
+      latitude: 19.076,
       longitude: 72.8777,
       accuracyMeters: 4.0,
       timestamp: Date.now() - 60_000, // 60s ago
@@ -33,7 +33,7 @@ describe('Phase 6: Disaster Location Provider & Fallbacks', () => {
     // Request with 10ms timeout -> triggers failure
     const fallbackFix = await provider.getCurrentLocation(10);
 
-    expect(fallbackFix.latitude).toBe(19.0760);
+    expect(fallbackFix.latitude).toBe(19.076);
     expect(fallbackFix.isStaleFallback).toBe(true);
     expect(fallbackFix.accuracyMeters).toBeGreaterThan(4.0);
   });
@@ -53,11 +53,11 @@ describe('Phase 6: Disaster Location Provider & Fallbacks', () => {
 
   it('supports manual pin location override and notes', async () => {
     const provider = new LocationProvider();
-    provider.setManualLocationOverride(18.5290, 73.8450, 'Trapped in basement B2');
+    provider.setManualLocationOverride(18.529, 73.845, 'Trapped in basement B2');
 
     const loc = await provider.getCurrentLocation();
-    expect(loc.latitude).toBe(18.5290);
-    expect(loc.longitude).toBe(73.8450);
+    expect(loc.latitude).toBe(18.529);
+    expect(loc.longitude).toBe(73.845);
     expect(loc.manualNote).toBe('Trapped in basement B2');
 
     provider.clearManualOverride();

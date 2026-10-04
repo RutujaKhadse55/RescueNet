@@ -83,7 +83,11 @@ export const RescuerCredentialModal: React.FC<RescuerCredentialModalProps> = ({
         <View style={styles.card}>
           <View style={styles.header}>
             <Text style={styles.title}>Rescuer Enrollment</Text>
-            <TouchableOpacity onPress={onClose} style={styles.closeBtn} testID="rescuer-modal-close-btn">
+            <TouchableOpacity
+              onPress={onClose}
+              style={styles.closeBtn}
+              testID="rescuer-modal-close-btn"
+            >
               <Text style={styles.closeBtnText}>✕</Text>
             </TouchableOpacity>
           </View>
@@ -102,16 +106,20 @@ export const RescuerCredentialModal: React.FC<RescuerCredentialModalProps> = ({
                   Permissions: {activeCred.permissions.join(', ')}
                 </Text>
 
-                <TouchableOpacity style={styles.revokeBtn} onPress={handleRevoke} testID="revoke-cred-btn">
+                <TouchableOpacity
+                  style={styles.revokeBtn}
+                  onPress={handleRevoke}
+                  testID="revoke-cred-btn"
+                >
                   <Text style={styles.revokeBtnText}>Revoke Credential</Text>
                 </TouchableOpacity>
               </View>
             ) : (
               <>
                 <Text style={styles.description}>
-                  Rescuer mode requires an Agency CA-signed cryptographic certificate.
-                  Responders can claim clusters, adjust triage priorities, transmit verified ACKs,
-                  and use BLE homing guidance.
+                  Rescuer mode requires an Agency CA-signed cryptographic certificate. Responders
+                  can claim clusters, adjust triage priorities, transmit verified ACKs, and use BLE
+                  homing guidance.
                 </Text>
 
                 {/* Import Methods: QR Code & File */}
@@ -145,7 +153,7 @@ export const RescuerCredentialModal: React.FC<RescuerCredentialModalProps> = ({
                 <TextInput
                   style={styles.textInput}
                   value={credentialToken}
-                  onChangeText={(t) => {
+                  onChangeText={t => {
                     setCredentialToken(t);
                     setError(null);
                   }}

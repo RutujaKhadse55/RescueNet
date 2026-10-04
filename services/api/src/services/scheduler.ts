@@ -37,7 +37,7 @@ export class BackgroundScheduler {
     try {
       // 1. Recompute priority & flags for active clusters
       const clustersRes = await db.query(
-        `SELECT * FROM clusters WHERE state NOT IN ('closed', 'false_alarm');`
+        `SELECT * FROM clusters WHERE state NOT IN ('closed', 'false_alarm');`,
       );
 
       const nowSeconds = Math.floor(Date.now() / 1000);
@@ -56,7 +56,7 @@ export class BackgroundScheduler {
         });
 
         const flags = [...(c.flags || [])].filter(
-          (f) => f !== 'possibly_failing' && f !== 'large_group'
+          f => f !== 'possibly_failing' && f !== 'large_group',
         );
 
         if (priorityRes.flags.large_group) flags.push('large_group');
@@ -64,7 +64,7 @@ export class BackgroundScheduler {
 
         await db.query(
           `UPDATE clusters SET priority_score = $1, priority_breakdown = $2, flags = $3, updated_at = now() WHERE id = $4;`,
-          [priorityRes.score, priorityRes.components, flags, c.id]
+          [priorityRes.score, priorityRes.components, flags, c.id],
         );
 
         if (priorityRes.flags.possibly_failing && !(c.flags || []).includes('possibly_failing')) {

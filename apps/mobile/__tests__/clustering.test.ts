@@ -62,7 +62,7 @@ describe('Phase 8: On-Device Clustering Engine', () => {
       // Give fixed deterministic fingerprint prefix: e.g. 0x01, 0x02...
       originFp[0] = i + 1;
       const originFpHex = Array.from(originFp)
-        .map((b) => b.toString(16).padStart(2, '0'))
+        .map(b => b.toString(16).padStart(2, '0'))
         .join('');
 
       const pos = positions[i]!;
@@ -83,7 +83,7 @@ describe('Phase 8: On-Device Clustering Engine', () => {
         },
         crypto,
         crypto.randomBytes(8),
-        originFp
+        originFp,
       );
 
       deviceData.push({ rawSos: sos, originFpHex });
@@ -113,8 +113,8 @@ describe('Phase 8: On-Device Clustering Engine', () => {
     expect(clustersB.length).toBe(3);
 
     // Verify identical cluster_id values
-    const idsA = clustersA.map((c) => c.clusterId).sort();
-    const idsB = clustersB.map((c) => c.clusterId).sort();
+    const idsA = clustersA.map(c => c.clusterId).sort();
+    const idsB = clustersB.map(c => c.clusterId).sort();
     expect(idsA).toEqual(idsB);
 
     // Verify survivor count totals
@@ -177,7 +177,7 @@ describe('Phase 8: On-Device Clustering Engine', () => {
       },
       crypto,
       crypto.randomBytes(8),
-      new Uint8Array([1, 0, 0, 0, 0, 0, 0, 0])
+      new Uint8Array([1, 0, 0, 0, 0, 0, 0, 0]),
     );
 
     const sos2 = await createAndSignSos(
@@ -197,13 +197,13 @@ describe('Phase 8: On-Device Clustering Engine', () => {
       },
       crypto,
       crypto.randomBytes(8),
-      new Uint8Array([2, 0, 0, 0, 0, 0, 0, 0])
+      new Uint8Array([2, 0, 0, 0, 0, 0, 0, 0]),
     );
 
     await clusterer.onPacketAccepted(sos1, PacketType.SOS, m1.originFpHex);
     await clusterer.onPacketAccepted(sos2, PacketType.SOS, m2Original.originFpHex);
 
-    let initialClusters = await clusterer.runFullRecluster();
+    const initialClusters = await clusterer.runFullRecluster();
     expect(initialClusters.length).toBe(1);
     expect(initialClusters[0]?.memberFingerprints.length).toBe(2);
 
@@ -227,7 +227,7 @@ describe('Phase 8: On-Device Clustering Engine', () => {
       },
       crypto,
       crypto.randomBytes(8),
-      new Uint8Array([2, 0, 0, 0, 0, 0, 0, 0])
+      new Uint8Array([2, 0, 0, 0, 0, 0, 0, 0]),
     );
 
     await clusterer.onPacketAccepted(sos2Moved, PacketType.SOS, m2Original.originFpHex);
@@ -274,7 +274,7 @@ describe('Phase 8: On-Device Clustering Engine', () => {
       },
       crypto,
       crypto.randomBytes(8),
-      new Uint8Array([1, 0, 0, 0, 0, 0, 0, 0])
+      new Uint8Array([1, 0, 0, 0, 0, 0, 0, 0]),
     );
 
     await clusterer.onPacketAccepted(sos1, PacketType.SOS, m1.originFpHex);
@@ -285,7 +285,7 @@ describe('Phase 8: On-Device Clustering Engine', () => {
     const summaryPacket = await clusterer.createClusterSummaryPacket(
       clusters[0]!.clusterId,
       keyPair,
-      1
+      1,
     );
     expect(summaryPacket).not.toBeNull();
 

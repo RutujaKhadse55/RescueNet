@@ -28,7 +28,7 @@ export class CsvExporter {
       'time_to_first_cluster_sec',
     ].join(',');
 
-    const rows = runs.map((r) =>
+    const rows = runs.map(r =>
       [
         r.strategy,
         r.seed,
@@ -42,7 +42,7 @@ export class CsvExporter {
         r.avgBatteryDrainPercent,
         r.duplicateDeliveriesAtGateway,
         r.timeToFirstClusterSec,
-      ].join(',')
+      ].join(','),
     );
 
     fs.writeFileSync(filePath, [headers, ...rows].join('\n'), 'utf8');
@@ -75,7 +75,7 @@ export class CsvExporter {
       'time_to_first_cluster_ci95',
     ].join(',');
 
-    const rows = summaries.map((s) =>
+    const rows = summaries.map(s =>
       [
         s.strategy,
         s.runs,
@@ -95,7 +95,7 @@ export class CsvExporter {
         s.duplicateDeliveries.ci95,
         s.timeToFirstCluster.mean,
         s.timeToFirstCluster.ci95,
-      ].join(',')
+      ].join(','),
     );
 
     fs.writeFileSync(filePath, [headers, ...rows].join('\n'), 'utf8');

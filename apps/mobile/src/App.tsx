@@ -71,11 +71,14 @@ export function App(): React.JSX.Element {
   const [currentTab, setCurrentTab] = useState<TabName>('home');
   const [currentRole, setCurrentRole] = useState<UserRole>('survivor');
   const [appLanguage, setAppLanguage] = useState<SupportedLanguage>('en');
+  const [mapUpdateCount, setMapUpdateCount] = useState(0);
 
   // Controllers
   const [sosController, setSosController] = useState<SosController | null>(null);
   const [meshSyncController, setMeshSyncController] = useState<MeshSyncController | null>(null);
-  const [_connectivityGovernor, setConnectivityGovernor] = useState<ConnectivityGovernor | null>(null);
+  const [_connectivityGovernor, setConnectivityGovernor] = useState<ConnectivityGovernor | null>(
+    null,
+  );
   const [uplinkService, setUplinkService] = useState<UplinkService | null>(null);
   const [rescuerService, setRescuerService] = useState<RescuerCredentialService | null>(null);
   const [homingService, setHomingService] = useState<HomingService | null>(null);
@@ -105,6 +108,11 @@ export function App(): React.JSX.Element {
   const [conversations, setConversations] = useState<ConversationRecord[]>([]);
   const [assignedTeam, setAssignedTeam] = useState<string | null>(null);
   const [activeChatChannelId, setActiveChatChannelId] = useState<string>('conv_local_mesh');
+  const [activeClusterId, setActiveClusterId] = useState<string>('cl_pune_ghats_01');
+  // Track the APK's own SOS GPS so we can match it in the clusters list
+  const [myLastSosLocation, setMyLastSosLocation] = useState<{ lat: number; lon: number } | null>(
+    null,
+  );
 
   // Initialize app: Database, Identity, Preparedness, BLE, SOS
   const initializeApp = useCallback(async () => {
@@ -152,7 +160,7 @@ export function App(): React.JSX.Element {
         RescueBle,
         db,
         identState.originFp.slice(0, 8),
-        async () => (await identSvc.getIdentity()).privateKey
+        async () => (await identSvc.getIdentity()).privateKey,
       );
       setMeshSyncController(meshCtrl);
 
@@ -167,25 +175,46 @@ export function App(): React.JSX.Element {
       setUplinkService(uplink);
 
       RescueBle.on('neighborDiscovered', (n: BleNeighbor) => {
-        setBleNeighbors((prev) => {
-          const filtered = prev.filter((item) => item.deviceId !== n.deviceId);
+        setBleNeighbors(prev => {
+          const filtered = prev.filter(item => item.deviceId !== n.deviceId);
           return [...filtered, n];
         });
       });
       RescueBle.on('neighborLost', (event: { deviceId: string }) => {
-        setBleNeighbors((prev) => prev.filter((item) => item.deviceId !== event.deviceId));
+        setBleNeighbors(prev => prev.filter(item => item.deviceId !== event.deviceId));
       });
 
       SurvivalModeManager.getInstance().addSurvivalListener(setSurvivalMode);
 
+      mapManager.setDbInstance(db);
+      await mapManager.loadFromDb(db);
+
+      // Dynamically detect user's location and set active map region
+      try {
+        const userLoc = await LocationProvider.getInstance().getCurrentLocation(3000);
+        if (userLoc) {
+          mapManager.setActiveRegionFromLocation(userLoc.latitude, userLoc.longitude);
+        }
+      } catch {}
+
       // Check preparedness completion state
       const prepFlag = await db.settings.get('preparedness_completed');
+      const savedRegion = await db.settings.get('map_region_downloaded');
       if (prepFlag === '1') {
         setIsPrepared(true);
-        mapManager.startDownload('maharashtra').catch(() => {});
+        if (!mapManager.hasAnyMapDownloaded()) {
+          const regionToLoad = savedRegion || mapManager.getActiveRegion().id;
+          mapManager.startDownload(regionToLoad).catch(() => {});
+        }
       } else {
         setIsPrepared(false);
       }
+
+      const activeReg = mapManager.getActiveDownloadedRegion() || mapManager.getActiveRegion();
+      LocationProvider.getInstance().setDefaultCoordinates(
+        activeReg.centerLat,
+        activeReg.centerLon,
+      );
 
       // Check consent record
       const hasConsent = await db.consent.hasValidConsent();
@@ -213,78 +242,14 @@ export function App(): React.JSX.Element {
   }, []);
 
   const loadInitialData = async (db: DatabaseManager) => {
-    const samplePeerA: NeighborRecord = {
-      fp: '4a9b2c8f1e7d3a01',
-      last_rssi: -62,
-      last_seen: new Date().toISOString(),
-      battery: 88,
-      role: 'survivor',
-      mac_rotating: 1,
-    };
-    const samplePeerB: NeighborRecord = {
-      fp: '8f2e1a3b5c7d9e02',
-      last_rssi: -74,
-      last_seen: new Date().toISOString(),
-      battery: 65,
-      role: 'survivor',
-      mac_rotating: 1,
-    };
-    await db.neighbors.upsertNeighbor(samplePeerA);
-    await db.neighbors.upsertNeighbor(samplePeerB);
     const allNeighbors = await db.neighbors.getAllNeighbors();
     setNeighbors(allNeighbors);
 
-    const sampleCluster: ClusterRecord = {
-      cluster_id: 'cl_pune_ghats_01',
-      centroid_lat: 18.5204,
-      centroid_lon: 73.8567,
-      radius_meters: 45,
-      member_count: 5,
-      priority_score: 0.85,
-      state: 'new',
-      updated_at: new Date().toISOString(),
-    };
-    await db.clusters.upsertCluster(sampleCluster);
     const allClusters = await db.clusters.getAllClusters();
     setClusters(allClusters);
 
-    // Initial conversation 1: Assigned Rescue Team Alpha
-    const convTeam: ConversationRecord = {
-      conversation_id: 'team_alpha_chat',
-      peer_fp: 'team_alpha',
-      peer_nickname: 'Rescue Team Alpha',
-      last_message_at: new Date().toISOString(),
-      unread_count: 1,
-    };
-    await db.chat.upsertConversation(convTeam);
-
-    // Initial conversation 2: Nearby Survivor B
-    const convSurvivorB: ConversationRecord = {
-      conversation_id: 'conv_local_mesh',
-      peer_fp: '4a9b2c8f1e7d3a01',
-      peer_nickname: 'Survivor B (Priya Patil)',
-      last_message_at: new Date().toISOString(),
-      unread_count: 0,
-    };
-    await db.chat.upsertConversation(convSurvivorB);
-
     const allConvs = await db.chat.getAllConversations();
     setConversations(allConvs);
-
-    // Seed initial messages (Only Survivor B is initially active on local mesh)
-
-    const survivorBMsg: ChatMessageRecord = {
-      message_id: 'msg_001',
-      conversation_id: 'conv_local_mesh',
-      direction: 'inbound',
-      sender_fp: '4a9b2c8f1e7d3a01',
-      recipient_fp: 'broadcast',
-      content: 'Is anyone nearby? We are at the relief shelter entrance.',
-      status: 'relayed',
-      ttl: 5,
-      created_at: new Date(Date.now() - 1000 * 60 * 8).toISOString(),
-    };
-    await db.chat.saveMessage(survivorBMsg);
 
     const allMsgs = await db.chat.getAllMessages();
     setMessages(allMsgs);
@@ -296,7 +261,8 @@ export function App(): React.JSX.Element {
 
   const readinessEvaluation: ReadinessEvaluation = calculateReadinessScore({
     permissionsGrantedPercentage: permissionService.getGrantedPercentage(),
-    batteryOptimizationExempt: permissionService.getStatus('REQUEST_IGNORE_BATTERY_OPTIMIZATIONS') === 'granted',
+    batteryOptimizationExempt:
+      permissionService.getStatus('REQUEST_IGNORE_BATTERY_OPTIMIZATIONS') === 'granted',
     bluetoothEnabled: true,
     locationEnabled: true,
     bleAdvertisingSupported: true,
@@ -364,7 +330,7 @@ export function App(): React.JSX.Element {
             true,
             true,
             'Distress SOS received and acknowledged by Emergency Response Center via Backend Uplink',
-            'INTERNET'
+            'INTERNET',
           );
           await dbManager.events.logEvent('sos_uplink_success', {
             channel: 'internet',
@@ -373,19 +339,24 @@ export function App(): React.JSX.Element {
           return;
         }
       } catch (e) {
-        console.warn('[EmergencyDispatcher] Internet uplink failed, falling back:', (e as Error).message);
+        console.warn(
+          '[EmergencyDispatcher] Internet uplink failed, falling back:',
+          (e as Error).message,
+        );
       }
     }
 
     // 2. Internet Unavailable + SMS Available -> SMS Fallback
     const hasSmsPermission = permissionService.getStatus('SEND_SMS') === 'granted' || demoMode;
     if (hasSmsPermission) {
-      console.log('[EmergencyDispatcher] Internet unavailable, SMS available -> Dispatching via Emergency SMS');
+      console.log(
+        '[EmergencyDispatcher] Internet unavailable, SMS available -> Dispatching via Emergency SMS',
+      );
       sosController.setUplinkStatus(
         false,
         true,
         'SOS dispatched via Emergency SMS Gateway (+911123456789)',
-        'SMS'
+        'SMS',
       );
       await dbManager.events.logEvent('sos_dispatched_sms', {
         destination: '+911123456789',
@@ -394,7 +365,7 @@ export function App(): React.JSX.Element {
         'LOW_LATENCY',
         'survivor',
         { hasSos: true, lowBattery: false, beaconOnly: false },
-        '00000000'
+        '00000000',
       );
       return;
     }
@@ -405,14 +376,14 @@ export function App(): React.JSX.Element {
       'LOW_LATENCY',
       'survivor',
       { hasSos: true, lowBattery: false, beaconOnly: false },
-      '00000000'
+      '00000000',
     );
     await RescueBle.startScanning('LOW_LATENCY');
     sosController.setUplinkStatus(
       false,
       false,
       'Broadcasting emergency packet locally to nearby phones via Bluetooth Low Energy mesh',
-      'BLE_MESH'
+      'BLE_MESH',
     );
     await dbManager.events.logEvent('sos_broadcast_ble_mesh', {
       sprayWaitCopies: 6,
@@ -423,11 +394,18 @@ export function App(): React.JSX.Element {
     if (sosController) {
       await sosController.triggerSos('instant_tap', { triage, needsMask });
       setShowSosStatusScreen(true);
+      // Capture GPS at SOS send time so we can match our cluster in polling
+      try {
+        const loc = await LocationProvider.getInstance().getCurrentLocation(3000);
+        if (loc) {
+          setMyLastSosLocation({ lat: loc.latitude, lon: loc.longitude });
+        }
+      } catch {}
       await dispatchEmergencyChannels();
     }
   };
 
-  const handleSendMessage = async (content: string, channelId: string = 'team_alpha_chat') => {
+  const handleSendMessage = async (content: string, channelId: string = activeClusterId) => {
     if (dbManager && identity) {
       const msgId = `msg_${Date.now()}`;
       const newMsg: ChatMessageRecord = {
@@ -435,77 +413,198 @@ export function App(): React.JSX.Element {
         conversation_id: channelId,
         direction: 'outbound',
         sender_fp: identity.originFp,
-        recipient_fp: channelId === 'team_alpha_chat' ? 'team_alpha' : 'broadcast',
+        recipient_fp: 'broadcast',
         content,
         status: 'delivered',
         ttl: 6,
         created_at: new Date().toISOString(),
       };
       await dbManager.chat.saveMessage(newMsg);
-      setMessages((prev) => [...prev, newMsg]);
+      setMessages(prev => [...prev, newMsg]);
 
       // Post to shared chat endpoint on backend so dashboard rescuer receives it in real time
-      fetch('http://10.0.2.2:3000/v1/chat/messages', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          conversationId: 'cl_pune_ghats_01',
-          senderFp: identity.originFp,
-          senderName: 'Survivor (You)',
-          senderRole: 'survivor',
-          content,
-        }),
-      }).catch(() => {});
+      // Use the active cluster ID so the message routes to the right conversation
+      const chatPayload = JSON.stringify({
+        conversationId: activeClusterId,
+        senderFp: identity.originFp,
+        senderName: 'Survivor (You)',
+        senderRole: 'survivor',
+        content,
+      });
+
+      const tryFetch = (url: string) =>
+        fetch(url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: chatPayload,
+        });
+
+      tryFetch('http://10.0.2.2:3000/v1/chat/messages').catch(() =>
+        tryFetch('http://localhost:3000/v1/chat/messages').catch(() => {}),
+      );
     }
   };
 
-  // Sync incoming rescuer messages from backend
+  // Sync incoming rescuer messages, cluster state, and simulation peers from backend
   useEffect(() => {
     const pollTimer = setInterval(async () => {
       try {
-        const res = await fetch('http://10.0.2.2:3000/v1/chat/messages?conversationId=cl_pune_ghats_01');
-        if (res.ok) {
-          const data = await res.json();
-          if (Array.isArray(data.messages) && data.messages.length > 0) {
-            const hasRescuerMsg = data.messages.some(
-              (m: any) =>
-                m.senderRole === 'rescuer' ||
-                m.senderFp === 'team_alpha' ||
-                (m.senderName && m.senderName.toLowerCase().includes('team')) ||
-                (m.content && m.content.toLowerCase().includes('dispatched'))
+        // ─── 1. Sync backend clusters → update map + extract own cluster state ───
+        let clusterRes = await fetch('http://10.0.2.2:3000/v1/clusters').catch(() => null);
+        if (!clusterRes || !clusterRes.ok) {
+          clusterRes = await fetch('http://localhost:3000/v1/clusters').catch(() => null);
+        }
+        if (clusterRes && clusterRes.ok) {
+          const backendClusters = await clusterRes.json();
+          if (Array.isArray(backendClusters) && backendClusters.length > 0) {
+            // Update our clusters list with real backend GPS data
+            setClusters(
+              backendClusters.map((c: any) => ({
+                cluster_id: c.id,
+                centroid_lat: Number(c.centroid_lat ?? c.lat ?? 18.5204),
+                centroid_lon: Number(c.centroid_lon ?? c.lon ?? 73.8567),
+                radius_meters: c.radius_m || 45,
+                member_count: c.member_count || 1,
+                priority_score: c.priority_score || 0.5,
+                state: c.state || 'new',
+                updated_at: c.updated_at || new Date().toISOString(),
+              })),
             );
-            if (hasRescuerMsg) {
-              setAssignedTeam('Rescue Team Alpha');
+
+            // Find OUR cluster: match by last known SOS GPS, or take the newest cluster
+            let myCluster: any = null;
+            if (myLastSosLocation) {
+              myCluster = backendClusters.find((c: any) => {
+                const clat = Number(c.centroid_lat ?? c.lat ?? 0);
+                const clon = Number(c.centroid_lon ?? c.lon ?? 0);
+                return (
+                  Math.abs(clat - myLastSosLocation.lat) < 0.002 &&
+                  Math.abs(clon - myLastSosLocation.lon) < 0.002
+                );
+              });
+            }
+            // If no GPS match, fall back to the most recently updated cluster
+            if (!myCluster) {
+              myCluster = backendClusters.sort(
+                (a: any, b: any) =>
+                  new Date(b.updated_at || 0).getTime() - new Date(a.updated_at || 0).getTime(),
+              )[0];
             }
 
-            setMessages((prev) => {
-              const existingIds = new Set(prev.map((m) => m.message_id));
-              const newIncoming = data.messages
-                .filter((m: any) => !existingIds.has(m.id))
-                .map((m: any) => ({
-                  message_id: m.id,
-                  conversation_id: m.conversationId === 'cl_pune_ghats_01' ? 'team_alpha_chat' : m.conversationId,
-                  direction: (m.senderRole === 'survivor' && m.senderFp !== 'team_alpha') ? ('outbound' as const) : ('inbound' as const),
-                  sender_fp: m.senderFp,
-                  recipient_fp: m.recipientFp || 'broadcast',
-                  content: m.content,
-                  status: 'delivered' as const,
-                  ttl: m.ttl || 6,
-                  created_at: m.timestamp || new Date().toISOString(),
-                }));
-              if (newIncoming.length > 0) {
-                return [...prev, ...newIncoming];
+            if (myCluster) {
+              // Update active cluster ID so chat messages route correctly
+              setActiveClusterId(myCluster.id);
+
+              // Extract assigned team directly from cluster record
+              if (myCluster.assigned_team) {
+                setAssignedTeam(myCluster.assigned_team);
+              } else if (
+                myCluster.state === 'assigned' ||
+                myCluster.state === 'en_route' ||
+                myCluster.state === 'reached'
+              ) {
+                // State says assigned but no team name yet — keep what we have
+                if (!assignedTeam) setAssignedTeam('Rescue Team Alpha');
               }
-              return prev;
+            }
+          }
+        }
+
+        // ─── 2. Sync simulation peers & status ───
+        let simRes = await fetch('http://10.0.2.2:3000/v1/simulation/peers').catch(() => null);
+        if (!simRes || !simRes.ok) {
+          simRes = await fetch('http://localhost:3000/v1/simulation/peers').catch(() => null);
+        }
+        if (simRes && simRes.ok) {
+          const simData = await simRes.json();
+          if (simData.active && Array.isArray(simData.peers) && simData.peers.length > 0) {
+            const simFps = new Set(simData.peers.map((p: any) => p.fp));
+            setNeighbors(prev => {
+              const nonSim = prev.filter(n => !simFps.has(n.fp));
+              const simNeighbors: NeighborRecord[] = simData.peers.map((p: any) => ({
+                fp: p.fp,
+                last_rssi: p.rssi || -65,
+                last_seen: new Date().toISOString(),
+                battery: p.battery || 75,
+                role: p.role || 'survivor',
+                mac_rotating: 0,
+              }));
+              return [...nonSim, ...simNeighbors];
             });
+          } else if (!simData.active) {
+            setNeighbors(prev =>
+              prev.filter(n => n.fp !== '4a9b2c8f1e7d3a01' && n.fp !== '8f2e1a3b5c7d9e02'),
+            );
+          }
+        }
+
+        // ─── 3. Sync chat messages from backend ───
+        let res = await fetch('http://10.0.2.2:3000/v1/chat/messages?conversationId=all').catch(
+          () => null,
+        );
+        if (!res || !res.ok) {
+          res = await fetch('http://localhost:3000/v1/chat/messages?conversationId=all').catch(
+            () => null,
+          );
+        }
+        if (res && res.ok) {
+          const data = await res.json();
+          if (Array.isArray(data.messages)) {
+            if (data.messages.length === 0) {
+              setMessages(prev =>
+                prev.filter(m => m.direction === 'outbound' && !m.message_id.startsWith('msg_')),
+              );
+              setAssignedTeam(null);
+            } else {
+              // Check if any rescuer message carries an explicit team name
+              const rescuerMsg = data.messages.find(
+                (m: any) =>
+                  m.senderRole === 'rescuer' ||
+                  m.senderFp === 'team_alpha' ||
+                  (m.senderName && m.senderName.toLowerCase().includes('team')),
+              );
+              if (rescuerMsg && !assignedTeam) {
+                // Extract team name from message senderName if possible
+                const teamName = rescuerMsg.senderName || 'Rescue Team Alpha';
+                setAssignedTeam(teamName);
+              }
+
+              setMessages(prev => {
+                const existingIds = new Set(prev.map(m => m.message_id));
+                const newIncoming = data.messages
+                  .filter((m: any) => !existingIds.has(m.id))
+                  .map((m: any) => ({
+                    message_id: m.id,
+                    conversation_id: m.conversationId || activeClusterId,
+                    direction:
+                      m.senderRole === 'survivor' && m.senderFp !== 'team_alpha'
+                        ? ('outbound' as const)
+                        : ('inbound' as const),
+                    sender_fp: m.senderFp,
+                    recipient_fp: m.recipientFp || 'broadcast',
+                    content: m.content,
+                    status: 'delivered' as const,
+                    ttl: m.ttl || 6,
+                    created_at: m.timestamp || new Date().toISOString(),
+                  }));
+
+                if (newIncoming.length > 0 && dbManager) {
+                  for (const item of newIncoming) {
+                    dbManager.chat.saveMessage(item).catch(() => {});
+                  }
+                  return [...prev, ...newIncoming];
+                }
+                return prev;
+              });
+            }
           }
         }
       } catch {
         // local offline mesh
       }
-    }, 3000);
+    }, 2500);
     return () => clearInterval(pollTimer);
-  }, []);
+  }, [dbManager, myLastSosLocation, assignedTeam, activeClusterId]);
 
   const handleConfirmWipe = async () => {
     if (dbManager) {
@@ -519,19 +618,20 @@ export function App(): React.JSX.Element {
     await initializeApp();
   };
 
-  const handleCompletePreparedness = async () => {
+  const handleCompletePreparedness = async (selectedRegionId?: string) => {
     setIsPrepared(true);
     if (dbManager) {
+      const regionToUse = selectedRegionId || mapManager.getActiveRegion().id;
       await dbManager.settings.set('preparedness_completed', '1');
-      await dbManager.settings.set('map_region_downloaded', 'maharashtra');
+      await dbManager.settings.set('map_region_downloaded', regionToUse);
+      await mapManager.startDownload(regionToUse).catch(() => {});
     }
-    await mapManager.startDownload('maharashtra').catch(() => {});
   };
 
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color={colors.info} />
+        <ActivityIndicator size="large" color="#2563eb" />
         <Text style={styles.loadingText}>Initializing RescueNet Mesh...</Text>
       </View>
     );
@@ -540,7 +640,7 @@ export function App(): React.JSX.Element {
   return (
     <LanguageProvider initialLanguage={appLanguage} onLanguageChange={handleLanguageChange}>
       <SafeAreaView style={styles.container}>
-        <StatusBar barStyle="dark-content" backgroundColor={colors.background} />
+        <StatusBar barStyle="dark-content" backgroundColor="#ffffff" />
 
         {/* Tab Body or First-Launch Preparedness */}
         <View style={styles.body}>
@@ -555,8 +655,12 @@ export function App(): React.JSX.Element {
             />
           ) : (
             <>
-              {currentTab === 'home' && (
-                currentRole === 'rescuer' && rescuerService && homingService && dbManager && meshEngine ? (
+              {currentTab === 'home' &&
+                (currentRole === 'rescuer' &&
+                rescuerService &&
+                homingService &&
+                dbManager &&
+                meshEngine ? (
                   <RescuerHomeScreen
                     db={dbManager}
                     meshEngine={meshEngine}
@@ -570,49 +674,42 @@ export function App(): React.JSX.Element {
                     onSosBroadcasted={handleSosBroadcasted}
                     isRegistered={identity?.registered}
                     nearbyCount={neighbors.length}
-                    onNavigateToTab={(tab) => setCurrentTab(tab)}
+                    onNavigateToTab={tab => setCurrentTab(tab)}
                     demoMode={demoMode}
-                    onToggleDemoMode={(val) => setDemoMode(val)}
+                    onToggleDemoMode={val => setDemoMode(val)}
                   />
-                )
-              )}
+                ))}
 
               {currentTab === 'nearby' && (
                 <NearbyScreen
                   neighbors={neighbors}
                   clusters={clusters}
-                  yourClusterId="cl_pune_ghats_01"
-                  onStartChatWithSurvivor={(survivor) => {
-                    setActiveChatChannelId(survivor.convId || 'conv_local_mesh');
-                    setCurrentTab('chat');
-                  }}
-                  onSelectPeer={() => {
-                    setActiveChatChannelId('conv_local_mesh');
-                    setCurrentTab('chat');
-                  }}
+                  yourClusterId={clusters[0]?.cluster_id || null}
+                  onSelectPeer={_fp => {}}
                 />
               )}
 
               {currentTab === 'chat' && (
                 <ChatScreen
-                  conversations={conversations}
                   messages={messages}
                   activeChannelId={activeChatChannelId}
                   assignedTeam={assignedTeam}
-                  onSelectChannel={(chId) => setActiveChatChannelId(chId)}
+                  neighbors={neighbors}
+                  onSelectChannel={ch => setActiveChatChannelId(ch)}
                   onSendMessage={handleSendMessage}
                 />
               )}
 
               {currentTab === 'map' && (
                 <MapScreen
+                  key={`map_${mapUpdateCount}_${mapManager.getActiveRegion().id}`}
                   hasOfflineMapPack={mapManager.hasAnyMapDownloaded()}
                   activeClusters={clusters}
+                  neighbors={neighbors}
+                  activeRegion={
+                    mapManager.getActiveDownloadedRegion() || mapManager.getActiveRegion()
+                  }
                   onOpenDownloadModal={() => setShowMapDownloadModal(true)}
-                  onNavigateToChat={(convId) => {
-                    setActiveChatChannelId(convId || 'conv_local_mesh');
-                    setCurrentTab('chat');
-                  }}
                 />
               )}
 
@@ -635,8 +732,8 @@ export function App(): React.JSX.Element {
           <BottomTabBar
             currentTab={currentTab}
             onSelectTab={setCurrentTab}
+            unreadChatCount={messages.length}
             nearbyCount={neighbors.length}
-            unreadChatCount={messages.length > 0 ? 1 : 0}
           />
         )}
 
@@ -671,17 +768,16 @@ export function App(): React.JSX.Element {
         />
 
         {/* OEM Battery Saver Guide Modal */}
-        <OemGuideModal
-          visible={showOemGuideModal}
-          onClose={() => setShowOemGuideModal(false)}
-        />
+        <OemGuideModal visible={showOemGuideModal} onClose={() => setShowOemGuideModal(false)} />
 
         {/* Map Download Modal */}
         <MapDownloadModal
           visible={showMapDownloadModal}
           mapManager={mapManager}
           onClose={() => setShowMapDownloadModal(false)}
-          onMapDownloaded={() => {}}
+          onMapDownloaded={() => {
+            setMapUpdateCount(c => c + 1);
+          }}
         />
 
         {/* Rescuer Credential Import Modal */}
@@ -689,7 +785,7 @@ export function App(): React.JSX.Element {
           visible={showRescuerModal}
           rescuerService={rescuerService ?? undefined}
           onClose={() => setShowRescuerModal(false)}
-          onCredentialImported={(_cred) => {
+          onCredentialImported={_cred => {
             setCurrentRole('rescuer');
             meshEngine?.setRole('rescuer');
             if (dbManager) {
@@ -733,9 +829,8 @@ export function App(): React.JSX.Element {
                 setShowSosDetailsModal(true);
               }}
               onClose={() => setShowSosStatusScreen(false)}
-              onNavigateToChat={(channelId) => {
+              onNavigateToChat={_channelId => {
                 setShowSosStatusScreen(false);
-                setActiveChatChannelId(channelId || 'team_alpha_chat');
                 setCurrentTab('chat');
               }}
             />
@@ -751,7 +846,7 @@ export function App(): React.JSX.Element {
           <DebugMeshScreen
             transport={RescueBle}
             neighbors={bleNeighbors}
-            onSendTestPacket={async (targetDeviceId) => {
+            onSendTestPacket={async targetDeviceId => {
               if (meshSyncController) {
                 await meshSyncController.sendTestPing(targetDeviceId);
               }
@@ -767,21 +862,23 @@ export function App(): React.JSX.Element {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.background,
+    backgroundColor: '#ffffff',
   },
   body: {
     flex: 1,
+    backgroundColor: '#ffffff',
   },
   loadingContainer: {
     flex: 1,
-    backgroundColor: colors.background,
+    backgroundColor: '#ffffff',
     alignItems: 'center',
     justifyContent: 'center',
   },
   loadingText: {
-    color: colors.textSecondary,
+    color: '#0f172a',
     fontSize: 14,
     marginTop: 12,
+    fontWeight: '700',
   },
 });
 

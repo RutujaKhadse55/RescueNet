@@ -26,11 +26,7 @@ export class ConnectivityGovernor {
   private isSosPending: boolean = false;
   private stateChangeListeners: Array<(state: NetworkState, mode: MeshMode) => void> = [];
 
-  constructor(
-    transport: IBleTransport,
-    db: DatabaseManager,
-    config?: Partial<ConnectivityConfig>
-  ) {
+  constructor(transport: IBleTransport, db: DatabaseManager, config?: Partial<ConnectivityConfig>) {
     this.transport = transport;
     this.db = db;
     this.config = {
@@ -52,7 +48,7 @@ export class ConnectivityGovernor {
 
   public async start(): Promise<void> {
     // Listen for Bluetooth state changes
-    this.transport.onBluetoothStateChanged(async (enabled) => {
+    this.transport.onBluetoothStateChanged(async enabled => {
       await this.db.events.logEvent('bluetooth_state_changed', { enabled });
       if (enabled && (this.currentMeshMode === 'ARMED' || this.currentMeshMode === 'ACTIVE')) {
         await this.applyMeshMode(this.currentMeshMode);
@@ -60,7 +56,10 @@ export class ConnectivityGovernor {
     });
 
     // Initial probe and state synchronization
-    if ((this.currentNetworkState === 'OFFLINE' || this.currentNetworkState === 'DEGRADED') && this.config.autoArmOnNetworkLost) {
+    if (
+      (this.currentNetworkState === 'OFFLINE' || this.currentNetworkState === 'DEGRADED') &&
+      this.config.autoArmOnNetworkLost
+    ) {
       await this.setMeshMode('ARMED');
     }
     await this.evaluateConnectivity();
@@ -110,7 +109,7 @@ export class ConnectivityGovernor {
         'http://10.0.2.2:3000/v1/health',
         'http://localhost:3000/v1/health',
         'http://127.0.0.1:3000/v1/health',
-      ])
+      ]),
     );
 
     for (const url of urls) {
@@ -215,20 +214,30 @@ export class ConnectivityGovernor {
         break;
 
       case 'ARMED':
-        await this.transport.startAdvertising('BALANCED', 'survivor', {
-          hasSos: this.isSosPending,
-          lowBattery: false,
-          beaconOnly: false,
-        }, '00000000');
+        await this.transport.startAdvertising(
+          'BALANCED',
+          'survivor',
+          {
+            hasSos: this.isSosPending,
+            lowBattery: false,
+            beaconOnly: false,
+          },
+          '00000000',
+        );
         await this.transport.startScanning('BALANCED');
         break;
 
       case 'ACTIVE':
-        await this.transport.startAdvertising('LOW_LATENCY', 'survivor', {
-          hasSos: true,
-          lowBattery: false,
-          beaconOnly: false,
-        }, '00000000');
+        await this.transport.startAdvertising(
+          'LOW_LATENCY',
+          'survivor',
+          {
+            hasSos: true,
+            lowBattery: false,
+            beaconOnly: false,
+          },
+          '00000000',
+        );
         await this.transport.startScanning('LOW_LATENCY');
         break;
     }
@@ -300,7 +309,7 @@ export class ConnectivityGovernor {
   public onStateChange(listener: (state: NetworkState, mode: MeshMode) => void): () => void {
     this.stateChangeListeners.push(listener);
     return () => {
-      this.stateChangeListeners = this.stateChangeListeners.filter((l) => l !== listener);
+      this.stateChangeListeners = this.stateChangeListeners.filter(l => l !== listener);
     };
   }
 

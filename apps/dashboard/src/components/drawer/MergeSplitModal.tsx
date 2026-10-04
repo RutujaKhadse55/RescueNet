@@ -14,7 +14,7 @@ export const MergeSplitModal: React.FC<MergeSplitModalProps> = ({ clusterId, isO
   const { t } = useTranslation();
 
   const [mode, setMode] = useState<'merge' | 'split'>('merge');
-  const otherClusters = clusters.filter((c) => c.id !== clusterId && c.state !== 'closed');
+  const otherClusters = clusters.filter(c => c.id !== clusterId && c.state !== 'closed');
   const [targetId, setTargetId] = useState(otherClusters[0]?.id || '');
 
   if (!isOpen) return null;
@@ -31,18 +31,33 @@ export const MergeSplitModal: React.FC<MergeSplitModalProps> = ({ clusterId, isO
   };
 
   return (
-    <div className="modal-backdrop" onClick={onClose} role="dialog" aria-modal="true" aria-labelledby="modal-merge-title">
-      <div className="modal-box" onClick={(e) => e.stopPropagation()}>
+    <div
+      className="modal-backdrop"
+      onClick={onClose}
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="modal-merge-title"
+    >
+      <div className="modal-box" onClick={e => e.stopPropagation()}>
         <div className="modal-header">
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            {mode === 'merge' ? <GitMerge size={18} color="var(--accent-blue)" /> : <Split size={18} color="#a855f7" />}
+            {mode === 'merge' ? (
+              <GitMerge size={18} color="var(--accent-blue)" />
+            ) : (
+              <Split size={18} color="#a855f7" />
+            )}
             <h2 id="modal-merge-title" style={{ fontSize: '1rem', fontWeight: 700 }}>
               {t.btnMergeSplit}
             </h2>
           </div>
           <button
             onClick={onClose}
-            style={{ background: 'transparent', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer' }}
+            style={{
+              background: 'transparent',
+              border: 'none',
+              color: 'var(--text-secondary)',
+              cursor: 'pointer',
+            }}
             aria-label="Close"
           >
             <X size={18} />
@@ -50,7 +65,14 @@ export const MergeSplitModal: React.FC<MergeSplitModalProps> = ({ clusterId, isO
         </div>
 
         <div className="modal-body">
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem', marginBottom: '0.5rem' }}>
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: '1fr 1fr',
+              gap: '0.5rem',
+              marginBottom: '0.5rem',
+            }}
+          >
             <button
               type="button"
               className={`btn ${mode === 'merge' ? 'btn-primary' : 'btn-secondary'}`}
@@ -73,32 +95,43 @@ export const MergeSplitModal: React.FC<MergeSplitModalProps> = ({ clusterId, isO
                 Select Cluster to Merge Into:
               </label>
               {otherClusters.length === 0 ? (
-                <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>No other active clusters available to merge with.</p>
+                <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+                  No other active clusters available to merge with.
+                </p>
               ) : (
                 <select
                   id="select-target-cluster"
                   className="form-select"
                   value={targetId}
-                  onChange={(e) => setTargetId(e.target.value)}
+                  onChange={e => setTargetId(e.target.value)}
                 >
-                  {otherClusters.map((c) => (
+                  {otherClusters.map(c => (
                     <option key={c.id} value={c.id}>
-                      {c.id.slice(0, 10)}... ({c.declared_people} people - {c.floor_hint || 'Ground'})
+                      {c.id.slice(0, 10)}... ({c.declared_people} people -{' '}
+                      {c.floor_hint || 'Ground'})
                     </option>
                   ))}
                 </select>
               )}
               <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
-                Merging will close this cluster and transfer its beacon members to the target cluster.
+                Merging will close this cluster and transfer its beacon members to the target
+                cluster.
               </span>
             </div>
           ) : (
             <div>
-              <p style={{ fontSize: '0.85rem', color: 'var(--text-primary)', marginBottom: '0.5rem' }}>
+              <p
+                style={{
+                  fontSize: '0.85rem',
+                  color: 'var(--text-primary)',
+                  marginBottom: '0.5rem',
+                }}
+              >
                 Split cluster members into two localized tactical zones.
               </p>
               <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                Useful when field reconnaissance identifies survivors spread across multiple building wings or floors.
+                Useful when field reconnaissance identifies survivors spread across multiple
+                building wings or floors.
               </p>
             </div>
           )}
@@ -109,11 +142,22 @@ export const MergeSplitModal: React.FC<MergeSplitModalProps> = ({ clusterId, isO
             {t.btnCancel}
           </button>
           {mode === 'merge' ? (
-            <button type="button" className="btn btn-primary" onClick={handleMerge} disabled={!targetId} id="btn-confirm-merge">
+            <button
+              type="button"
+              className="btn btn-primary"
+              onClick={handleMerge}
+              disabled={!targetId}
+              id="btn-confirm-merge"
+            >
               Confirm Merge
             </button>
           ) : (
-            <button type="button" className="btn btn-primary" onClick={handleSplit} id="btn-confirm-split">
+            <button
+              type="button"
+              className="btn btn-primary"
+              onClick={handleSplit}
+              id="btn-confirm-split"
+            >
               Confirm Split
             </button>
           )}

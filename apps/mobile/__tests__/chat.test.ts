@@ -47,10 +47,12 @@ describe('Phase 11-A: ChatService', () => {
   afterEach(() => FakeBleNetwork.clear());
 
   test('quick reply code 1 renders in all 5 languages', () => {
-    const node = { getQuickReplyText: (code: number, lang: string) => {
-      const entry = QUICK_REPLIES[code];
-      return entry ? (entry[lang] ?? entry['en'] ?? '') : '';
-    }};
+    const node = {
+      getQuickReplyText: (code: number, lang: string) => {
+        const entry = QUICK_REPLIES[code];
+        return entry ? (entry[lang] ?? entry['en'] ?? '') : '';
+      },
+    };
 
     expect(node.getQuickReplyText(1, 'en')).toBe('I am safe');
     expect(node.getQuickReplyText(1, 'hi')).toBeTruthy();
@@ -125,11 +127,14 @@ describe('Phase 11-A: ChatService', () => {
     A.chat.mutePeer('aabbccddaabbccdd');
 
     let received = false;
-    A.chat.onMessage(() => { received = true; });
+    A.chat.onMessage(() => {
+      received = true;
+    });
 
     // Simulate an incoming chat from that muted peer
     const fakePkt = new Uint8Array(200);
-    fakePkt[0] = 1; fakePkt[1] = 0x02; // header
+    fakePkt[0] = 1;
+    fakePkt[1] = 0x02; // header
     // originFp bytes 13-20 = aabbccddaabbccdd
     const fpBytes = new Uint8Array('aabbccddaabbccdd'.match(/.{1,2}/g)!.map(b => parseInt(b, 16)));
     fakePkt.set(fpBytes, 13);
@@ -145,7 +150,8 @@ describe('Phase 11-A: ChatService', () => {
     A.chat.blockPeer(blockedFp);
 
     const fakePkt = new Uint8Array(200);
-    fakePkt[0] = 1; fakePkt[1] = 0x02;
+    fakePkt[0] = 1;
+    fakePkt[1] = 0x02;
     const fpBytes = new Uint8Array(blockedFp.match(/.{1,2}/g)!.map(b => parseInt(b, 16)));
     fakePkt.set(fpBytes, 13);
 
@@ -176,10 +182,10 @@ describe('Phase 11-A: ChatService', () => {
     // Relay node: handleIncomingChat returns null for E2EE packets not addressed to it.
     // Build a fake packet with encrypted flag (bit1) set and a different originFp.
     const fakeDmPkt = new Uint8Array(200);
-    fakeDmPkt[0] = 1;    // version
+    fakeDmPkt[0] = 1; // version
     fakeDmPkt[1] = 0x02; // CHAT
     fakeDmPkt[2] = 0x02; // flags: encrypted (E2EE)
-    fakeDmPkt[3] = 6;    // TTL
+    fakeDmPkt[3] = 6; // TTL
     const relayNode = await makeNode('chatDM_Relay');
     // Relay's handleIncomingChat returns null for encrypted packets not addressed to it
     const relayResult = await relayNode.chat.handleIncomingChat(fakeDmPkt);
@@ -261,14 +267,15 @@ describe('Phase 11-B: LiveLocationService', () => {
     const { location } = await makeNode('locPeerA');
 
     // My location
-    location.updateMyLocation(18.9220, 72.8347, 10);
+    location.updateMyLocation(18.922, 72.8347, 10);
 
     // Build a minimal LOCATION packet (type 0x05)
     const raw = new Uint8Array(120);
-    raw[0] = 1; raw[1] = 0x05;
+    raw[0] = 1;
+    raw[1] = 0x05;
     raw[3] = 3; // TTL
     // originFp at bytes 13-20
-    raw.set([0xAA, 0xBB, 0xCC, 0xDD, 0x11, 0x22, 0x33, 0x44], 13);
+    raw.set([0xaa, 0xbb, 0xcc, 0xdd, 0x11, 0x22, 0x33, 0x44], 13);
 
     // Stub decodeLocation to return valid data
     const { decodeLocation } = require('@rescuenet/core');
@@ -281,14 +288,14 @@ describe('Phase 11-B: LiveLocationService', () => {
 
   test('navigation to peer computes bearing and distance', async () => {
     const { location } = await makeNode('navTest');
-    location.updateMyLocation(18.9220, 72.8347, 10);
+    location.updateMyLocation(18.922, 72.8347, 10);
 
     // Inject a peer location manually
     const peerFp = 'aabbccdd11223344';
     (location as any).peerLocations.set(peerFp, {
       peerFp,
-      latitude: 18.9250,
-      longitude: 72.8380,
+      latitude: 18.925,
+      longitude: 72.838,
       accuracyMeters: 15,
       timestamp: Math.floor(Date.now() / 1000),
       stalenessMinutes: 0,
@@ -318,7 +325,7 @@ describe('Phase 11-B: LiveLocationService', () => {
     });
 
     const peers = location.getPeerLocations();
-    const peer = peers.find((p) => p.peerFp === peerFp);
+    const peer = peers.find(p => p.peerFp === peerFp);
     expect(peer).toBeDefined();
     expect(peer!.isStale).toBe(true);
     expect(peer!.stalenessMinutes).toBeGreaterThanOrEqual(14);
@@ -328,8 +335,13 @@ describe('Phase 11-B: LiveLocationService', () => {
     const { location, db } = await makeNode('wipeTest');
     const peerFp = 'wipe0001wipe0001';
     (location as any).peerLocations.set(peerFp, {
-      peerFp, latitude: 0, longitude: 0, accuracyMeters: 0,
-      timestamp: 0, stalenessMinutes: 0, isStale: false,
+      peerFp,
+      latitude: 0,
+      longitude: 0,
+      accuracyMeters: 0,
+      timestamp: 0,
+      stalenessMinutes: 0,
+      isStale: false,
     });
 
     await location.deleteSharedHistory();
@@ -364,4 +376,3 @@ describe('Phase 11-B: LiveLocationService', () => {
     expect(locRank).toBeLessThan(chatRank);
   });
 });
-

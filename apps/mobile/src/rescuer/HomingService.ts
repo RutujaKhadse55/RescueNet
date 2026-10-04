@@ -8,12 +8,7 @@
  * Dispatches signed REACHED acknowledgment upon successful location.
  */
 
-import {
-  HomingEngine,
-  HomingSignalState,
-  createAndSignAck,
-  PacketFlags,
-} from '@rescuenet/core';
+import { HomingEngine, HomingSignalState, createAndSignAck, PacketFlags } from '@rescuenet/core';
 import { IBleTransport } from '../native/RescueBle';
 import { DatabaseManager } from '../db/DatabaseManager';
 import { MeshEngine } from '../mesh/MeshEngine';
@@ -45,7 +40,7 @@ export class HomingService {
     transport: IBleTransport,
     db: DatabaseManager,
     meshEngine: MeshEngine,
-    rescuerService: RescuerCredentialService
+    rescuerService: RescuerCredentialService,
   ) {
     this.transport = transport;
     this.db = db;
@@ -97,7 +92,10 @@ export class HomingService {
       if (this.currentTarget.originFpPrefix) {
         const cleanPrefix = this.currentTarget.originFpPrefix.toLowerCase();
         const cleanDevice = deviceId.toLowerCase().replace(/[^a-f0-9]/g, '');
-        if (!cleanDevice.includes(cleanPrefix) && !deviceId.includes(this.currentTarget.originFpPrefix)) {
+        if (
+          !cleanDevice.includes(cleanPrefix) &&
+          !deviceId.includes(this.currentTarget.originFpPrefix)
+        ) {
           // If explicitly designated target prefix does not match, ignore unrelated signals
           // (Unless targetId matches deviceId directly)
           if (deviceId !== this.currentTarget.targetId) {
@@ -172,7 +170,10 @@ export class HomingService {
 
     // Convert targetId to 8-byte targetPacketId buffer
     const targetBuffer = new Uint8Array(8);
-    const cleanHex = this.currentTarget.targetId.replace(/[^a-f0-9]/gi, '').padEnd(16, '0').slice(0, 16);
+    const cleanHex = this.currentTarget.targetId
+      .replace(/[^a-f0-9]/gi, '')
+      .padEnd(16, '0')
+      .slice(0, 16);
     targetBuffer.set(Buffer.from(cleanHex, 'hex'));
 
     const agencyIdNum = parseInt(cred.agencyId, 10) || 1;
@@ -187,7 +188,7 @@ export class HomingService {
         agencyId: agencyIdNum,
         keyPair,
       },
-      this.db.getCrypto()
+      this.db.getCrypto(),
     );
 
     // Re-relay through local mesh engine

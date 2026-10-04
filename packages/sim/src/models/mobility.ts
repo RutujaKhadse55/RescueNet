@@ -45,8 +45,14 @@ export class MobilityEngine {
         const epicenterY = config.areaHeightM * (0.3 + 0.4 * (index % 2));
         const spread = Math.min(config.areaWidthM, config.areaHeightM) * 0.2;
 
-        node.x = Math.max(10, Math.min(config.areaWidthM - 10, epicenterX + (this.rng() - 0.5) * spread));
-        node.y = Math.max(10, Math.min(config.areaHeightM - 10, epicenterY + (this.rng() - 0.5) * spread));
+        node.x = Math.max(
+          10,
+          Math.min(config.areaWidthM - 10, epicenterX + (this.rng() - 0.5) * spread),
+        );
+        node.y = Math.max(
+          10,
+          Math.min(config.areaHeightM - 10, epicenterY + (this.rng() - 0.5) * spread),
+        );
 
         const speed = node.role === 'carrier' ? 1.5 : 0.6;
         this.assignNewWaypoint(node, config, speed);
@@ -82,7 +88,7 @@ export class MobilityEngine {
         const pause = node.role === 'rescuer' ? 5 + this.rng() * 10 : 30 + this.rng() * 180;
         node.pauseTimeLeft = pause;
 
-        const speed = node.role === 'rescuer' ? 8.0 : (node.role === 'carrier' ? 1.5 : 0.6);
+        const speed = node.role === 'rescuer' ? 8.0 : node.role === 'carrier' ? 1.5 : 0.6;
         this.assignNewWaypoint(node, config, speed);
       } else {
         node.x += (dx / dist) * stepDist;

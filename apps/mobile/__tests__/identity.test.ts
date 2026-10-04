@@ -23,7 +23,7 @@ describe('Identity & Ephemeral Pseudonym Service', () => {
     // Verify origin_fp matches BLAKE2b(masterPublicKey, 8)
     const expectedFpBytes = await crypto.blake2b(service.getMasterPublicKey(), 8);
     const expectedHex = Array.from(expectedFpBytes)
-      .map((b) => b.toString(16).padStart(2, '0'))
+      .map(b => b.toString(16).padStart(2, '0'))
       .join('');
     expect(service.getOriginFp()).toBe(expectedHex);
   });

@@ -4,7 +4,13 @@
  * Portable across mobile, tests, and packages/sim without native dependencies.
  */
 
-import { BleMode, BleNeighbor, GattExchangeStats, IBleTransport, ScanMode } from '../native/RescueBle';
+import {
+  BleMode,
+  BleNeighbor,
+  GattExchangeStats,
+  IBleTransport,
+  ScanMode,
+} from '../native/RescueBle';
 
 export interface FakeLinkOptions {
   rssi?: number;
@@ -94,7 +100,8 @@ export class FakeTransport implements IBleTransport {
   private neighborDiscoveredListeners: Array<(neighbor: BleNeighbor) => void> = [];
   private neighborLostListeners: Array<(event: { deviceId: string }) => void> = [];
   private rssiListeners: Array<(event: { deviceId: string; rssi: number }) => void> = [];
-  private fragmentListeners: Array<(event: { deviceId: string; fragmentBase64: string }) => void> = [];
+  private fragmentListeners: Array<(event: { deviceId: string; fragmentBase64: string }) => void> =
+    [];
   private btStateListeners: Array<(enabled: boolean) => void> = [];
 
   constructor(nodeId: string) {
@@ -130,7 +137,7 @@ export class FakeTransport implements IBleTransport {
       lowBattery: false,
       beaconOnly: false,
     },
-    originFpPrefix: string = '00000000'
+    originFpPrefix: string = '00000000',
   ): Promise<boolean> {
     this.advMode = mode;
     this.advRole = role;
@@ -200,7 +207,7 @@ export class FakeTransport implements IBleTransport {
   // Data Exchange
   async connectAndSync(
     deviceId: string,
-    _localSummaryHex: string
+    _localSummaryHex: string,
   ): Promise<{ success: boolean; peerSummaryHex?: string }> {
     this.stats.connectAttempts++;
     const link = FakeBleNetwork.getLink(this.nodeId, deviceId);
@@ -225,7 +232,10 @@ export class FakeTransport implements IBleTransport {
     return true;
   }
 
-  public async receiveFragmentFrom(fromDeviceId: string, fragmentBytesBase64: string): Promise<void> {
+  public async receiveFragmentFrom(
+    fromDeviceId: string,
+    fragmentBytesBase64: string,
+  ): Promise<void> {
     this.stats.bytesReceived += fragmentBytesBase64.length;
     for (const listener of this.fragmentListeners) {
       await listener({ deviceId: fromDeviceId, fragmentBase64: fragmentBytesBase64 });
@@ -260,34 +270,42 @@ export class FakeTransport implements IBleTransport {
 
   on(event: 'neighborDiscovered', callback: (neighbor: BleNeighbor) => void): () => void;
   on(event: 'neighborLost', callback: (event: { deviceId: string }) => void): () => void;
-  on(event: 'rssiSample', callback: (event: { deviceId: string; rssi: number }) => void): () => void;
-  on(event: 'fragmentReceived', callback: (event: { deviceId: string; fragmentBase64: string }) => void): () => void;
+  on(
+    event: 'rssiSample',
+    callback: (event: { deviceId: string; rssi: number }) => void,
+  ): () => void;
+  on(
+    event: 'fragmentReceived',
+    callback: (event: { deviceId: string; fragmentBase64: string }) => void,
+  ): () => void;
   on(event: 'bluetoothState', callback: (enabled: boolean) => void): () => void;
   on(event: string, callback: any): () => void {
     if (event === 'neighborDiscovered') {
       this.neighborDiscoveredListeners.push(callback);
       return () => {
-        this.neighborDiscoveredListeners = this.neighborDiscoveredListeners.filter((c) => c !== callback);
+        this.neighborDiscoveredListeners = this.neighborDiscoveredListeners.filter(
+          c => c !== callback,
+        );
       };
     } else if (event === 'neighborLost') {
       this.neighborLostListeners.push(callback);
       return () => {
-        this.neighborLostListeners = this.neighborLostListeners.filter((c) => c !== callback);
+        this.neighborLostListeners = this.neighborLostListeners.filter(c => c !== callback);
       };
     } else if (event === 'rssiSample') {
       this.rssiListeners.push(callback);
       return () => {
-        this.rssiListeners = this.rssiListeners.filter((c) => c !== callback);
+        this.rssiListeners = this.rssiListeners.filter(c => c !== callback);
       };
     } else if (event === 'fragmentReceived') {
       this.fragmentListeners.push(callback);
       return () => {
-        this.fragmentListeners = this.fragmentListeners.filter((c) => c !== callback);
+        this.fragmentListeners = this.fragmentListeners.filter(c => c !== callback);
       };
     } else if (event === 'bluetoothState') {
       this.btStateListeners.push(callback);
       return () => {
-        this.btStateListeners = this.btStateListeners.filter((c) => c !== callback);
+        this.btStateListeners = this.btStateListeners.filter(c => c !== callback);
       };
     }
     return () => {};
@@ -298,15 +316,17 @@ export class FakeTransport implements IBleTransport {
   }
 
   onNeighborLost(callback: (deviceId: string) => void): () => void {
-    return this.on('neighborLost', (e) => callback(e.deviceId));
+    return this.on('neighborLost', e => callback(e.deviceId));
   }
 
   onRssiSample(callback: (deviceId: string, rssi: number) => void): () => void {
-    return this.on('rssiSample', (e) => callback(e.deviceId, e.rssi));
+    return this.on('rssiSample', e => callback(e.deviceId, e.rssi));
   }
 
-  onPacketFragmentReceived(callback: (deviceId: string, fragmentBase64: string) => void): () => void {
-    return this.on('fragmentReceived', (e) => callback(e.deviceId, e.fragmentBase64));
+  onPacketFragmentReceived(
+    callback: (deviceId: string, fragmentBase64: string) => void,
+  ): () => void {
+    return this.on('fragmentReceived', e => callback(e.deviceId, e.fragmentBase64));
   }
 
   onBluetoothStateChanged(callback: (enabled: boolean) => void): () => void {

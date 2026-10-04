@@ -1,13 +1,5 @@
 import React, { useState } from 'react';
-import {
-  Modal,
-  View,
-  Text,
-  TouchableOpacity,
-  ScrollView,
-  StyleSheet,
-  Switch,
-} from 'react-native';
+import { Modal, View, Text, TouchableOpacity, ScrollView, StyleSheet, Switch } from 'react-native';
 import { colors, layout, spacing, typography } from '../../theme';
 import { useTranslation } from '../../i18n/LanguageContext';
 import { ReadinessEvaluation } from '../../preparedness/readinessScore';
@@ -142,7 +134,7 @@ export const PreparednessModal: React.FC<PreparednessModalProps> = ({
           <View style={styles.card}>
             <Text style={styles.cardTitle}>Preparedness Checklist</Text>
             <View style={styles.checklist}>
-              {evaluation.items.map((item) => (
+              {evaluation.items.map(item => (
                 <View key={item.id} style={styles.checklistItem}>
                   <Text style={styles.checkIcon}>{item.achieved ? '✅' : '❌'}</Text>
                   <View style={styles.checkTextCol}>

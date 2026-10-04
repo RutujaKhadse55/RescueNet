@@ -21,13 +21,13 @@ export class EventLogRepository {
 
     await this.driver.execute(
       `INSERT INTO event_log (id, event_type, details, timestamp) VALUES (?, ?, ?, ?);`,
-      [id, eventType, detailsStr, timestamp]
+      [id, eventType, detailsStr, timestamp],
     );
   }
 
   async getRecentEvents(limit: number = 50): Promise<EventLogRecord[]> {
     const res = await this.driver.execute<EventLogRecord>(
-      `SELECT * FROM event_log ORDER BY timestamp DESC LIMIT ${limit};`
+      `SELECT * FROM event_log ORDER BY timestamp DESC LIMIT ${limit};`,
     );
     return res.rows;
   }

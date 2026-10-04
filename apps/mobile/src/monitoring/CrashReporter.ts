@@ -36,7 +36,11 @@ export class CrashReporter {
     return CrashReporter.instance;
   }
 
-  public initialize(db: DatabaseManager, appVersion: string = '1.0.0', apiUrl: string = 'http://localhost:3000'): void {
+  public initialize(
+    db: DatabaseManager,
+    appVersion: string = '1.0.0',
+    apiUrl: string = 'http://localhost:3000',
+  ): void {
     this.db = db;
     this.appVersion = appVersion;
     this.apiUrl = apiUrl;
@@ -60,15 +64,17 @@ export class CrashReporter {
    */
   public sanitizeErrorMessage(rawText: string): string {
     if (!rawText) return '';
-    return rawText
-      // Redact coordinates: 18.5204, 73.8567
-      .replace(/-?\d{1,3}\.\d{4,8}/g, '[REDACTED_GPS]')
-      // Redact 64-char hex keys
-      .replace(/[a-fA-F0-9]{64}/g, '[REDACTED_HEX_KEY]')
-      // Redact phone numbers (+91...)
-      .replace(/\+?[1-9]\d{9,13}/g, '[REDACTED_PHONE]')
-      // Redact Bearer tokens
-      .replace(/Bearer\s+[A-Za-z0-9\-_.]+/gi, 'Bearer [REDACTED_JWT]');
+    return (
+      rawText
+        // Redact coordinates: 18.5204, 73.8567
+        .replace(/-?\d{1,3}\.\d{4,8}/g, '[REDACTED_GPS]')
+        // Redact 64-char hex keys
+        .replace(/[a-fA-F0-9]{64}/g, '[REDACTED_HEX_KEY]')
+        // Redact phone numbers (+91...)
+        .replace(/\+?[1-9]\d{9,13}/g, '[REDACTED_PHONE]')
+        // Redact Bearer tokens
+        .replace(/Bearer\s+[A-Za-z0-9\-_.]+/gi, 'Bearer [REDACTED_JWT]')
+    );
   }
 
   /**
@@ -93,7 +99,11 @@ export class CrashReporter {
 
     if (this.db) {
       try {
-        await this.db.events.logEvent('crash_report', { id: report.id, message: report.message, isFatal });
+        await this.db.events.logEvent('crash_report', {
+          id: report.id,
+          message: report.message,
+          isFatal,
+        });
       } catch {
         // Fallback in memory
       }

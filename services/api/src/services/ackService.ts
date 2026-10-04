@@ -4,11 +4,7 @@
  * exposes to BLE mesh uplinks & gateways, and queues outbound SMS messages.
  */
 
-import {
-  ICrypto,
-  SodiumCrypto,
-  createAndSignAck,
-} from '@rescuenet/core';
+import { ICrypto, SodiumCrypto, createAndSignAck } from '@rescuenet/core';
 import { db } from '../db/client';
 import { eventBus } from './eventBus';
 
@@ -74,7 +70,7 @@ export class AckService {
         agencyId: 1,
         keyPair,
       },
-      cryptoInstance
+      cryptoInstance,
     );
 
     const meshPacketHex = Buffer.from(ackPacketBytes).toString('hex');
@@ -95,7 +91,7 @@ export class AckService {
         params.etaMinutes ?? 30,
         Buffer.from(ackPacketBytes.subarray(ackPacketBytes.length - 64)),
         Buffer.from(ackPacketBytes),
-      ]
+      ],
     );
 
     // 2. Queue outbound SMS to registered devices in this cluster
@@ -103,7 +99,7 @@ export class AckService {
       `SELECT d.id, d.pubkey FROM cluster_members cm
        JOIN devices d ON d.fp = cm.origin_fp
        WHERE cm.cluster_id = $1;`,
-      [params.clusterId]
+      [params.clusterId],
     );
 
     let smsQueued = false;
@@ -115,7 +111,7 @@ export class AckService {
     await db.query(
       `INSERT INTO sms_outbound (ack_id, to_enc, body, state, created_at)
        VALUES ($1, $2, $3, 'pending', now());`,
-      [ackId, Buffer.from(phoneRecipient), smsBody]
+      [ackId, Buffer.from(phoneRecipient), smsBody],
     );
     smsQueued = true;
 
@@ -139,11 +135,13 @@ export class AckService {
    */
   public async getPendingGatewayOutbox(): Promise<Array<{ ackId: string; meshPacketHex: string }>> {
     const res = await db.query(
-      `SELECT id, mesh_packet FROM acks WHERE delivery IN ('pending', 'seeded_to_gateway') LIMIT 50;`
+      `SELECT id, mesh_packet FROM acks WHERE delivery IN ('pending', 'seeded_to_gateway') LIMIT 50;`,
     );
     return res.rows.map((r: any) => ({
       ackId: r.id,
-      meshPacketHex: Buffer.isBuffer(r.mesh_packet) ? r.mesh_packet.toString('hex') : String(r.mesh_packet),
+      meshPacketHex: Buffer.isBuffer(r.mesh_packet)
+        ? r.mesh_packet.toString('hex')
+        : String(r.mesh_packet),
     }));
   }
 }

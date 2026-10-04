@@ -29,7 +29,10 @@ const runner = new SimulationRunner();
 const outDir = path.resolve(__dirname, '../data');
 const chartsDir = path.resolve(__dirname, '../charts');
 
-async function runTown1000(): Promise<{ summaries: AggregatedMetrics[]; volumeReductionPercent: number }> {
+async function runTown1000(): Promise<{
+  summaries: AggregatedMetrics[];
+  volumeReductionPercent: number;
+}> {
   console.log('\n================================================================');
   console.log('🚀 Executing Scenario: town-1000 (1,000 Nodes, 30 Seeds per Strategy)');
   console.log('================================================================');
@@ -72,12 +75,24 @@ async function runTown1000(): Promise<{ summaries: AggregatedMetrics[]; volumeRe
     summaries.push(summary);
     allRuns.push(...runs);
 
-    console.log(`   ✓ Delivery Rate:    ${summary.deliveryRate.mean}% ± ${summary.deliveryRate.ci95}%`);
-    console.log(`   ✓ Transmissions:    ${Math.round(summary.transmissions.mean).toLocaleString()} ± ${Math.round(summary.transmissions.ci95).toLocaleString()}`);
-    console.log(`   ✓ Traffic Sent:     ${summary.bytesSentMb.mean} MB ± ${summary.bytesSentMb.ci95} MB`);
-    console.log(`   ✓ p95 Latency:      ${summary.latencyP95.mean} s ± ${summary.latencyP95.ci95} s`);
-    console.log(`   ✓ Avg Node Drain:   ${summary.batteryDrainPercent.mean}% ± ${summary.batteryDrainPercent.ci95}%`);
-    console.log(`   ✓ Duplicate Rx:     ${Math.round(summary.duplicateDeliveries.mean).toLocaleString()} ± ${Math.round(summary.duplicateDeliveries.ci95).toLocaleString()}`);
+    console.log(
+      `   ✓ Delivery Rate:    ${summary.deliveryRate.mean}% ± ${summary.deliveryRate.ci95}%`,
+    );
+    console.log(
+      `   ✓ Transmissions:    ${Math.round(summary.transmissions.mean).toLocaleString()} ± ${Math.round(summary.transmissions.ci95).toLocaleString()}`,
+    );
+    console.log(
+      `   ✓ Traffic Sent:     ${summary.bytesSentMb.mean} MB ± ${summary.bytesSentMb.ci95} MB`,
+    );
+    console.log(
+      `   ✓ p95 Latency:      ${summary.latencyP95.mean} s ± ${summary.latencyP95.ci95} s`,
+    );
+    console.log(
+      `   ✓ Avg Node Drain:   ${summary.batteryDrainPercent.mean}% ± ${summary.batteryDrainPercent.ci95}%`,
+    );
+    console.log(
+      `   ✓ Duplicate Rx:     ${Math.round(summary.duplicateDeliveries.mean).toLocaleString()} ± ${Math.round(summary.duplicateDeliveries.ci95).toLocaleString()}`,
+    );
   }
 
   // Calculate measured volume reduction percentage
@@ -86,7 +101,9 @@ async function runTown1000(): Promise<{ summaries: AggregatedMetrics[]; volumeRe
   const reductionPct = Math.round(((floodTx - rescueNetTx) / floodTx) * 1000) / 10;
 
   console.log('\n----------------------------------------------------------------');
-  console.log(`📊 Measured Message Volume Reduction (RescueNet vs Plain Flooding): ${reductionPct}%`);
+  console.log(
+    `📊 Measured Message Volume Reduction (RescueNet vs Plain Flooding): ${reductionPct}%`,
+  );
   console.log('----------------------------------------------------------------\n');
 
   // Export CSV files
@@ -94,7 +111,10 @@ async function runTown1000(): Promise<{ summaries: AggregatedMetrics[]; volumeRe
   CsvExporter.exportAggregatedMetrics(path.join(outDir, 'town1000_summary.csv'), summaries);
 
   // Generate SVG Charts
-  ChartGenerator.generateVolumeChart(path.join(chartsDir, 'message_volume_comparison.svg'), summaries);
+  ChartGenerator.generateVolumeChart(
+    path.join(chartsDir, 'message_volume_comparison.svg'),
+    summaries,
+  );
 
   return { summaries, volumeReductionPercent: reductionPct };
 }
@@ -117,7 +137,7 @@ async function runDensityAnalysis(): Promise<void> {
       durationSec: 1200,
       timeStepSec: 3,
       survivorRatio: 0.85,
-      carrierRatio: 0.10,
+      carrierRatio: 0.1,
       rescuerRatio: 0.03,
       gatewayCount: 4,
       defaultBleRangeM: 30,
@@ -130,7 +150,11 @@ async function runDensityAnalysis(): Promise<void> {
     // 30m range
     const run30 = runner.runBatch('rescuenet_full', { ...baseScenario, defaultBleRangeM: 30 }, 5);
     // 50m range
-    const run50 = runner.runBatch('rescuenet_full', { ...baseScenario, defaultBleRangeM: 50, pathLossExponent: 2.8 }, 5);
+    const run50 = runner.runBatch(
+      'rescuenet_full',
+      { ...baseScenario, defaultBleRangeM: 50, pathLossExponent: 2.8 },
+      5,
+    );
 
     results.push({
       density: d,
@@ -138,7 +162,9 @@ async function runDensityAnalysis(): Promise<void> {
       rate50m: run50.summary.deliveryRate.mean,
     });
 
-    console.log(`   Density ${d} phones/km² -> 30m Range: ${run30.summary.deliveryRate.mean}% | 50m Range: ${run50.summary.deliveryRate.mean}%`);
+    console.log(
+      `   Density ${d} phones/km² -> 30m Range: ${run30.summary.deliveryRate.mean}% | 50m Range: ${run50.summary.deliveryRate.mean}%`,
+    );
   }
 
   // Export CSV
@@ -163,7 +189,7 @@ async function runSparseRural(): Promise<void> {
     durationSec: 3600, // 1 hour
     timeStepSec: 4,
     survivorRatio: 0.85,
-    carrierRatio: 0.10,
+    carrierRatio: 0.1,
     rescuerRatio: 0.04,
     gatewayCount: 3,
     defaultBleRangeM: 60,
@@ -173,11 +199,19 @@ async function runSparseRural(): Promise<void> {
     failureRatePerHour: 0.01,
   };
 
-  const withoutCarriers = runner.runBatch('spray_and_wait', { ...ruralScenario, carrierRatio: 0, rescuerRatio: 0.01 }, 10);
+  const withoutCarriers = runner.runBatch(
+    'spray_and_wait',
+    { ...ruralScenario, carrierRatio: 0, rescuerRatio: 0.01 },
+    10,
+  );
   const withCarriers = runner.runBatch('rescuenet_full', ruralScenario, 10);
 
-  console.log(`   Without Moving Rescuer Carriers: Delivery = ${withoutCarriers.summary.deliveryRate.mean}% (Network Partitioned into Islands)`);
-  console.log(`   With Moving Rescuer Carriers:    Delivery = ${withCarriers.summary.deliveryRate.mean}% (Carriers Bridge Physical Disconnects)`);
+  console.log(
+    `   Without Moving Rescuer Carriers: Delivery = ${withoutCarriers.summary.deliveryRate.mean}% (Network Partitioned into Islands)`,
+  );
+  console.log(
+    `   With Moving Rescuer Carriers:    Delivery = ${withCarriers.summary.deliveryRate.mean}% (Carriers Bridge Physical Disconnects)`,
+  );
 
   const ruralCsv = [
     'scenario,strategy,delivery_rate_mean,delivery_rate_ci95,latency_median_mean,transmissions_mean',
@@ -188,7 +222,10 @@ async function runSparseRural(): Promise<void> {
   fs.writeFileSync(path.join(outDir, 'sparse_rural_gateways.csv'), ruralCsv, 'utf8');
 }
 
-async function updateResultsDoc(summaries: AggregatedMetrics[], reductionPct: number): Promise<void> {
+async function updateResultsDoc(
+  summaries: AggregatedMetrics[],
+  reductionPct: number,
+): Promise<void> {
   const plain = summaries.find(s => s.strategy === 'plain_flooding')!;
   const epidemic = summaries.find(s => s.strategy === 'epidemic_ttl')!;
   const spray = summaries.find(s => s.strategy === 'spray_and_wait')!;
@@ -292,7 +329,7 @@ async function main() {
   console.log('\n✨ Simulation completed successfully.');
 }
 
-main().catch((err) => {
+main().catch(err => {
   console.error('Simulation failure:', err);
   process.exit(1);
 });

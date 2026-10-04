@@ -169,4 +169,3 @@ export class SodiumCrypto implements ICrypto {
     return sodium.crypto_auth(data, key);
   }
 }
-

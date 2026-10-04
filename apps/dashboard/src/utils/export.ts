@@ -21,7 +21,7 @@ export function exportClustersToCsv(clusters: Cluster[]): void {
     'Last Seen',
   ];
 
-  const rows = clusters.map((c) => [
+  const rows = clusters.map(c => [
     c.id,
     c.priority_score.toFixed(2),
     c.priority_band.toUpperCase(),
@@ -38,12 +38,15 @@ export function exportClustersToCsv(clusters: Cluster[]): void {
     c.last_seen,
   ]);
 
-  const csvContent = [headers.join(','), ...rows.map((r) => r.join(','))].join('\n');
+  const csvContent = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
   const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
   const url = URL.createObjectURL(blob);
   const link = document.createElement('a');
   link.setAttribute('href', url);
-  link.setAttribute('download', `rescuenet_triage_export_${new Date().toISOString().slice(0, 10)}.csv`);
+  link.setAttribute(
+    'download',
+    `rescuenet_triage_export_${new Date().toISOString().slice(0, 10)}.csv`,
+  );
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);
@@ -57,8 +60,10 @@ export function exportSituationReport(clusters: Cluster[], stats: OperationalSta
   const printWindow = window.open('', '_blank');
   if (!printWindow) return;
 
-  const criticalClusters = clusters.filter((c) => c.priority_band === 'critical');
-  const assignedCount = clusters.filter((c) => c.state === 'assigned' || c.state === 'en_route').length;
+  const criticalClusters = clusters.filter(c => c.priority_band === 'critical');
+  const assignedCount = clusters.filter(
+    c => c.state === 'assigned' || c.state === 'en_route',
+  ).length;
 
   printWindow.document.write(`
     <!DOCTYPE html>
@@ -128,7 +133,7 @@ export function exportSituationReport(clusters: Cluster[], stats: OperationalSta
           <tbody>
             ${clusters
               .map(
-                (c) => `
+                c => `
               <tr>
                 <td><code>${c.id.slice(0, 8)}...</code></td>
                 <td><strong>${c.priority_score.toFixed(2)}</strong></td>
@@ -139,7 +144,7 @@ export function exportSituationReport(clusters: Cluster[], stats: OperationalSta
                 <td>${c.assigned_team_name || 'Unassigned'}</td>
                 <td>${c.floor_hint || 'N/A'}</td>
               </tr>
-            `
+            `,
               )
               .join('')}
           </tbody>

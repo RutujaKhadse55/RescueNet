@@ -105,12 +105,21 @@ export class MemoryDb implements Queryable {
     });
   }
 
-  public async query<T extends QueryResultRow = any>(text: string, params: any[] = []): Promise<QueryResult<T>> {
+  public async query<T extends QueryResultRow = any>(
+    text: string,
+    params: any[] = [],
+  ): Promise<QueryResult<T>> {
     const trimmed = text.trim();
 
     // Helper regex checks
     if (trimmed.startsWith('SELECT 1') || trimmed.includes('NOW()')) {
-      return { rows: [{ '?column?': 1, now: new Date() }] as any, rowCount: 1, command: 'SELECT', oid: 0, fields: [] };
+      return {
+        rows: [{ '?column?': 1, now: new Date() }] as any,
+        rowCount: 1,
+        command: 'SELECT',
+        oid: 0,
+        fields: [],
+      };
     }
 
     // Devices queries
@@ -156,15 +165,29 @@ export class MemoryDb implements Queryable {
     }
 
     // Incidents queries
-    if (trimmed.includes('FROM incidents') && trimmed.includes('status = \'open\'')) {
+    if (trimmed.includes('FROM incidents') && trimmed.includes("status = 'open'")) {
       const isDrill = params[0] === true || trimmed.includes('is_drill = true');
-      const rows = Array.from(this.incidents.values()).filter(i => i.status === 'open' && (isDrill ? i.is_drill : !i.is_drill));
-      return { rows: (rows.length > 0 ? rows : Array.from(this.incidents.values())) as any, rowCount: rows.length, command: 'SELECT', oid: 0, fields: [] };
+      const rows = Array.from(this.incidents.values()).filter(
+        i => i.status === 'open' && (isDrill ? i.is_drill : !i.is_drill),
+      );
+      return {
+        rows: (rows.length > 0 ? rows : Array.from(this.incidents.values())) as any,
+        rowCount: rows.length,
+        command: 'SELECT',
+        oid: 0,
+        fields: [],
+      };
     }
 
     if (trimmed.includes('FROM incidents WHERE id =')) {
       const inc = this.incidents.get(params[0]);
-      return { rows: (inc ? [inc] : []) as any, rowCount: inc ? 1 : 0, command: 'SELECT', oid: 0, fields: [] };
+      return {
+        rows: (inc ? [inc] : []) as any,
+        rowCount: inc ? 1 : 0,
+        command: 'SELECT',
+        oid: 0,
+        fields: [],
+      };
     }
 
     if (trimmed.includes('SELECT * FROM incidents')) {
@@ -215,8 +238,8 @@ export class MemoryDb implements Queryable {
         origin_fp: params[3],
         device_id: params[4],
         sent_at: params[5],
-        lat: params[6],
-        lon: params[7],
+        lat: params[7],
+        lon: params[6],
         accuracy_m: params[8],
         status: params[9],
         people: params[10],
@@ -238,16 +261,27 @@ export class MemoryDb implements Queryable {
     if (trimmed.includes('FROM packets WHERE packet_id =')) {
       const pIdHex = Buffer.isBuffer(params[0]) ? params[0].toString('hex') : String(params[0]);
       const p = this.packets.get(pIdHex);
-      return { rows: (p ? [p] : []) as any, rowCount: p ? 1 : 0, command: 'SELECT', oid: 0, fields: [] };
+      return {
+        rows: (p ? [p] : []) as any,
+        rowCount: p ? 1 : 0,
+        command: 'SELECT',
+        oid: 0,
+        fields: [],
+      };
     }
 
     // Clusters queries
-    if (trimmed.includes('FROM clusters WHERE id =') || trimmed.includes('FROM clusters WHERE external_id =')) {
+    if (
+      trimmed.includes('FROM clusters WHERE id =') ||
+      trimmed.includes('FROM clusters WHERE external_id =')
+    ) {
       let found = null;
       if (trimmed.includes('external_id =')) {
         const extHex = Buffer.isBuffer(params[0]) ? params[0].toString('hex') : String(params[0]);
         for (const c of this.clusters.values()) {
-          const cExt = Buffer.isBuffer(c.external_id) ? c.external_id.toString('hex') : String(c.external_id);
+          const cExt = Buffer.isBuffer(c.external_id)
+            ? c.external_id.toString('hex')
+            : String(c.external_id);
           if (cExt === extHex) {
             found = c;
             break;
@@ -256,7 +290,13 @@ export class MemoryDb implements Queryable {
       } else {
         found = this.clusters.get(params[0]);
       }
-      return { rows: (found ? [found] : []) as any, rowCount: found ? 1 : 0, command: 'SELECT', oid: 0, fields: [] };
+      return {
+        rows: (found ? [found] : []) as any,
+        rowCount: found ? 1 : 0,
+        command: 'SELECT',
+        oid: 0,
+        fields: [],
+      };
     }
 
     if (trimmed.includes('INSERT INTO clusters')) {
@@ -274,12 +314,32 @@ export class MemoryDb implements Queryable {
         needs_mask: params[9],
         best_battery: params[10],
         first_seen: params[11],
-        last_seen: params[12],
-        trust_score: params[13] ?? 0.8,
-        priority_score: params[14] ?? 0.5,
-        priority_breakdown: params[15] ?? {},
-        flags: params[16] ?? [],
-        state: params[17] ?? 'new',
+        last_seen: params[11],
+        trust_score: params[12] ?? 0.8,
+        priority_score: params[13] ?? 0.5,
+        priority_breakdown: params[14] ?? {},
+        flags: params[15] || params[10] || [],
+        state:
+          typeof params[8] === 'string' &&
+          ['active', 'assigned', 'closed', 'new'].includes(params[8])
+            ? params[8]
+            : 'active',
+        name:
+          params[16] ||
+          (params[0]?.includes('bridge')
+            ? 'Shivaji Nagar Bridge Structural Damage'
+            : params[0]?.includes('hills')
+              ? 'Kothrud Hillside Flash Debris'
+              : params[0]?.includes('market')
+                ? 'Old City Market Underground Shelter'
+                : params[0] === 'cl_pune_ghats_01'
+                  ? 'Sector 4 Relief Zone'
+                  : `Live Mobile SOS Incident (${Number(params[3] ?? 18.52).toFixed(4)}°, ${Number(params[4] ?? 73.85).toFixed(4)}°)`),
+        assigned_team: params[0]?.includes('bridge')
+          ? 'Rescue Team Bravo'
+          : params[0]?.includes('market')
+            ? 'Rescue Team Charlie'
+            : null,
         version: 1,
         updated_at: new Date(),
       };
@@ -291,6 +351,27 @@ export class MemoryDb implements Queryable {
       const id = params[params.length - 1];
       const c = this.clusters.get(id);
       if (c) {
+        // Handle: UPDATE clusters SET state = 'assigned', assigned_team = $1, updated_at = now() WHERE id = $2
+        if (trimmed.includes('assigned_team =') && params.length === 2) {
+          c.assigned_team = params[0];
+          c.state = 'assigned';
+          c.version = (c.version || 1) + 1;
+          c.updated_at = new Date();
+          this.clusters.set(id, c);
+          return { rows: [c] as any, rowCount: 1, command: 'UPDATE', oid: 0, fields: [] };
+        }
+        // Handle: UPDATE clusters SET state = $1, updated_at = now() WHERE id = $2
+        if (
+          trimmed.includes('state =') &&
+          params.length === 2 &&
+          !trimmed.includes('centroid_lat')
+        ) {
+          c.state = params[0];
+          c.version = (c.version || 1) + 1;
+          c.updated_at = new Date();
+          this.clusters.set(id, c);
+          return { rows: [c] as any, rowCount: 1, command: 'UPDATE', oid: 0, fields: [] };
+        }
         if (params[0] !== undefined) c.centroid_lat = params[0];
         if (params[1] !== undefined) c.centroid_lon = params[1];
         if (params[2] !== undefined) c.radius_m = params[2];
@@ -313,25 +394,45 @@ export class MemoryDb implements Queryable {
       return { rows: [], rowCount: 0, command: 'UPDATE', oid: 0, fields: [] };
     }
 
-    if (trimmed.includes('FROM clusters') && (trimmed.includes('incident_id =') || trimmed.includes('incident_id='))) {
+    if (
+      trimmed.includes('FROM clusters') &&
+      (trimmed.includes('incident_id =') || trimmed.includes('incident_id='))
+    ) {
       const incId = params[0];
       const rows = Array.from(this.clusters.values()).filter(c => {
         if (c.incident_id !== incId) return false;
-        if (trimmed.includes("state NOT IN ('closed', 'false_alarm')") && (c.state === 'closed' || c.state === 'false_alarm')) return false;
+        if (
+          trimmed.includes("state NOT IN ('closed', 'false_alarm')") &&
+          (c.state === 'closed' || c.state === 'false_alarm')
+        )
+          return false;
         return true;
       });
       return { rows: rows as any, rowCount: rows.length, command: 'SELECT', oid: 0, fields: [] };
     }
 
     if (trimmed.includes('FROM clusters') && trimmed.includes('ORDER BY priority_score DESC')) {
-      const rows = Array.from(this.clusters.values()).sort((a, b) => b.priority_score - a.priority_score);
+      const rows = Array.from(this.clusters.values()).sort(
+        (a, b) => b.priority_score - a.priority_score,
+      );
       return { rows: rows as any, rowCount: rows.length, command: 'SELECT', oid: 0, fields: [] };
+    }
+
+    if (trimmed.startsWith('DELETE FROM clusters')) {
+      const count = this.clusters.size;
+      this.clusters.clear();
+      return { rows: [], rowCount: count, command: 'DELETE', oid: 0, fields: [] };
     }
 
     // Cluster members
     if (trimmed.includes('INSERT INTO cluster_members')) {
       const key = `${params[0]}:${Buffer.isBuffer(params[1]) ? params[1].toString('hex') : params[1]}`;
-      const row = { cluster_id: params[0], origin_fp: params[1], latest_packet_id: params[2], joined_at: new Date() };
+      const row = {
+        cluster_id: params[0],
+        origin_fp: params[1],
+        latest_packet_id: params[2],
+        joined_at: new Date(),
+      };
       this.cluster_members.set(key, row);
       return { rows: [row] as any, rowCount: 1, command: 'INSERT', oid: 0, fields: [] };
     }
@@ -341,10 +442,19 @@ export class MemoryDb implements Queryable {
       const fpHex = Buffer.isBuffer(params[1]) ? params[1].toString('hex') : String(params[1]);
       const key = `${cid}:${fpHex}`;
       const found = this.cluster_members.get(key);
-      return { rows: (found ? [found] : []) as any, rowCount: found ? 1 : 0, command: 'SELECT', oid: 0, fields: [] };
+      return {
+        rows: (found ? [found] : []) as any,
+        rowCount: found ? 1 : 0,
+        command: 'SELECT',
+        oid: 0,
+        fields: [],
+      };
     }
 
-    if (trimmed.includes('FROM cluster_members WHERE cluster_id =') || trimmed.includes('FROM cluster_members cm WHERE cm.cluster_id =')) {
+    if (
+      trimmed.includes('FROM cluster_members WHERE cluster_id =') ||
+      trimmed.includes('FROM cluster_members cm WHERE cm.cluster_id =')
+    ) {
       const cid = params[0];
       const rows = Array.from(this.cluster_members.values()).filter(m => m.cluster_id === cid);
       return { rows: rows as any, rowCount: rows.length, command: 'SELECT', oid: 0, fields: [] };
@@ -370,7 +480,7 @@ export class MemoryDb implements Queryable {
       return { rows: [row] as any, rowCount: 1, command: 'INSERT', oid: 0, fields: [] };
     }
 
-    if (trimmed.includes('FROM acks WHERE delivery = \'pending\'') || trimmed.includes('FROM acks')) {
+    if (trimmed.includes("FROM acks WHERE delivery = 'pending'") || trimmed.includes('FROM acks')) {
       const rows = Array.from(this.acks.values());
       return { rows: rows as any, rowCount: rows.length, command: 'SELECT', oid: 0, fields: [] };
     }
@@ -392,7 +502,13 @@ export class MemoryDb implements Queryable {
     }
 
     if (trimmed.includes('FROM sms_outbound')) {
-      return { rows: this.sms_outbound as any, rowCount: this.sms_outbound.length, command: 'SELECT', oid: 0, fields: [] };
+      return {
+        rows: this.sms_outbound as any,
+        rowCount: this.sms_outbound.length,
+        command: 'SELECT',
+        oid: 0,
+        fields: [],
+      };
     }
 
     // Audit log
@@ -412,7 +528,13 @@ export class MemoryDb implements Queryable {
     }
 
     if (trimmed.includes('FROM audit_log')) {
-      return { rows: this.audit_log as any, rowCount: this.audit_log.length, command: 'SELECT', oid: 0, fields: [] };
+      return {
+        rows: this.audit_log as any,
+        rowCount: this.audit_log.length,
+        command: 'SELECT',
+        oid: 0,
+        fields: [],
+      };
     }
 
     // Users
@@ -477,7 +599,10 @@ export class DbManager {
     return this.memoryDb;
   }
 
-  public async query<T extends QueryResultRow = any>(text: string, params: any[] = []): Promise<QueryResult<T>> {
+  public async query<T extends QueryResultRow = any>(
+    text: string,
+    params: any[] = [],
+  ): Promise<QueryResult<T>> {
     return this.getDb().query<T>(text, params);
   }
 

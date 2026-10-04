@@ -16,7 +16,7 @@ async function start() {
   }
 }
 
-start().catch((err) => {
+start().catch(err => {
   console.error('Fatal error starting RescueNet API:', err);
   process.exit(1);
 });

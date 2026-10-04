@@ -15,10 +15,10 @@ describe('RescueNet Mobile Shell & Navigation', () => {
     // Wait until async initializeApp finishes and renders full UI
     for (let i = 0; i < 30; i++) {
       await act(async () => {
-        await new Promise((r) => setTimeout(r, 60));
+        await new Promise(r => setTimeout(r, 60));
       });
-      const textNodes = component!.root.findAll((node) => typeof node.props.children === 'string');
-      const textValues = textNodes.map((t) => t.props.children).join(' ');
+      const textNodes = component!.root.findAll(node => typeof node.props.children === 'string');
+      const textValues = textNodes.map(t => t.props.children).join(' ');
       if (!textValues.includes('Initializing RescueNet Mesh')) {
         break;
       }
@@ -34,8 +34,8 @@ describe('RescueNet Mobile Shell & Navigation', () => {
     const component = await renderApp();
     const root = component.root;
 
-    const textNodes = root.findAll((node) => typeof node.props.children === 'string');
-    const textValues = textNodes.map((t) => t.props.children).join(' ');
+    const textNodes = root.findAll(node => typeof node.props.children === 'string');
+    const textValues = textNodes.map(t => t.props.children).join(' ');
 
     expect(textValues).toContain('SOS EMERGENCY');
     expect(textValues).toContain('BLE MESH ACTIVE');
@@ -46,28 +46,28 @@ describe('RescueNet Mobile Shell & Navigation', () => {
     const root = component.root;
 
     const allTabs = root.findAll(
-      (node) => node.props.accessibilityRole === 'tab' && typeof node.props.onPress === 'function'
+      node => node.props.accessibilityRole === 'tab' && typeof node.props.onPress === 'function',
     );
     const labels = Array.from(
-      new Set(allTabs.map((t) => t.props.accessibilityLabel as string).filter(Boolean))
+      new Set(allTabs.map(t => t.props.accessibilityLabel as string).filter(Boolean)),
     );
     expect(labels.length).toBe(5);
 
     // Verify accessibility labels for TalkBack
-    expect(labels.some((l) => l.includes('Home tab'))).toBe(true);
-    expect(labels.some((l) => l.includes('Nearby tab'))).toBe(true);
-    expect(labels.some((l) => l.includes('Chat tab'))).toBe(true);
-    expect(labels.some((l) => l.includes('Map tab'))).toBe(true);
-    expect(labels.some((l) => l.includes('Settings tab'))).toBe(true);
+    expect(labels.some(l => l.includes('Home tab'))).toBe(true);
+    expect(labels.some(l => l.includes('Nearby tab'))).toBe(true);
+    expect(labels.some(l => l.includes('Chat tab'))).toBe(true);
+    expect(labels.some(l => l.includes('Map tab'))).toBe(true);
+    expect(labels.some(l => l.includes('Settings tab'))).toBe(true);
   });
 
   test('allows navigating between tabs', async () => {
     const component = await renderApp();
     const root = component.root;
 
-    const tabs = root.findAll((node) => node.props.accessibilityRole === 'tab');
-    const settingsTab = tabs.find((t) =>
-      Boolean(t.props.accessibilityLabel && t.props.accessibilityLabel.includes('Settings tab'))
+    const tabs = root.findAll(node => node.props.accessibilityRole === 'tab');
+    const settingsTab = tabs.find(t =>
+      Boolean(t.props.accessibilityLabel && t.props.accessibilityLabel.includes('Settings tab')),
     );
     expect(settingsTab).toBeDefined();
 
@@ -75,8 +75,8 @@ describe('RescueNet Mobile Shell & Navigation', () => {
       settingsTab!.props.onPress();
     });
 
-    const textNodes = root.findAll((node) => typeof node.props.children === 'string');
-    const textValues = textNodes.map((t) => t.props.children).join(' ');
+    const textNodes = root.findAll(node => typeof node.props.children === 'string');
+    const textValues = textNodes.map(t => t.props.children).join(' ');
     expect(textValues).toContain('Danger Zone');
   });
 
@@ -85,9 +85,9 @@ describe('RescueNet Mobile Shell & Navigation', () => {
     const root = component.root;
 
     const bypassBtn = root.find(
-      (node) =>
+      node =>
         node.props.accessibilityLabel &&
-        node.props.accessibilityLabel.includes('Single-Tap Immediate Emergency Broadcast')
+        node.props.accessibilityLabel.includes('Single-Tap Immediate Emergency Broadcast'),
     );
     expect(bypassBtn).toBeDefined();
 
@@ -95,8 +95,8 @@ describe('RescueNet Mobile Shell & Navigation', () => {
       bypassBtn.props.onPress();
     });
 
-    const textNodes = root.findAll((node) => typeof node.props.children === 'string');
-    const textValues = textNodes.map((t) => t.props.children).join(' ');
+    const textNodes = root.findAll(node => typeof node.props.children === 'string');
+    const textValues = textNodes.map(t => t.props.children).join(' ');
     expect(textValues).toContain('SOS BROADCASTED TO MESH');
   });
 });

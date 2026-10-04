@@ -44,14 +44,18 @@ async function runSmsLoadTest() {
   console.log('🚀 RescueNet SMS Ingestion Load Test (Phase 16)');
   console.log(`   Target:       ${options.apiUrl}`);
   console.log(`   Messages:     ${options.totalMessages.toLocaleString()} Emergency SMS`);
-  console.log(`   Duration:     ${options.durationSeconds} seconds (${(options.totalMessages / options.durationSeconds).toFixed(2)} SMS/sec sustained)`);
+  console.log(
+    `   Duration:     ${options.durationSeconds} seconds (${(options.totalMessages / options.durationSeconds).toFixed(2)} SMS/sec sustained)`,
+  );
   console.log('================================================================\n');
 
   const sodium = await SodiumCrypto.getInstance();
   const testKeyPair = await sodium.generateKeyPair();
 
   // 1. Pre-generate 1,000 realistic SMS payloads (50% Base64 binary packets, 50% Plain human text)
-  console.log('⏳ Pre-generating 1,000 emergency SMS payloads with valid cryptographic signatures...');
+  console.log(
+    '⏳ Pre-generating 1,000 emergency SMS payloads with valid cryptographic signatures...',
+  );
   const payloads: { from: string; body: string; timestamp: number }[] = [];
 
   for (let i = 0; i < options.totalMessages; i++) {
@@ -79,7 +83,7 @@ async function runSmsLoadTest() {
           altitudeMeters: 50,
         },
         null,
-        sodium
+        sodium,
       );
       payloads.push({ from: phone, body: encoded, timestamp: Math.floor(Date.now() / 1000) });
     } else {
@@ -98,7 +102,9 @@ async function runSmsLoadTest() {
   const startTime = Date.now();
   const delayBetweenRequestsMs = (options.durationSeconds * 1000) / options.totalMessages;
 
-  console.log(`\n⏳ Streaming SMS ingestion load... (Pacing: ~${delayBetweenRequestsMs.toFixed(1)} ms between requests)`);
+  console.log(
+    `\n⏳ Streaming SMS ingestion load... (Pacing: ~${delayBetweenRequestsMs.toFixed(1)} ms between requests)`,
+  );
 
   for (let i = 0; i < payloads.length; i++) {
     const p = payloads[i]!;
@@ -109,10 +115,7 @@ async function runSmsLoadTest() {
       provider: 'load_test_suite',
     });
 
-    const hmacSig = crypto
-      .createHmac('sha256', options.secret)
-      .update(bodyJson)
-      .digest('hex');
+    const hmacSig = crypto.createHmac('sha256', options.secret).update(bodyJson).digest('hex');
 
     const reqStart = Date.now();
     try {
@@ -141,35 +144,44 @@ async function runSmsLoadTest() {
     }
 
     if (!options.fastMode && delayBetweenRequestsMs > 0) {
-      await new Promise((resolve) => setTimeout(resolve, delayBetweenRequestsMs));
+      await new Promise(resolve => setTimeout(resolve, delayBetweenRequestsMs));
     }
 
     if ((i + 1) % 100 === 0 || i === payloads.length - 1) {
-      process.stdout.write(`   Sent ${i + 1}/${options.totalMessages} (${successfulRequests} OK, ${failedRequests} Fail)...\r`);
+      process.stdout.write(
+        `   Sent ${i + 1}/${options.totalMessages} (${successfulRequests} OK, ${failedRequests} Fail)...\r`,
+      );
     }
   }
 
   const totalTimeSeconds = (Date.now() - startTime) / 1000;
   latenciesMs.sort((a, b) => a - b);
-  const medianLatency = latenciesMs.length > 0 ? latenciesMs[Math.floor(latenciesMs.length * 0.5)]! : 0;
-  const p95Latency = latenciesMs.length > 0 ? latenciesMs[Math.floor(latenciesMs.length * 0.95)]! : 0;
-  const p99Latency = latenciesMs.length > 0 ? latenciesMs[Math.floor(latenciesMs.length * 0.99)]! : 0;
+  const medianLatency =
+    latenciesMs.length > 0 ? latenciesMs[Math.floor(latenciesMs.length * 0.5)]! : 0;
+  const p95Latency =
+    latenciesMs.length > 0 ? latenciesMs[Math.floor(latenciesMs.length * 0.95)]! : 0;
+  const p99Latency =
+    latenciesMs.length > 0 ? latenciesMs[Math.floor(latenciesMs.length * 0.99)]! : 0;
 
   console.log('\n\n================================================================');
   console.log('📊 RESCUENET SMS LOAD TEST RESULTS');
   console.log('================================================================');
   console.log(`Total Transmitted:    ${payloads.length.toLocaleString()} SMS`);
-  console.log(`Successful Ingested:  ${successfulRequests.toLocaleString()} (${((successfulRequests / payloads.length) * 100).toFixed(1)}%)`);
+  console.log(
+    `Successful Ingested:  ${successfulRequests.toLocaleString()} (${((successfulRequests / payloads.length) * 100).toFixed(1)}%)`,
+  );
   console.log(`Failed / Rejected:    ${failedRequests.toLocaleString()}`);
   console.log(`Total Duration:       ${totalTimeSeconds.toFixed(2)} seconds`);
-  console.log(`Achieved Throughput:  ${(payloads.length / totalTimeSeconds).toFixed(2)} SMS/second`);
+  console.log(
+    `Achieved Throughput:  ${(payloads.length / totalTimeSeconds).toFixed(2)} SMS/second`,
+  );
   console.log(`Median Latency:       ${medianLatency} ms`);
   console.log(`p95 Latency:          ${p95Latency} ms`);
   console.log(`p99 Latency:          ${p99Latency} ms`);
   console.log('================================================================\n');
 }
 
-runSmsLoadTest().catch((err) => {
+runSmsLoadTest().catch(err => {
   console.error('Load test runner failed:', err);
   process.exit(1);
 });

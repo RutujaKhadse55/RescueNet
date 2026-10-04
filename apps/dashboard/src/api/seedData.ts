@@ -155,7 +155,7 @@ export const SEED_CLUSTERS: Cluster[] = [
       severityWeighted: 0.35, // 0.35 * 1.0
       survivorCountWeighted: 0.15, // 0.25 * 0.6
       timeSinceLastSeenWeighted: 0.14, // 0.15 * 0.93
-      declaredNeedsWeighted: 0.10, // 0.15 * 0.7
+      declaredNeedsWeighted: 0.1, // 0.15 * 0.7
       locationUncertaintyDeduction: -0.02, // -0.10 * 0.2
     },
     flags: ['large_group', 'water_rising'],
@@ -237,7 +237,7 @@ export const SEED_CLUSTERS: Cluster[] = [
         id: 'ts_03',
         cluster_id: '55555555-5555-5555-5555-555555555501',
         signal_type: 'hop_plausibility',
-        score: 0.90,
+        score: 0.9,
         passed: true,
         details: 'Average hop count 2.4 meets realistic physical distance propagation bounds.',
       },
@@ -550,5 +550,5 @@ export const DEFAULT_PRIORITY_WEIGHTS: PriorityWeightsConfig = {
   survivorCount: 0.25,
   timeSinceLastSeen: 0.15,
   declaredNeeds: 0.15,
-  locationUncertainty: -0.10,
+  locationUncertainty: -0.1,
 };

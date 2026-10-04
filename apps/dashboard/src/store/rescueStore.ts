@@ -9,7 +9,7 @@ export type SosStatus = 'idle' | 'sending' | 'sent' | 'assigned' | 'acknowledged
 
 export interface ChatMessage {
   id: string;
-  sender: 'survivor' | 'nearby' | 'rescuer';
+  sender: 'survivor' | 'nearby' | 'rescuer' | 'dispatcher';
   senderName: string;
   text: string;
   timestamp: string;
@@ -90,149 +90,17 @@ interface RescueState {
   selectPerson: (personId: string | null) => void;
   startNavigation: () => void;
   stepNavigation: () => void;
-  sendRescuerMessage: (text: string, senderRole?: 'rescuer' | 'survivor') => void;
+  sendRescuerMessage: (text: string, senderRole?: 'rescuer' | 'survivor' | 'dispatcher') => void;
   addSosIncident: (incident: Partial<SosIncident>) => void;
+  syncChatFromBackend: () => Promise<void>;
+  syncClustersFromBackend: () => Promise<void>;
+  seedSimulation: () => Promise<void>;
+  cleanSimulation: () => Promise<void>;
+  simulateDisasterSos: (zoneName: string, lat: number, lon: number, peopleCount: number) => void;
   resetDemo: () => void;
 }
 
-const INITIAL_SOS_LIST: SosIncident[] = [
-  {
-    id: 'SOS #1024',
-    survivorName: 'Rohan Sharma & 3 others',
-    lat: 18.5204,
-    lon: 73.8567,
-    nearbyCount: 4,
-    urgency: 'Emergency',
-    timeReceived: '3 min ago',
-    status: 'Pending',
-    assignedTeam: null,
-    acknowledged: false,
-    clusterRadiusMeters: 45,
-    notes: 'Structural collapse on ground floor. 4 survivors trapped. Medical aid & stretcher needed.',
-    clusterMembers: [
-      {
-        id: 'p-1024-1',
-        name: 'Rohan Sharma (Beacon Lead)',
-        condition: 'Trapped under rubble, severe leg fracture',
-        distanceMeters: 0,
-        lat: 18.5204,
-        lon: 73.8567,
-        phone: '+91 98220 11442',
-        emergencyNeeds: ['First Aid', 'Stretcher'],
-        battery: 68,
-      },
-      {
-        id: 'p-1024-2',
-        name: 'Priya Patil',
-        condition: 'Injured right arm, conscious near entrance',
-        distanceMeters: 25,
-        lat: 18.5206,
-        lon: 73.8569,
-        phone: '+91 98220 33881',
-        emergencyNeeds: ['First Aid', 'Water'],
-        battery: 82,
-      },
-      {
-        id: 'p-1024-3',
-        name: 'Amit Deshmukh',
-        condition: 'Trapped under concrete beam, respiratory distress',
-        distanceMeters: 38,
-        lat: 18.5202,
-        lon: 73.8564,
-        phone: '+91 98220 55119',
-        emergencyNeeds: ['Oxygen', 'Heavy Lifting'],
-        battery: 45,
-      },
-      {
-        id: 'p-1024-4',
-        name: 'Sunil Kulkarni (Elderly)',
-        condition: 'Mobility impaired, safe on elevated platform',
-        distanceMeters: 42,
-        lat: 18.5203,
-        lon: 73.8563,
-        phone: '+91 98220 77220',
-        emergencyNeeds: ['Evacuation Assist'],
-        battery: 31,
-      },
-    ],
-  },
-  {
-    id: 'SOS #1021',
-    survivorName: 'Rahul Deshmukh & 2 others',
-    lat: 18.5245,
-    lon: 73.8522,
-    nearbyCount: 3,
-    urgency: 'Emergency',
-    timeReceived: '14 min ago',
-    status: 'Assigned',
-    assignedTeam: 'Rescue Team Bravo',
-    acknowledged: true,
-    clusterRadiusMeters: 40,
-    notes: 'Submerged basement parking. Rising water level (3.5 ft). Infant on site.',
-    clusterMembers: [
-      {
-        id: 'p-1021-1',
-        name: 'Rahul Deshmukh',
-        condition: 'Trapped in submerged vehicle, hypothermia risk',
-        distanceMeters: 0,
-        lat: 18.5245,
-        lon: 73.8522,
-        phone: '+91 97650 22119',
-        emergencyNeeds: ['Boat', 'Warmth'],
-        battery: 28,
-      },
-      {
-        id: 'p-1021-2',
-        name: 'Deepak Shinde',
-        condition: 'Stranded on car roof, non-swimmer',
-        distanceMeters: 18,
-        lat: 18.5247,
-        lon: 73.8524,
-        phone: '+91 97650 33882',
-        emergencyNeeds: ['Life Jacket'],
-        battery: 54,
-      },
-      {
-        id: 'p-1021-3',
-        name: 'Kavita Rao & Infant',
-        condition: 'Maternal distress, high water level',
-        distanceMeters: 32,
-        lat: 18.5243,
-        lon: 73.8520,
-        phone: '+91 97650 44990',
-        emergencyNeeds: ['Infant Care', 'Evacuation'],
-        battery: 40,
-      },
-    ],
-  },
-  {
-    id: 'SOS #1019',
-    survivorName: 'Sunita Patil',
-    lat: 18.5178,
-    lon: 73.8611,
-    nearbyCount: 1,
-    urgency: 'Stable',
-    timeReceived: '50 min ago',
-    status: 'Resolved',
-    assignedTeam: 'Rescue Team Charlie',
-    acknowledged: true,
-    clusterRadiusMeters: 25,
-    notes: 'Elderly citizen evacuated successfully to relief tent.',
-    clusterMembers: [
-      {
-        id: 'p-1019-1',
-        name: 'Sunita Patil',
-        condition: 'Safe in relief shelter, medical checkup done',
-        distanceMeters: 0,
-        lat: 18.5178,
-        lon: 73.8611,
-        phone: '+91 98224 88112',
-        emergencyNeeds: ['Safe'],
-        battery: 95,
-      },
-    ],
-  },
-];
+const INITIAL_SOS_LIST: SosIncident[] = [];
 
 const INITIAL_TEAMS: RescueTeam[] = [
   {
@@ -248,8 +116,8 @@ const INITIAL_TEAMS: RescueTeam[] = [
     name: 'Rescue Team Bravo',
     lead: 'Lt. Sneha Joshi',
     members: 4,
-    status: 'Deployed',
-    currentSosId: 'SOS #1021',
+    status: 'Available',
+    currentSosId: null,
     vehicle: 'Amphibious Response Unit (AR-04)',
   },
   {
@@ -262,45 +130,29 @@ const INITIAL_TEAMS: RescueTeam[] = [
   },
 ];
 
-const INITIAL_RESCUER_CHAT: ChatMessage[] = [
-  {
-    id: 'r1',
-    sender: 'rescuer',
-    senderName: 'Rescue Team Alpha',
-    text: 'We have received your SOS. Stay at your current location if safe.',
-    timestamp: '14:20',
-    target: 'rescuer',
-  },
-  {
-    id: 'r2',
-    sender: 'survivor',
-    senderName: 'Rohan Sharma (Survivor A)',
-    text: 'We are near the main entrance under the collapsed stairwell.',
-    timestamp: '14:21',
-    target: 'rescuer',
-  },
-];
+const INITIAL_RESCUER_CHAT: ChatMessage[] = [];
 
 export const useRescueStore = create<RescueState>((set, get) => ({
   // Defaults to Admin / Control Center
   currentRole: 'admin',
-  setRole: (role) => set({ currentRole: role }),
+  setRole: role => set({ currentRole: role }),
 
   adminNav: 'requests',
-  setAdminNav: (nav) => set({ adminNav: nav }),
+  setAdminNav: nav => set({ adminNav: nav }),
 
   rescuerNav: 'cases',
-  setRescuerNav: (nav) => set({ rescuerNav: nav }),
+  setRescuerNav: nav => set({ rescuerNav: nav }),
 
   // Incident & Admin State
   sosList: INITIAL_SOS_LIST,
   teams: INITIAL_TEAMS,
-  selectedSosId: 'SOS #1024',
+  selectedSosId: null,
   selectedPersonId: null,
   showIndividualPins: true,
   showClusterBoundaries: true,
-  toggleIndividualPins: () => set((state) => ({ showIndividualPins: !state.showIndividualPins })),
-  toggleClusterBoundaries: () => set((state) => ({ showClusterBoundaries: !state.showClusterBoundaries })),
+  toggleIndividualPins: () => set(state => ({ showIndividualPins: !state.showIndividualPins })),
+  toggleClusterBoundaries: () =>
+    set(state => ({ showClusterBoundaries: !state.showClusterBoundaries })),
 
   // Rescuer State
   rescuerLocation: { lat: 18.5235, lon: 73.8595 },
@@ -310,14 +162,17 @@ export const useRescueStore = create<RescueState>((set, get) => ({
   rescuerMessages: INITIAL_RESCUER_CHAT,
 
   assignTeam: (sosId, teamName) => {
-    set((state) => {
-      const updatedSos = state.sosList.map((s) =>
+    set(state => {
+      const updatedSos = state.sosList.map(s =>
         s.id === sosId ? { ...s, assignedTeam: teamName, status: 'Assigned' as const } : s,
       );
 
-      const updatedTeams = state.teams.map((t) =>
+      const updatedTeams = state.teams.map(t =>
         t.name === teamName ? { ...t, status: 'Deployed' as const, currentSosId: sosId } : t,
       );
+
+      // Find the raw cluster ID from sosList to call backend
+      const incident = state.sosList.find(s => s.id === sosId);
 
       // Notify survivor over shared chat endpoint
       if (typeof window !== 'undefined') {
@@ -332,6 +187,32 @@ export const useRescueStore = create<RescueState>((set, get) => ({
             content: `🚨 ${teamName} has been assigned to your cluster! We are en route with rescue gear. Maintain your position and conserve battery.`,
           }),
         }).catch(() => {});
+
+        // Persist assignment to backend: try cluster IDs derived from sosId
+        // sosId looks like "SOS #1234" → we need the cluster's backend ID
+        // We'll call /v1/clusters to find the cluster matching this incident's lat/lon
+        if (incident) {
+          fetch('/v1/clusters')
+            .then(r => r.json())
+            .then((clusters: any[]) => {
+              // Find cluster whose centroid matches this incident (within 10m)
+              const match = clusters.find((c: any) => {
+                const clat = Number(c.centroid_lat ?? c.lat);
+                const clon = Number(c.centroid_lon ?? c.lon);
+                const dlat = Math.abs(clat - incident.lat);
+                const dlon = Math.abs(clon - incident.lon);
+                return dlat < 0.001 && dlon < 0.001;
+              });
+              if (match) {
+                fetch(`/v1/clusters/${match.id}/set-team`, {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ teamName }),
+                }).catch(() => {});
+              }
+            })
+            .catch(() => {});
+        }
       }
 
       const dispatchChat: ChatMessage = {
@@ -351,9 +232,9 @@ export const useRescueStore = create<RescueState>((set, get) => ({
     });
   },
 
-  acknowledgeSos: (sosId) => {
-    set((state) => {
-      const updatedSos = state.sosList.map((s) =>
+  acknowledgeSos: sosId => {
+    set(state => {
+      const updatedSos = state.sosList.map(s =>
         s.id === sosId ? { ...s, acknowledged: true, status: 'In Progress' as const } : s,
       );
 
@@ -373,16 +254,16 @@ export const useRescueStore = create<RescueState>((set, get) => ({
     });
   },
 
-  markResolved: (sosId) => {
-    set((state) => {
-      const updatedSos = state.sosList.map((s) =>
+  markResolved: sosId => {
+    set(state => {
+      const updatedSos = state.sosList.map(s =>
         s.id === sosId ? { ...s, status: 'Resolved' as const } : s,
       );
 
-      const target = state.sosList.find((s) => s.id === sosId);
+      const target = state.sosList.find(s => s.id === sosId);
       const teamNameToFree = target?.assignedTeam;
 
-      const updatedTeams = state.teams.map((t) =>
+      const updatedTeams = state.teams.map(t =>
         t.name === teamNameToFree ? { ...t, status: 'Available' as const, currentSosId: null } : t,
       );
 
@@ -395,15 +276,15 @@ export const useRescueStore = create<RescueState>((set, get) => ({
     });
   },
 
-  selectSos: (sosId) => set({ selectedSosId: sosId, selectedPersonId: null }),
-  selectPerson: (personId) => set({ selectedPersonId: personId }),
+  selectSos: sosId => set({ selectedSosId: sosId, selectedPersonId: null }),
+  selectPerson: personId => set({ selectedPersonId: personId }),
 
   startNavigation: () => {
     set({ isNavigating: true });
   },
 
   stepNavigation: () => {
-    set((state) => {
+    set(state => {
       if (!state.isNavigating) return state;
       const nextDist = Math.max(0, state.navDistanceRemaining - 90);
       const nextEta = Math.max(0, Math.ceil(nextDist / 120));
@@ -419,45 +300,360 @@ export const useRescueStore = create<RescueState>((set, get) => ({
   },
 
   sendRescuerMessage: (text, senderRole) => {
-    const role = senderRole || (get().currentRole === 'rescuer' ? 'rescuer' : 'survivor');
+    const role = senderRole || (get().currentRole === 'rescuer' ? 'rescuer' : 'dispatcher');
+    const activeSos = get().sosList.find(s => s.id === get().selectedSosId) || get().sosList[0];
     const newMsg: ChatMessage = {
       id: `msg_${Date.now()}`,
       sender: role,
-      senderName: role === 'rescuer' ? 'Rescue Team Alpha' : 'Rohan Sharma',
+      senderName:
+        role === 'rescuer'
+          ? 'NDRF Tactical Team Alpha'
+          : role === 'dispatcher'
+            ? 'NDRF Command Dispatcher'
+            : 'Survivor',
       text,
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       target: 'rescuer',
     };
-    set((state) => ({ rescuerMessages: [...state.rescuerMessages, newMsg] }));
+    set(state => ({ rescuerMessages: [...state.rescuerMessages, newMsg] }));
 
+    if (typeof window !== 'undefined') {
+      // Send to fallback + dynamically discovered cluster IDs so APK receives it regardless of cluster
+      const postChat = (conversationId: string) =>
+        fetch('/v1/chat/messages', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            conversationId,
+            senderFp:
+              role === 'rescuer'
+                ? 'team_alpha'
+                : role === 'dispatcher'
+                  ? 'dispatcher_hq'
+                  : 'survivor_node',
+            senderName: newMsg.senderName,
+            senderRole: role === 'dispatcher' ? 'rescuer' : role,
+            recipientFp: 'broadcast',
+            content: text,
+          }),
+        }).catch(() => {});
+
+      // Always post to the fallback conversation and active cluster
+      postChat('cl_pune_ghats_01');
+      if (activeSos) {
+        // Also look up real backend cluster ID via the sosList notes
+        fetch('/v1/clusters')
+          .then(r => r.json())
+          .then((clusters: any[]) => {
+            clusters.forEach((c: any) => {
+              const clat = Number(c.centroid_lat ?? c.lat ?? 0);
+              const clon = Number(c.centroid_lon ?? c.lon ?? 0);
+              const dlat = Math.abs(clat - activeSos.lat);
+              const dlon = Math.abs(clon - activeSos.lon);
+              if (dlat < 0.002 && dlon < 0.002 && c.id !== 'cl_pune_ghats_01') {
+                postChat(c.id);
+              }
+            });
+          })
+          .catch(() => {});
+      }
+    }
+  },
+
+  syncChatFromBackend: async () => {
+    try {
+      const res = await fetch('/v1/chat/messages?conversationId=all');
+      if (res.ok) {
+        const data = await res.json();
+        if (Array.isArray(data.messages)) {
+          if (data.messages.length === 0) {
+            if (get().rescuerMessages.length > 0) {
+              set({ rescuerMessages: [] });
+            }
+          } else {
+            const current = get().rescuerMessages;
+            const currentIds = new Set(current.map(m => m.id));
+            const newOnes = data.messages
+              .filter((m: any) => !currentIds.has(m.id))
+              .map((m: any) => ({
+                id: m.id,
+                sender: (m.senderRole === 'rescuer' ? 'rescuer' : 'survivor') as
+                  'rescuer' | 'survivor',
+                senderName:
+                  m.senderName ||
+                  (m.senderRole === 'rescuer' ? 'NDRF Rescue Team Alpha' : 'Survivor'),
+                text: m.content,
+                timestamp: new Date(m.timestamp || Date.now()).toLocaleTimeString([], {
+                  hour: '2-digit',
+                  minute: '2-digit',
+                }),
+                target: 'rescuer' as const,
+              }));
+            if (newOnes.length > 0) {
+              set({ rescuerMessages: [...current, ...newOnes] });
+            }
+          }
+        }
+      }
+    } catch {
+      // offline / mock mode
+    }
+  },
+
+  syncClustersFromBackend: async () => {
+    try {
+      // Also check simulation peers to attach realistic individual member pins
+      let simPeers: any[] = [];
+      try {
+        const pRes = await fetch('/v1/simulation/peers');
+        if (pRes.ok) {
+          const pData = await pRes.json();
+          if (pData.active && Array.isArray(pData.peers)) {
+            simPeers = pData.peers;
+          }
+        }
+      } catch {}
+
+      const res = await fetch('/v1/clusters');
+      if (res.ok) {
+        const clusters = await res.json();
+        if (Array.isArray(clusters)) {
+          if (clusters.length === 0 && simPeers.length === 0) {
+            // Cleaned state - remove seeded clusters
+            set(state => ({
+              sosList: state.sosList.filter(
+                s => !s.id.includes('ghat') && !s.notes?.includes('Relief Zone'),
+              ),
+            }));
+          } else if (clusters.length > 0) {
+            clusters.forEach((c: any) => {
+              // Always cast to number — the mock DB may return string values from in-memory maps
+              const lat = Number(c.centroid_lat ?? c.lat ?? 18.5204);
+              const lon = Number(c.centroid_lon ?? c.lon ?? 73.8567);
+
+              if (isNaN(lat) || isNaN(lon)) {
+                console.warn(
+                  '[RescueStore] Skipping cluster with invalid coordinates:',
+                  c.id,
+                  c.centroid_lat,
+                  c.centroid_lon,
+                );
+                return;
+              }
+
+              const id = `SOS #${String(c.id).slice(-4)}`;
+              const clusterName = c.name || `Sector ${String(c.id).slice(-4)}`;
+              const isResolved = c.state === 'closed' || c.state === 'resolved';
+              const isAssigned =
+                c.state === 'assigned' ||
+                c.state === 'en_route' ||
+                c.state === 'reached' ||
+                Boolean(c.assigned_team);
+              const assignedTeam = c.assigned_team || null;
+
+              // Preserve local assignment: if this incident is already locally marked Assigned,
+              // keep it even if the backend still returns an old state
+              const existingLocal = get().sosList.find(s => s.id === id);
+              const preserveLocalAssignment =
+                existingLocal?.status === 'Assigned' || existingLocal?.status === 'In Progress';
+
+              const members: ClusterMember[] = [];
+              if (
+                c.id === 'cl_pune_ghats_01' ||
+                (!c.id.includes('bridge') && !c.id.includes('hills') && !c.id.includes('market'))
+              ) {
+                members.push({
+                  id: `surv-lead-${c.id}`,
+                  name: 'Survivor Lead (Mobile)',
+                  condition: 'Emergency SOS Broadcast Active',
+                  distanceMeters: 0,
+                  lat,
+                  lon,
+                  battery: 88,
+                  emergencyNeeds: ['Rescue Extraction', 'Radio Relay'],
+                });
+                if (simPeers.length > 0) {
+                  simPeers.forEach((p: any, idx: number) => {
+                    members.push({
+                      id: `sim-peer-${p.fp}`,
+                      name: p.name || `Survivor Node #${p.fp.slice(0, 4)}`,
+                      condition:
+                        p.triage === 'RED'
+                          ? 'Critical Trapped - Needs Extraction'
+                          : 'Stable - Sheltered on Terrace',
+                      distanceMeters: p.distanceMeters || (idx + 1) * 20,
+                      lat: Number(p.lat),
+                      lon: Number(p.lon),
+                      battery: p.battery || 75,
+                      emergencyNeeds: p.needs || ['Assistance'],
+                    });
+                  });
+                }
+              } else {
+                const count = c.survivor_count || 3;
+                for (let i = 0; i < count; i++) {
+                  members.push({
+                    id: `sim-${c.id}-${i}`,
+                    name: `Survivor ${i + 1} (${clusterName.split(' ')[0]})`,
+                    condition: isResolved
+                      ? 'Safely evacuated to medical shelter'
+                      : i === 0
+                        ? 'Conscious, awaiting evacuation'
+                        : 'Stable sheltered on roof',
+                    distanceMeters: i * 18,
+                    lat: +(lat + i * 0.00015).toFixed(6),
+                    lon: +(lon + i * 0.00012).toFixed(6),
+                    battery: Math.max(30, 85 - i * 12),
+                    emergencyNeeds: isResolved ? ['Cleared'] : ['Water', 'Evacuation Assist'],
+                  });
+                }
+              }
+
+              get().addSosIncident({
+                id,
+                survivorName: `${clusterName} (${c.survivor_count || members.length} survivors)`,
+                lat,
+                lon,
+                nearbyCount: members.length,
+                urgency:
+                  c.priority_score > 0.85
+                    ? 'Emergency'
+                    : c.priority_score > 0.6
+                      ? 'Urgent'
+                      : 'Stable',
+                // If we already assigned locally and backend hasn't caught up yet, keep Assigned
+                status: isResolved
+                  ? 'Resolved'
+                  : isAssigned || preserveLocalAssignment
+                    ? 'Assigned'
+                    : 'Pending',
+                assignedTeam:
+                  assignedTeam ||
+                  (preserveLocalAssignment ? (existingLocal?.assignedTeam ?? null) : null),
+                acknowledged: isAssigned || isResolved || preserveLocalAssignment,
+                notes: `${clusterName} • ${members.length} survivors mesh connected`,
+                clusterRadiusMeters: c.radius_m || 45,
+                clusterMembers: members,
+              });
+            });
+          }
+        }
+      }
+    } catch {
+      // offline / mock fallback
+    }
+  },
+
+  seedSimulation: async () => {
+    try {
+      const res = await fetch('/v1/simulation/seed', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({}),
+      });
+      if (res.ok) {
+        await get().syncClustersFromBackend();
+        await get().syncChatFromBackend();
+      }
+    } catch (e) {
+      console.error('[RescueStore] seedSimulation failed:', e);
+    }
+  },
+
+  cleanSimulation: async () => {
+    try {
+      await fetch('/v1/simulation/clean', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+      });
+      set(state => ({
+        sosList: state.sosList.filter(
+          s => !s.id.includes('ghat') && !s.notes?.includes('Relief Zone'),
+        ),
+        rescuerMessages: [],
+        selectedSosId: null,
+      }));
+      await get().syncClustersFromBackend();
+      await get().syncChatFromBackend();
+    } catch (e) {
+      console.error('[RescueStore] cleanSimulation failed:', e);
+    }
+  },
+
+  simulateDisasterSos: (zoneName: string, lat: number, lon: number, peopleCount: number) => {
+    const id = `SOS #${Math.floor(2000 + Math.random() * 8000)}`;
+    const members: ClusterMember[] = Array.from({ length: peopleCount }).map((_, i) => ({
+      id: `p-${Date.now()}-${i}`,
+      name: i === 0 ? `Survivor Lead (${zoneName})` : `Survivor ${String.fromCharCode(65 + i)}`,
+      condition:
+        i === 0
+          ? 'Urgent evacuation needed, water rising'
+          : i === 1
+            ? 'Mild trauma, conscious'
+            : 'Safe on elevated platform',
+      distanceMeters: i * 15,
+      lat: +(lat + (Math.random() - 0.5) * 0.002).toFixed(6),
+      lon: +(lon + (Math.random() - 0.5) * 0.002).toFixed(6),
+      emergencyNeeds: i === 0 ? ['Boat', 'Medical Kit'] : ['Evacuation Assist'],
+      battery: Math.floor(40 + Math.random() * 55),
+    }));
+
+    get().addSosIncident({
+      id,
+      survivorName: `${zoneName} Cluster (${peopleCount} survivors)`,
+      lat,
+      lon,
+      nearbyCount: peopleCount,
+      urgency: 'Emergency',
+      timeReceived: 'Just now',
+      status: 'Pending',
+      notes: `Simulated live emergency SOS cluster in ${zoneName}. Coordinates: ${lat.toFixed(4)}°N, ${lon.toFixed(4)}°E.`,
+      clusterRadiusMeters: 35 + peopleCount * 5,
+      clusterMembers: members,
+    });
+
+    // Also dispatch message over backend chat
     if (typeof window !== 'undefined') {
       fetch('/v1/chat/messages', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           conversationId: 'cl_pune_ghats_01',
-          senderFp: role === 'rescuer' ? 'team_alpha' : 'survivor_node',
-          senderName: role === 'rescuer' ? 'Rescue Team Alpha' : 'Survivor',
-          senderRole: role,
-          content: text,
+          senderFp: `sim_node_${Date.now()}`,
+          senderName: `Survivor (${zoneName})`,
+          senderRole: 'survivor',
+          content: `🚨 SOS broadcast from ${zoneName}: ${peopleCount} survivors trapped. Immediate tactical assistance required at ${lat.toFixed(4)}°N, ${lon.toFixed(4)}°E!`,
         }),
       }).catch(() => {});
     }
   },
 
-  addSosIncident: (inc) => {
-    set((state) => {
-      const existing = state.sosList.find((s) => s.id === inc.id);
+  addSosIncident: inc => {
+    set(state => {
+      const existing = state.sosList.find(s => s.id === inc.id);
       if (existing) {
+        // Preserve local assignment if backend hasn't acknowledged it yet
+        const mergedStatus =
+          (existing.status === 'Assigned' || existing.status === 'In Progress') &&
+          (inc.status === 'Pending' || inc.status === undefined)
+            ? existing.status
+            : (inc.status ?? existing.status);
+        const mergedTeam =
+          existing.assignedTeam && !inc.assignedTeam
+            ? existing.assignedTeam
+            : (inc.assignedTeam ?? existing.assignedTeam);
+
         return {
-          sosList: state.sosList.map((s) => (s.id === inc.id ? { ...s, ...inc } : s)),
+          sosList: state.sosList.map(s =>
+            s.id === inc.id ? { ...s, ...inc, status: mergedStatus, assignedTeam: mergedTeam } : s,
+          ),
         };
       }
       const full: SosIncident = {
         id: inc.id || `SOS #${Math.floor(1000 + Math.random() * 9000)}`,
-        survivorName: inc.survivorName || 'Survivor & Group',
-        lat: inc.lat ?? 18.5204,
-        lon: inc.lon ?? 73.8567,
+        survivorName: inc.survivorName || 'Survivor (Emulator)',
+        lat: Number(inc.lat ?? 18.5204),
+        lon: Number(inc.lon ?? 73.8567),
         nearbyCount: inc.nearbyCount ?? 1,
         urgency: inc.urgency ?? 'Emergency',
         timeReceived: inc.timeReceived || 'Just now',
@@ -469,11 +665,11 @@ export const useRescueStore = create<RescueState>((set, get) => ({
         clusterMembers: inc.clusterMembers || [
           {
             id: `p-${Date.now()}`,
-            name: 'Survivor Node',
-            condition: 'SOS broadcasted from Android Survivor App',
+            name: 'Survivor Node (Emulator)',
+            condition: 'Live SOS beacon received via Backend Uplink',
             distanceMeters: 0,
-            lat: inc.lat ?? 18.5204,
-            lon: inc.lon ?? 73.8567,
+            lat: Number(inc.lat ?? 18.5204),
+            lon: Number(inc.lon ?? 73.8567),
             battery: 88,
             emergencyNeeds: ['Emergency Assistance'],
           },
@@ -493,7 +689,7 @@ export const useRescueStore = create<RescueState>((set, get) => ({
       rescuerNav: 'cases',
       sosList: INITIAL_SOS_LIST,
       teams: INITIAL_TEAMS,
-      selectedSosId: 'SOS #1024',
+      selectedSosId: null,
       selectedPersonId: null,
       rescuerLocation: { lat: 18.5235, lon: 73.8595 },
       navDistanceRemaining: 420,
@@ -503,3 +699,17 @@ export const useRescueStore = create<RescueState>((set, get) => ({
     });
   },
 }));
+
+// Automatic background chat and clusters polling for real-time synchronization
+if (typeof window !== 'undefined') {
+  setInterval(() => {
+    useRescueStore
+      .getState()
+      .syncChatFromBackend()
+      .catch(() => {});
+    useRescueStore
+      .getState()
+      .syncClustersFromBackend()
+      .catch(() => {});
+  }, 2000);
+}

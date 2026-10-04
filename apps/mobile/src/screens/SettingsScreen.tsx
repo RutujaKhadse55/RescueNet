@@ -1,12 +1,5 @@
 import React from 'react';
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  ScrollView,
-  StyleSheet,
-  Alert,
-} from 'react-native';
+import { View, Text, TouchableOpacity, ScrollView, StyleSheet, Alert } from 'react-native';
 import { colors, layout, spacing, typography } from '../theme';
 import { useTranslation } from '../i18n/LanguageContext';
 import { StoredIdentity } from '../security/identity';
@@ -57,12 +50,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
           >
             <Text style={styles.roleIcon}>📱</Text>
             <View>
-              <Text
-                style={[
-                  styles.roleText,
-                  currentRole === 'survivor' && styles.roleTextActive,
-                ]}
-              >
+              <Text style={[styles.roleText, currentRole === 'survivor' && styles.roleTextActive]}>
                 Survivor Mode
               </Text>
               <Text style={styles.roleSubtext}>1-Tap SOS, Mesh Chat & Beacon</Text>
@@ -76,12 +64,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
           >
             <Text style={styles.roleIcon}>🧑‍🚒</Text>
             <View>
-              <Text
-                style={[
-                  styles.roleText,
-                  currentRole === 'rescuer' && styles.roleTextActive,
-                ]}
-              >
+              <Text style={[styles.roleText, currentRole === 'rescuer' && styles.roleTextActive]}>
                 Rescue Team Mode
               </Text>
               <Text style={styles.roleSubtext}>Homing, Cluster Triage & Radar</Text>
@@ -132,7 +115,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
           <View style={styles.mapPackInfo}>
             <Text style={styles.mapPackTitle}>Pune District & Western Ghats</Text>
             <Text style={styles.mapPackSub}>
-              14.2 MB Vector MBTiles • 100% Offline (No Internet Needed)
+              42.5 MB Vector MBTiles • 100% Offline (No Internet Needed)
             </Text>
           </View>
           <TouchableOpacity
@@ -140,9 +123,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
             onPress={onOpenMapDownload}
             activeOpacity={0.8}
           >
-            <Text style={styles.verifyBtnText}>
-              {hasMapDownloaded ? '✓ Verified' : 'Download'}
-            </Text>
+            <Text style={styles.verifyBtnText}>{hasMapDownloaded ? '✓ Verified' : 'Download'}</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -199,11 +180,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
         <Text style={styles.dangerDescription}>
           Clear cached disaster telemetry, local peer database, and emergency keypairs.
         </Text>
-        <TouchableOpacity
-          style={styles.wipeButton}
-          onPress={onOpenWipeData}
-          activeOpacity={0.8}
-        >
+        <TouchableOpacity style={styles.wipeButton} onPress={onOpenWipeData} activeOpacity={0.8}>
           <Text style={styles.wipeButtonText}>🗑️ Wipe Local Emergency Data</Text>
         </TouchableOpacity>
       </View>
@@ -214,7 +191,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0a0f1d',
+    backgroundColor: '#ffffff',
   },
   content: {
     padding: spacing.md,
@@ -224,28 +201,28 @@ const styles = StyleSheet.create({
     marginBottom: spacing.md,
   },
   screenTitle: {
-    fontSize: 20,
+    fontSize: 22,
     fontWeight: '800',
-    color: '#f8fafc',
+    color: '#0f172a',
   },
   screenSubtitle: {
-    fontSize: 11,
-    color: '#94a3b8',
+    fontSize: 12,
+    color: '#64748b',
     marginTop: 2,
   },
   sectionCard: {
-    backgroundColor: '#0f172a',
-    borderRadius: 12,
+    backgroundColor: '#f8fafc',
+    borderRadius: 14,
     borderWidth: 1,
-    borderColor: '#1e293b',
+    borderColor: '#e2e8f0',
     padding: spacing.md,
     marginBottom: spacing.md,
   },
   sectionCardDanger: {
-    backgroundColor: 'rgba(239, 68, 68, 0.05)',
-    borderRadius: 12,
+    backgroundColor: '#fef2f2',
+    borderRadius: 14,
     borderWidth: 1,
-    borderColor: 'rgba(239, 68, 68, 0.3)',
+    borderColor: '#fecaca',
     padding: spacing.md,
     marginBottom: spacing.md,
   },
@@ -257,8 +234,8 @@ const styles = StyleSheet.create({
     marginBottom: 6,
   },
   sectionDescription: {
-    fontSize: 11,
-    color: '#94a3b8',
+    fontSize: 12,
+    color: '#64748b',
     marginBottom: 10,
   },
   roleGrid: {
@@ -267,16 +244,16 @@ const styles = StyleSheet.create({
   roleBtn: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#1e293b',
+    backgroundColor: '#ffffff',
     borderRadius: 10,
     padding: 12,
     borderWidth: 1,
-    borderColor: '#334155',
+    borderColor: '#e2e8f0',
     gap: 12,
   },
   roleBtnActive: {
-    backgroundColor: '#1e3a8a',
-    borderColor: '#3b82f6',
+    backgroundColor: '#eff6ff',
+    borderColor: '#2563eb',
   },
   roleIcon: {
     fontSize: 22,
@@ -284,50 +261,50 @@ const styles = StyleSheet.create({
   roleText: {
     fontSize: 14,
     fontWeight: '700',
-    color: '#cbd5e1',
+    color: '#334155',
   },
   roleTextActive: {
-    color: '#ffffff',
+    color: '#1d4ed8',
     fontWeight: '800',
   },
   roleSubtext: {
-    fontSize: 10,
-    color: '#94a3b8',
+    fontSize: 10.5,
+    color: '#64748b',
     marginTop: 1,
   },
   radioRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: 8,
+    paddingVertical: 10,
     borderBottomWidth: 1,
-    borderBottomColor: '#1e293b',
+    borderBottomColor: '#e2e8f0',
   },
   radioInfo: {
     flex: 1,
   },
   radioTitle: {
-    fontSize: 13,
+    fontSize: 13.5,
     fontWeight: '700',
-    color: '#f8fafc',
+    color: '#0f172a',
   },
   radioSub: {
-    fontSize: 10,
-    color: '#94a3b8',
+    fontSize: 10.5,
+    color: '#64748b',
     marginTop: 1,
   },
   statusPillActive: {
-    backgroundColor: 'rgba(16, 185, 129, 0.15)',
+    backgroundColor: '#ecfdf5',
     borderWidth: 1,
-    borderColor: '#10b981',
+    borderColor: '#a7f3d0',
     paddingHorizontal: 8,
     paddingVertical: 3,
     borderRadius: 6,
   },
   statusPillText: {
-    fontSize: 9,
+    fontSize: 9.5,
     fontWeight: '900',
-    color: '#34d399',
+    color: '#059669',
   },
   mapPackRow: {
     flexDirection: 'row',
@@ -338,19 +315,19 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   mapPackTitle: {
-    fontSize: 13,
+    fontSize: 13.5,
     fontWeight: '700',
-    color: '#f8fafc',
+    color: '#0f172a',
   },
   mapPackSub: {
-    fontSize: 10,
-    color: '#94a3b8',
+    fontSize: 10.5,
+    color: '#64748b',
     marginTop: 2,
   },
   verifyBtn: {
-    backgroundColor: 'rgba(16, 185, 129, 0.15)',
+    backgroundColor: '#eff6ff',
     borderWidth: 1,
-    borderColor: '#10b981',
+    borderColor: '#bfdbfe',
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 8,
@@ -358,30 +335,30 @@ const styles = StyleSheet.create({
   verifyBtnText: {
     fontSize: 11,
     fontWeight: '800',
-    color: '#34d399',
+    color: '#2563eb',
   },
   helplineRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: 8,
+    paddingVertical: 10,
     borderBottomWidth: 1,
-    borderBottomColor: '#1e293b',
+    borderBottomColor: '#e2e8f0',
   },
   helplineName: {
-    fontSize: 12,
+    fontSize: 12.5,
     fontWeight: '700',
-    color: '#f1f5f9',
+    color: '#0f172a',
   },
   helplineSub: {
-    fontSize: 10,
-    color: '#94a3b8',
+    fontSize: 10.5,
+    color: '#64748b',
     marginTop: 1,
   },
   helplineNumberBadge: {
-    backgroundColor: '#1e293b',
+    backgroundColor: '#eff6ff',
     borderWidth: 1,
-    borderColor: '#334155',
+    borderColor: '#bfdbfe',
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 6,
@@ -389,38 +366,40 @@ const styles = StyleSheet.create({
   helplineNumber: {
     fontSize: 12,
     fontWeight: '800',
-    color: '#38bdf8',
+    color: '#1d4ed8',
   },
   identityFingerprint: {
     fontSize: 11,
     fontFamily: 'monospace',
-    color: '#f8fafc',
-    backgroundColor: '#1e293b',
+    color: '#0f172a',
+    backgroundColor: '#ffffff',
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
     padding: 8,
     borderRadius: 6,
     marginTop: 4,
   },
   identityAlgorithm: {
-    fontSize: 10,
+    fontSize: 10.5,
     color: '#64748b',
     marginTop: 6,
   },
   dangerLabel: {
     fontSize: 10,
     fontWeight: '900',
-    color: '#ef4444',
+    color: '#dc2626',
     letterSpacing: 1,
     marginBottom: 4,
   },
   dangerDescription: {
     fontSize: 11,
-    color: '#94a3b8',
+    color: '#64748b',
     marginBottom: 10,
   },
   wipeButton: {
-    backgroundColor: 'rgba(239, 68, 68, 0.15)',
+    backgroundColor: '#fee2e2',
     borderWidth: 1,
-    borderColor: '#ef4444',
+    borderColor: '#fca5a5',
     borderRadius: 8,
     paddingVertical: 10,
     alignItems: 'center',
@@ -428,6 +407,6 @@ const styles = StyleSheet.create({
   wipeButtonText: {
     fontSize: 12,
     fontWeight: '800',
-    color: '#ef4444',
+    color: '#b91c1c',
   },
 });

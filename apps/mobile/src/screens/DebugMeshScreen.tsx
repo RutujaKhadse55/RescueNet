@@ -1,12 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  ScrollView,
-  StyleSheet,
-  Alert,
-} from 'react-native';
+import { View, Text, TouchableOpacity, ScrollView, StyleSheet, Alert } from 'react-native';
 import { colors, layout, spacing, typography } from '../theme';
 import { IBleTransport, GattExchangeStats, BleNeighbor } from '../native/RescueBle';
 import { MeshEngine } from '../mesh/MeshEngine';
@@ -239,14 +232,15 @@ export const DebugMeshScreen: React.FC<DebugMeshScreenProps> = ({
           </View>
         ) : (
           <View style={styles.peerList}>
-            {neighbors.map((n) => (
+            {neighbors.map(n => (
               <View key={n.deviceId} style={styles.peerRow}>
                 <View style={styles.peerLeft}>
                   <Text style={styles.peerId}>
                     {n.deviceId} ({n.originFpPrefix})
                   </Text>
                   <Text style={styles.peerMeta}>
-                    RSSI: {n.rssi} dBm • Role: {n.role.toUpperCase()} • Protocol: v{n.protocolVersion}
+                    RSSI: {n.rssi} dBm • Role: {n.role.toUpperCase()} • Protocol: v
+                    {n.protocolVersion}
                   </Text>
                   <Text style={styles.flagText}>
                     Flags: {n.flags.hasSos ? '[SOS]' : ''} {n.flags.lowBattery ? '[LOW_BAT]' : ''}{' '}

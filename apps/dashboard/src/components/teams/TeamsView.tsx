@@ -32,9 +32,15 @@ export const TeamsView: React.FC = () => {
         <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>{t.teamsSubtitle}</p>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(360px, 1fr))', gap: '1rem' }}>
-        {teams.map((team) => {
-          const assignedClusterObjs = clusters.filter((c) => team.assigned_clusters.includes(c.id));
+      <div
+        style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fill, minmax(360px, 1fr))',
+          gap: '1rem',
+        }}
+      >
+        {teams.map(team => {
+          const assignedClusterObjs = clusters.filter(c => team.assigned_clusters.includes(c.id));
 
           return (
             <div
@@ -43,10 +49,20 @@ export const TeamsView: React.FC = () => {
               style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}
               id={`team-card-${team.id}`}
             >
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+              <div
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'flex-start',
+                }}
+              >
                 <div>
-                  <h3 style={{ fontSize: '1rem', fontWeight: 700, color: '#f8fafc' }}>{team.name}</h3>
-                  <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.1rem' }}>
+                  <h3 style={{ fontSize: '1rem', fontWeight: 700, color: '#f8fafc' }}>
+                    {team.name}
+                  </h3>
+                  <div
+                    style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.1rem' }}
+                  >
                     Lead: {team.lead_name || 'Designated NDRF Officer'}
                   </div>
                 </div>
@@ -61,14 +77,14 @@ export const TeamsView: React.FC = () => {
                       team.status === 'assigned'
                         ? 'rgba(59, 130, 246, 0.2)'
                         : team.status === 'en_route'
-                        ? 'rgba(245, 158, 11, 0.2)'
-                        : 'rgba(16, 185, 129, 0.2)',
+                          ? 'rgba(245, 158, 11, 0.2)'
+                          : 'rgba(16, 185, 129, 0.2)',
                     color:
                       team.status === 'assigned'
                         ? '#60a5fa'
                         : team.status === 'en_route'
-                        ? '#f59e0b'
-                        : '#10b981',
+                          ? '#f59e0b'
+                          : '#10b981',
                   }}
                 >
                   {team.status}
@@ -88,7 +104,9 @@ export const TeamsView: React.FC = () => {
                 }}
               >
                 <div>
-                  <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>GPS Position:</div>
+                  <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
+                    GPS Position:
+                  </div>
                   <div style={{ fontSize: '0.85rem', fontFamily: 'var(--font-mono)' }}>
                     {team.lat.toFixed(4)}°N, {team.lon.toFixed(4)}°E
                   </div>
@@ -106,12 +124,19 @@ export const TeamsView: React.FC = () => {
 
               {/* Workload */}
               <div>
-                <div style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', marginBottom: '0.3rem' }}>
-                  <strong>Workload:</strong> {team.assigned_clusters.length} Active Survivor Clusters
+                <div
+                  style={{
+                    fontSize: '0.78rem',
+                    color: 'var(--text-secondary)',
+                    marginBottom: '0.3rem',
+                  }}
+                >
+                  <strong>Workload:</strong> {team.assigned_clusters.length} Active Survivor
+                  Clusters
                 </div>
                 {assignedClusterObjs.length > 0 ? (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem' }}>
-                    {assignedClusterObjs.map((cl) => (
+                    {assignedClusterObjs.map(cl => (
                       <div
                         key={cl.id}
                         style={{
@@ -124,18 +149,36 @@ export const TeamsView: React.FC = () => {
                         }}
                       >
                         <span>Cluster {cl.id.slice(0, 8)}...</span>
-                        <span style={{ color: '#ef4444', fontWeight: 600 }}>{cl.declared_people} survivors</span>
+                        <span style={{ color: '#ef4444', fontWeight: 600 }}>
+                          {cl.declared_people} survivors
+                        </span>
                       </div>
                     ))}
                   </div>
                 ) : (
-                  <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>No current assignments (Available)</span>
+                  <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                    No current assignments (Available)
+                  </span>
                 )}
               </div>
 
               {/* Equipment */}
-              <div style={{ marginTop: 'auto', paddingTop: '0.5rem', borderTop: '1px solid var(--border-color)' }}>
-                <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginBottom: '0.2rem' }}>Tactical Equipment:</div>
+              <div
+                style={{
+                  marginTop: 'auto',
+                  paddingTop: '0.5rem',
+                  borderTop: '1px solid var(--border-color)',
+                }}
+              >
+                <div
+                  style={{
+                    fontSize: '0.72rem',
+                    color: 'var(--text-muted)',
+                    marginBottom: '0.2rem',
+                  }}
+                >
+                  Tactical Equipment:
+                </div>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.3rem' }}>
                   {(team.equipment || []).map((eq, idx) => (
                     <span
@@ -167,32 +210,40 @@ export const TeamsView: React.FC = () => {
             <form onSubmit={handleSavePosition}>
               <div className="modal-body">
                 <div className="form-group">
-                  <label className="form-label" htmlFor="edit-team-lat">Latitude</label>
+                  <label className="form-label" htmlFor="edit-team-lat">
+                    Latitude
+                  </label>
                   <input
                     id="edit-team-lat"
                     type="number"
                     step="0.0001"
                     className="form-input"
                     value={editLat}
-                    onChange={(e) => setEditLat(Number(e.target.value))}
+                    onChange={e => setEditLat(Number(e.target.value))}
                     required
                   />
                 </div>
                 <div className="form-group">
-                  <label className="form-label" htmlFor="edit-team-lon">Longitude</label>
+                  <label className="form-label" htmlFor="edit-team-lon">
+                    Longitude
+                  </label>
                   <input
                     id="edit-team-lon"
                     type="number"
                     step="0.0001"
                     className="form-input"
                     value={editLon}
-                    onChange={(e) => setEditLon(Number(e.target.value))}
+                    onChange={e => setEditLon(Number(e.target.value))}
                     required
                   />
                 </div>
               </div>
               <div className="modal-footer">
-                <button type="button" className="btn btn-secondary" onClick={() => setEditingTeam(null)}>
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  onClick={() => setEditingTeam(null)}
+                >
                   Cancel
                 </button>
                 <button type="submit" className="btn btn-primary" id="btn-save-team-pos">

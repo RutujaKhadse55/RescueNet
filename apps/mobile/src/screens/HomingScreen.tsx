@@ -34,7 +34,7 @@ export const HomingScreen: React.FC<HomingScreenProps> = ({
   const pulseAnim = useRef(
     Animated && typeof Animated.Value === 'function'
       ? new Animated.Value(1)
-      : ({ setValue: () => {} } as any)
+      : ({ setValue: () => {} } as any),
   ).current;
 
   useEffect(() => {
@@ -42,16 +42,21 @@ export const HomingScreen: React.FC<HomingScreenProps> = ({
     homingService.startHoming(target).catch(() => {});
 
     // Listen to signal state changes
-    homingService.onStateChange((state) => {
+    homingService.onStateChange(state => {
       setSignalState(state);
     });
 
     // Listen to pulse ticks
     homingService.onPulse((_type, _interval) => {
-      setPulseCount((c) => c + 1);
+      setPulseCount(c => c + 1);
 
       // Trigger short haptic vibration on real device
-      if (Platform && Platform.OS !== 'web' && Vibration && typeof Vibration.vibrate === 'function') {
+      if (
+        Platform &&
+        Platform.OS !== 'web' &&
+        Vibration &&
+        typeof Vibration.vibrate === 'function'
+      ) {
         try {
           Vibration.vibrate(30);
         } catch {}
@@ -143,12 +148,7 @@ export const HomingScreen: React.FC<HomingScreenProps> = ({
 
       {/* Main Trend HUD */}
       <View style={styles.hudContainer}>
-        <View
-          style={[
-            styles.trendCircle,
-            { borderColor: getTrendColor(signalState.trend) },
-          ]}
-        >
+        <View style={[styles.trendCircle, { borderColor: getTrendColor(signalState.trend) }]}>
           <Text style={[styles.trendIcon, { color: getTrendColor(signalState.trend) }]}>
             {getTrendIcon(signalState.trend)}
           </Text>
@@ -159,7 +159,7 @@ export const HomingScreen: React.FC<HomingScreenProps> = ({
 
         {/* Signal Strength Segmented Bars (0 to 5) */}
         <View style={styles.barsContainer} testID="homing-signal-bars">
-          {[1, 2, 3, 4, 5].map((barIdx) => {
+          {[1, 2, 3, 4, 5].map(barIdx => {
             const isActive = signalState.signalBars >= barIdx;
             return (
               <View
@@ -180,12 +180,7 @@ export const HomingScreen: React.FC<HomingScreenProps> = ({
 
         {/* Audio / Haptic Pulse Status */}
         <View style={styles.pulseContainer}>
-          <View
-            style={[
-              styles.pulseDot,
-              { backgroundColor: getTrendColor(signalState.trend) },
-            ]}
-          />
+          <View style={[styles.pulseDot, { backgroundColor: getTrendColor(signalState.trend) }]} />
           <Text style={styles.pulseText}>
             Audio / Haptic Pulse: {signalState.pulseIntervalMs} ms rate (Tick #{pulseCount})
           </Text>
@@ -196,8 +191,8 @@ export const HomingScreen: React.FC<HomingScreenProps> = ({
       <View style={styles.rubbleNoteBox}>
         <Text style={styles.rubbleNoteTitle}>⚠️ RELATIVE GUIDANCE ONLY</Text>
         <Text style={styles.rubbleNoteBody}>
-          RSSI is heavily distorted by concrete, rebar, and rubble multipath. Do not display
-          or rely on calculated metres. Follow the relative trend arrow and use audio calls.
+          RSSI is heavily distorted by concrete, rebar, and rubble multipath. Do not display or rely
+          on calculated metres. Follow the relative trend arrow and use audio calls.
         </Text>
       </View>
 

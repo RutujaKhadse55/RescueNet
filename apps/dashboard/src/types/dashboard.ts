@@ -1,12 +1,6 @@
 export type UserRole = 'viewer' | 'dispatcher' | 'rescuer' | 'admin';
 
-export type ClusterState =
-  | 'new'
-  | 'assigned'
-  | 'en_route'
-  | 'reached'
-  | 'closed'
-  | 'false_alarm';
+export type ClusterState = 'new' | 'assigned' | 'en_route' | 'reached' | 'closed' | 'false_alarm';
 
 export type PriorityBand = 'critical' | 'high' | 'medium' | 'low';
 
@@ -59,7 +53,14 @@ export interface ClusterMember {
 export interface ClusterEvent {
   id: string;
   cluster_id: string;
-  event_type: 'created' | 'state_changed' | 'team_assigned' | 'ack_sent' | 'note_added' | 'merged' | 'false_alarm';
+  event_type:
+    | 'created'
+    | 'state_changed'
+    | 'team_assigned'
+    | 'ack_sent'
+    | 'note_added'
+    | 'merged'
+    | 'false_alarm';
   actor_id?: string;
   actor_name?: string;
   notes?: string;

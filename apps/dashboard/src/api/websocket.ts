@@ -18,29 +18,31 @@ class WebSocketManager {
     this.listeners.push(listener);
     listener(this.status);
     return () => {
-      this.listeners = this.listeners.filter((l) => l !== listener);
+      this.listeners = this.listeners.filter(l => l !== listener);
     };
   }
 
   private setStatus(newStatus: WsStatus) {
     this.status = newStatus;
-    this.listeners.forEach((l) => l(newStatus));
+    this.listeners.forEach(l => l(newStatus));
   }
 
   public connect(): void {
     if (this.socket && this.socket.readyState === WebSocket.OPEN) return;
 
-    let token = useAuthStore.getState().token;
+    const token = useAuthStore.getState().token;
     if (!token && typeof window !== 'undefined') {
       fetch('/v1/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: 'dispatcher@rescuenet.gov.in', password: 'any' }),
       })
-        .then((res) => res.json())
-        .then((auth) => {
+        .then(res => res.json())
+        .then(auth => {
           if (auth.accessToken) {
-            useAuthStore.getState().login('dispatcher@rescuenet.gov.in', 'dispatcher', auth.accessToken);
+            useAuthStore
+              .getState()
+              .login('dispatcher@rescuenet.gov.in', 'dispatcher', auth.accessToken);
             this.connect();
           }
         })
@@ -62,7 +64,7 @@ class WebSocketManager {
         }
       };
 
-      this.socket.onmessage = (event) => {
+      this.socket.onmessage = event => {
         try {
           const data = JSON.parse(event.data);
           useDashboardStore.getState().receiveWebSocketEvent(data);
@@ -74,18 +76,20 @@ class WebSocketManager {
           ) {
             const clusterData = data.data || {};
             const clusterId = data.clusterId || `cl_${Date.now()}`;
+            const targetLat = clusterData.lat ?? clusterData.center_lat ?? data.lat ?? 18.5204;
+            const targetLon = clusterData.lon ?? clusterData.center_lon ?? data.lon ?? 73.8567;
             useRescueStore.getState().addSosIncident({
               id: `SOS #${String(clusterId).slice(-4)}`,
               survivorName: `Survivor (${clusterData.declared_people || 1} people)`,
-              lat: clusterData.lat || 18.5204,
-              lon: clusterData.lon || 73.8567,
+              lat: Number(targetLat),
+              lon: Number(targetLon),
               nearbyCount: clusterData.member_count || 1,
               urgency:
                 clusterData.max_status === 3
                   ? 'Emergency'
                   : clusterData.max_status === 2
-                  ? 'Urgent'
-                  : 'Stable',
+                    ? 'Urgent'
+                    : 'Stable',
               timeReceived: 'Just now',
               status: 'Pending',
               notes: `Live emergency SOS received from Android Survivor App via Backend Uplink. Needs mask: ${
@@ -98,14 +102,20 @@ class WebSocketManager {
           if (data.type === 'chat_message' && data.data) {
             const chatPayload = data.data;
             const currentMessages = useRescueStore.getState().rescuerMessages;
-            const alreadyExists = currentMessages.some((m) => m.id === chatPayload.id);
+            const alreadyExists = currentMessages.some(m => m.id === chatPayload.id);
             if (!alreadyExists && chatPayload.content) {
               const newMsg = {
                 id: chatPayload.id || `msg_${Date.now()}`,
-                sender: (chatPayload.senderRole === 'rescuer' ? 'rescuer' : 'survivor') as 'rescuer' | 'survivor',
-                senderName: chatPayload.senderName || (chatPayload.senderRole === 'rescuer' ? 'Rescue Team Alpha' : 'Survivor'),
+                sender: (chatPayload.senderRole === 'rescuer' ? 'rescuer' : 'survivor') as
+                  'rescuer' | 'survivor',
+                senderName:
+                  chatPayload.senderName ||
+                  (chatPayload.senderRole === 'rescuer' ? 'Rescue Team Alpha' : 'Survivor'),
                 text: chatPayload.content,
-                timestamp: new Date(chatPayload.timestamp || Date.now()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                timestamp: new Date(chatPayload.timestamp || Date.now()).toLocaleTimeString([], {
+                  hour: '2-digit',
+                  minute: '2-digit',
+                }),
                 target: 'rescuer' as const,
               };
               useRescueStore.setState({ rescuerMessages: [...currentMessages, newMsg] });

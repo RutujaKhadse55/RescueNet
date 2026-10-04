@@ -84,7 +84,7 @@ export class IdentityService {
 
       // Master key signs chain of custody
       const custodyPayload = new TextEncoder().encode(
-        `RESCUENET-EPHEMERAL-CHAIN:${i}:${this.toHex(epKp.publicKey)}:${expiresAtIso}`
+        `RESCUENET-EPHEMERAL-CHAIN:${i}:${this.toHex(epKp.publicKey)}:${expiresAtIso}`,
       );
       const custodySig = await this.crypto.sign(custodyPayload, masterKp.privateKey);
 
@@ -117,7 +117,11 @@ export class IdentityService {
   /**
    * Returns raw binary keys and fingerprint for cryptographic signing
    */
-  public async getIdentity(): Promise<{ publicKey: Uint8Array; privateKey: Uint8Array; fingerprint: Uint8Array }> {
+  public async getIdentity(): Promise<{
+    publicKey: Uint8Array;
+    privateKey: Uint8Array;
+    fingerprint: Uint8Array;
+  }> {
     this.ensureInitialized();
     return {
       publicKey: this.fromHex(this.currentIdentity!.masterPublicKeyHex),
@@ -191,7 +195,8 @@ export class IdentityService {
    */
   public async rotateEphemeralKey(): Promise<EphemeralKeyRecord> {
     this.ensureInitialized();
-    const nextIndex = (this.currentIdentity!.activePoolIndex + 1) % this.currentIdentity!.ephemeralPool.length;
+    const nextIndex =
+      (this.currentIdentity!.activePoolIndex + 1) % this.currentIdentity!.ephemeralPool.length;
     this.currentIdentity!.activePoolIndex = nextIndex;
     await this.persistIdentity();
     return this.getActiveEphemeralKey();
@@ -203,7 +208,7 @@ export class IdentityService {
    * so emergency mesh operations never block.
    */
   public async registerWithBackend(
-    backendUrl: string = 'http://localhost:3000'
+    backendUrl: string = 'http://localhost:3000',
   ): Promise<{ success: boolean; registered: boolean; trustLevel: 'registered' | 'unregistered' }> {
     this.ensureInitialized();
     const identity = this.currentIdentity!;
@@ -211,14 +216,17 @@ export class IdentityService {
     const payload = {
       origin_fp: identity.originFp,
       master_public_key: identity.masterPublicKeyHex,
-      ephemeral_public_keys: identity.ephemeralPool.map((e) => e.publicKeyHex),
-      chain_of_custody_signatures: identity.ephemeralPool.map((e) => e.chainOfCustodySigHex),
+      ephemeral_public_keys: identity.ephemeralPool.map(e => e.publicKeyHex),
+      chain_of_custody_signatures: identity.ephemeralPool.map(e => e.chainOfCustodySigHex),
       sms_secret_hash: this.toHex(
-        await this.crypto.blake2b(this.fromHex(identity.smsSecretHex), 16)
+        await this.crypto.blake2b(this.fromHex(identity.smsSecretHex), 16),
       ),
     };
 
-    if (process.env.NODE_ENV === 'test' && (backendUrl.includes('localhost') || backendUrl.includes('mock'))) {
+    if (
+      process.env.NODE_ENV === 'test' &&
+      (backendUrl.includes('localhost') || backendUrl.includes('mock'))
+    ) {
       identity.registered = false;
       identity.trustLevel = 'unregistered';
       await this.persistIdentity();
@@ -296,7 +304,7 @@ export class IdentityService {
 
   private toHex(bytes: Uint8Array): string {
     return Array.from(bytes)
-      .map((b) => b.toString(16).padStart(2, '0'))
+      .map(b => b.toString(16).padStart(2, '0'))
       .join('');
   }
 

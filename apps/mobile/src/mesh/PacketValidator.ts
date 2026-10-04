@@ -39,7 +39,7 @@ export class PacketValidator {
     crypto: ICrypto,
     db: DatabaseManager,
     policy: MeshPolicy,
-    rescuerService?: RescuerCredentialService
+    rescuerService?: RescuerCredentialService,
   ) {
     this.crypto = crypto;
     this.db = db;
@@ -80,7 +80,7 @@ export class PacketValidator {
    */
   public async validatePacket(
     rawBytes: Uint8Array,
-    nowSeconds: number = Math.floor(Date.now() / 1000)
+    nowSeconds: number = Math.floor(Date.now() / 1000),
   ): Promise<PacketValidationResult> {
     const effectiveNow = nowSeconds + this.serverTimeOffsetSeconds;
     if (rawBytes.length < HEADER_SIZE) {
@@ -114,10 +114,10 @@ export class PacketValidator {
     }
 
     const packetIdHex = Array.from(header.packetId)
-      .map((b) => b.toString(16).padStart(2, '0'))
+      .map(b => b.toString(16).padStart(2, '0'))
       .join('');
     const originFpHex = Array.from(header.originFp)
-      .map((b) => b.toString(16).padStart(2, '0'))
+      .map(b => b.toString(16).padStart(2, '0'))
       .join('');
 
     // 2.1 Check if origin key is banned
@@ -129,7 +129,7 @@ export class PacketValidator {
     // 2.2 Update flood window and circuit breaker
     this.floodTimestamps.push(effectiveNow);
     const cutoff = effectiveNow - 60;
-    this.floodTimestamps = this.floodTimestamps.filter((t) => t >= cutoff);
+    this.floodTimestamps = this.floodTimestamps.filter(t => t >= cutoff);
     this.isCircuitBreakerTripped = this.floodTimestamps.length > this.floodThresholdPerMinute;
 
     // 3. Deduplication by packet_id
@@ -148,7 +148,7 @@ export class PacketValidator {
     let packetTimestamp = effectiveNow;
     let sequenceNumber = 0;
     let packetNonce: number | undefined = undefined;
-    let isSos = header.type === PacketType.SOS;
+    const isSos = header.type === PacketType.SOS;
 
     if (isSos) {
       try {
@@ -173,7 +173,10 @@ export class PacketValidator {
 
     // 5. Timestamp validation: reject > 5 min in future or older than retention
     if (packetTimestamp > effectiveNow + 300) {
-      await this.logRejection('future_timestamp', `timestamp_${packetTimestamp}_vs_${effectiveNow}`);
+      await this.logRejection(
+        'future_timestamp',
+        `timestamp_${packetTimestamp}_vs_${effectiveNow}`,
+      );
       return { valid: false, lowTrust: false, reason: 'future_timestamp' };
     }
 
@@ -233,7 +236,10 @@ export class PacketValidator {
     if (this.rescuerService && (header.flags & PacketFlags.FROM_RESCUER) !== 0) {
       const rescuerVerify = await this.rescuerService.verifyRescuerPacket(rawBytes);
       if (!rescuerVerify.valid) {
-        await this.logRejection('invalid_signature', rescuerVerify.reason || 'rescuer_credential_unverified');
+        await this.logRejection(
+          'invalid_signature',
+          rescuerVerify.reason || 'rescuer_credential_unverified',
+        );
         return { valid: false, lowTrust: false, reason: 'invalid_signature' };
       }
     }
@@ -281,7 +287,7 @@ export class PacketValidator {
 
     // Filter out timestamps older than 60 seconds
     const oneMinAgo = nowSeconds - 60;
-    const active = window.filter((t) => t > oneMinAgo);
+    const active = window.filter(t => t > oneMinAgo);
 
     if (active.length >= maxPerMinute) {
       this.originRateWindows.set(originFpHex, active);

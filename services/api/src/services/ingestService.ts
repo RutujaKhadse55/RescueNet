@@ -28,6 +28,8 @@ export interface IngestItemResult {
   reason?: string;
 }
 
+export let latestLiveFix: { lat: number; lon: number; updatedAt: number } | null = null;
+
 export interface IngestBatchResult {
   accepted: number;
   duplicate: number;
@@ -54,7 +56,7 @@ export class IngestService {
   public async ingestBatch(
     rawPackets: Uint8Array[],
     channel: 'internet' | 'sms' | 'gateway' = 'internet',
-    uplinkedDeviceId?: string
+    uplinkedDeviceId?: string,
   ): Promise<IngestBatchResult> {
     const cryptoInstance = await this.getCrypto();
     const perPacket: IngestItemResult[] = [];
@@ -150,6 +152,9 @@ export class IngestService {
           signatureValid = await verifySosPacket(raw, cryptoInstance);
           lat = sos.body.latitude;
           lon = sos.body.longitude;
+          if (typeof lat === 'number' && typeof lon === 'number' && !isNaN(lat) && !isNaN(lon)) {
+            latestLiveFix = { lat, lon, updatedAt: Date.now() };
+          }
           accuracyM = sos.body.accuracyMeters;
           status = sos.body.status;
           people = sos.body.peopleCount;
@@ -159,7 +164,11 @@ export class IngestService {
           seq = sos.body.sequenceNumber;
         } catch {
           rejected++;
-          perPacket.push({ packetId: packetIdHex, status: 'rejected', reason: 'sos_decode_failed' });
+          perPacket.push({
+            packetId: packetIdHex,
+            status: 'rejected',
+            reason: 'sos_decode_failed',
+          });
           continue;
         }
       } else if (header.type === PacketType.CLUSTER_SUMMARY) {
@@ -177,7 +186,11 @@ export class IngestService {
           externalClusterId = Buffer.from(summary.body.clusterId, 'utf-8');
         } catch {
           rejected++;
-          perPacket.push({ packetId: packetIdHex, status: 'rejected', reason: 'cluster_summary_decode_failed' });
+          perPacket.push({
+            packetId: packetIdHex,
+            status: 'rejected',
+            reason: 'cluster_summary_decode_failed',
+          });
           continue;
         }
       } else {
@@ -189,7 +202,7 @@ export class IngestService {
       let incidentId = '22222222-2222-2222-2222-222222222222';
       const incRes = await db.query(
         `SELECT id FROM incidents WHERE status = 'open' AND is_drill = $1 ORDER BY opened_at DESC LIMIT 1;`,
-        [isDrill]
+        [isDrill],
       );
       if (incRes.rows.length > 0) {
         incidentId = incRes.rows[0].id;
@@ -212,7 +225,12 @@ export class IngestService {
         RETURNING packet_id;
       `;
 
-      const kindStr = header.type === PacketType.SOS ? 'sos' : header.type === PacketType.CLUSTER_SUMMARY ? 'cluster_summary' : 'chat';
+      const kindStr =
+        header.type === PacketType.SOS
+          ? 'sos'
+          : header.type === PacketType.CLUSTER_SUMMARY
+            ? 'cluster_summary'
+            : 'chat';
       const insRes = await db.query(insertSql, [
         Buffer.from(header.packetId),
         incidentId,
@@ -272,12 +290,14 @@ export class IngestService {
 
     // Pending ACKs for response
     const acksRes = await db.query(
-      `SELECT id, cluster_id, mesh_packet FROM acks WHERE delivery = 'pending' LIMIT 5;`
+      `SELECT id, cluster_id, mesh_packet FROM acks WHERE delivery = 'pending' LIMIT 5;`,
     );
     const pendingAcks = acksRes.rows.map((r: any) => ({
       ackId: r.id,
       clusterId: r.cluster_id,
-      rawHex: Buffer.isBuffer(r.mesh_packet) ? r.mesh_packet.toString('hex') : String(r.mesh_packet),
+      rawHex: Buffer.isBuffer(r.mesh_packet)
+        ? r.mesh_packet.toString('hex')
+        : String(r.mesh_packet),
     }));
 
     return {
@@ -313,16 +333,15 @@ export class IngestService {
       signatureValid: boolean;
       registered: boolean;
       externalClusterId?: Buffer;
-    }>
+    }>,
   ): Promise<void> {
     for (const item of telemetryItems) {
       // 1. Try matching by external_id (from cluster summary)
       let targetClusterId: string | null = null;
       if (item.externalClusterId) {
-        const extMatch = await db.query(
-          `SELECT id FROM clusters WHERE external_id = $1;`,
-          [item.externalClusterId]
-        );
+        const extMatch = await db.query(`SELECT id FROM clusters WHERE external_id = $1;`, [
+          item.externalClusterId,
+        ]);
         if (extMatch.rows.length > 0) {
           targetClusterId = extMatch.rows[0].id;
         }
@@ -332,13 +351,13 @@ export class IngestService {
       if (!targetClusterId) {
         const allClusters = await db.query(
           `SELECT id, centroid_lat, centroid_lon, radius_m FROM clusters WHERE incident_id = $1 AND state NOT IN ('closed', 'false_alarm');`,
-          [item.incidentId]
+          [item.incidentId],
         );
 
         for (const c of allClusters.rows) {
           const dist = haversineDistanceMeters(
             { latitude: item.lat, longitude: item.lon },
-            { latitude: c.centroid_lat, longitude: c.centroid_lon }
+            { latitude: c.centroid_lat, longitude: c.centroid_lon },
           );
           if (dist <= 40) {
             targetClusterId = c.id;
@@ -355,7 +374,7 @@ export class IngestService {
         // Check if member already exists
         const existingMember = await db.query(
           `SELECT origin_fp FROM cluster_members WHERE cluster_id = $1 AND origin_fp = $2;`,
-          [targetClusterId, item.originFp]
+          [targetClusterId, item.originFp],
         );
         const isNewMember = existingMember.rows.length === 0;
 
@@ -364,12 +383,12 @@ export class IngestService {
           `INSERT INTO cluster_members (cluster_id, origin_fp, latest_packet_id, joined_at)
            VALUES ($1, $2, $3, now())
            ON CONFLICT (cluster_id, origin_fp) DO UPDATE SET latest_packet_id = $3;`,
-          [targetClusterId, item.originFp, item.packetId]
+          [targetClusterId, item.originFp, item.packetId],
         );
 
         const memCountRes = await db.query(
           `SELECT origin_fp FROM cluster_members WHERE cluster_id = $1;`,
-          [targetClusterId]
+          [targetClusterId],
         );
         const memberCount = memCountRes.rows.length;
         const declaredPeople = isNewMember ? c.declared_people + item.people : c.declared_people;
@@ -391,7 +410,7 @@ export class IngestService {
         const trustScore = this.computeTrustScore(
           memberCount,
           item.signatureValid,
-          item.registered
+          item.registered,
         );
 
         const flags = [];
@@ -423,13 +442,23 @@ export class IngestService {
             flags,
             c.state,
             targetClusterId,
-          ]
+          ],
         );
 
         eventBus.broadcastClusterEvent({
           type: 'cluster_updated',
           clusterId: targetClusterId,
-          data: { priorityScore: priorityRes.score, memberCount, status: maxStatus },
+          data: {
+            priorityScore: priorityRes.score,
+            memberCount,
+            status: maxStatus,
+            lat: c.centroid_lat,
+            lon: c.centroid_lon,
+            declared_people: declaredPeople,
+            max_status: maxStatus,
+            needs_mask: needsMask,
+            radius_m: c.radius_m,
+          },
           timestamp: new Date().toISOString(),
         });
       } else {
@@ -478,19 +507,45 @@ export class IngestService {
             priorityRes.score,
             priorityRes.components,
             flags,
-          ]
+          ],
         );
 
         await db.query(
           `INSERT INTO cluster_members (cluster_id, origin_fp, latest_packet_id, joined_at)
            VALUES ($1, $2, $3, now());`,
-          [newClusterId, item.originFp, item.packetId]
+          [newClusterId, item.originFp, item.packetId],
         );
 
         eventBus.broadcastClusterEvent({
           type: 'cluster_created',
           clusterId: newClusterId,
-          data: { priorityScore: priorityRes.score, memberCount: 1 },
+          data: {
+            priorityScore: priorityRes.score,
+            memberCount: 1,
+            lat: item.lat,
+            lon: item.lon,
+            declared_people: item.people,
+            max_status: item.status,
+            needs_mask: item.needs,
+            radius_m: item.accuracyM,
+            clusterMembers: [
+              {
+                id: `p-${item.originFpHex.slice(0, 8)}`,
+                name: `Survivor (${item.originFpHex.slice(0, 6)})`,
+                lat: item.lat,
+                lon: item.lon,
+                condition:
+                  item.status === 3
+                    ? 'Critical Emergency'
+                    : item.status === 2
+                      ? 'Urgent / Trapped'
+                      : 'Stable',
+                distanceMeters: 0,
+                emergencyNeeds: item.needs ? ['Medical Aid', 'Evacuation'] : ['Emergency SOS'],
+                battery: item.batteryPct,
+              },
+            ],
+          },
           timestamp: new Date().toISOString(),
         });
       }
@@ -503,7 +558,7 @@ export class IngestService {
   private computeTrustScore(
     independentDevices: number,
     signatureValid: boolean,
-    registered: boolean
+    registered: boolean,
   ): number {
     let score = 0.5;
     if (signatureValid) score += 0.25;

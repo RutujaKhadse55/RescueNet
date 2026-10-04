@@ -82,12 +82,13 @@ export const LoginPage: React.FC = () => {
           <h1 style={{ fontSize: '1.35rem', fontWeight: 700, marginBottom: '0.4rem' }}>
             {t.loginTitle}
           </h1>
-          <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
-            {t.loginSubtitle}
-          </p>
+          <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>{t.loginSubtitle}</p>
         </div>
 
-        <form onSubmit={handleLogin} style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+        <form
+          onSubmit={handleLogin}
+          style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}
+        >
           {error && (
             <div
               style={{
@@ -106,7 +107,11 @@ export const LoginPage: React.FC = () => {
           )}
 
           <div className="form-group">
-            <label className="form-label" htmlFor="input-email" style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+            <label
+              className="form-label"
+              htmlFor="input-email"
+              style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}
+            >
               <Mail size={14} />
               {t.emailLabel}
             </label>
@@ -115,14 +120,18 @@ export const LoginPage: React.FC = () => {
               type="email"
               className="form-input"
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              onChange={e => setEmail(e.target.value)}
               placeholder="responder@rescuenet.gov.in"
               required
             />
           </div>
 
           <div className="form-group">
-            <label className="form-label" htmlFor="input-password" style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+            <label
+              className="form-label"
+              htmlFor="input-password"
+              style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}
+            >
               <Lock size={14} />
               {t.passwordLabel}
             </label>
@@ -131,14 +140,18 @@ export const LoginPage: React.FC = () => {
               type="password"
               className="form-input"
               value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              onChange={e => setPassword(e.target.value)}
               placeholder="••••••••••••"
               required
             />
           </div>
 
           <div className="form-group">
-            <label className="form-label" htmlFor="input-totp" style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+            <label
+              className="form-label"
+              htmlFor="input-totp"
+              style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}
+            >
               <KeyRound size={14} />
               {t.totpLabel}
             </label>
@@ -147,9 +160,14 @@ export const LoginPage: React.FC = () => {
               type="text"
               maxLength={6}
               className="form-input"
-              style={{ letterSpacing: '0.25em', fontFamily: 'var(--font-mono)', fontWeight: 700, textAlign: 'center' }}
+              style={{
+                letterSpacing: '0.25em',
+                fontFamily: 'var(--font-mono)',
+                fontWeight: 700,
+                textAlign: 'center',
+              }}
               value={totp}
-              onChange={(e) => setTotp(e.target.value.replace(/\D/g, ''))}
+              onChange={e => setTotp(e.target.value.replace(/\D/g, ''))}
               placeholder="123456"
               required
             />

@@ -7,11 +7,7 @@
 import { SodiumCrypto } from '../crypto/sodium';
 
 export type RescuerPermission =
-  | 'ack_cluster'
-  | 'mark_reached'
-  | 'mark_closed'
-  | 'priority_override'
-  | 'gateway_relay';
+  'ack_cluster' | 'mark_reached' | 'mark_closed' | 'priority_override' | 'gateway_relay';
 
 export interface RescuerCredential {
   credentialId: string;
@@ -46,7 +42,7 @@ export enum CredentialVerifyResult {
  * Deterministically serializes credential metadata into canonical bytes for CA signing.
  */
 export function serializeCredentialCanonicalPayload(
-  cred: Omit<RescuerCredential, 'caSignature'>
+  cred: Omit<RescuerCredential, 'caSignature'>,
 ): Uint8Array {
   const encoder = new TextEncoder();
   // Order keys deterministically: agencyId, badgeNumber, credentialId, expiresAt, issuedAt, permissions, pubkey, userId
@@ -79,7 +75,7 @@ export async function issueRescuerCredential(
     validitySeconds?: number;
     permissions?: RescuerPermission[];
   },
-  caPrivateKey: Uint8Array
+  caPrivateKey: Uint8Array,
 ): Promise<RescuerCredential> {
   const crypto = await SodiumCrypto.getInstance();
   const issuedAt = Math.floor(Date.now() / 1000);
@@ -119,7 +115,7 @@ export async function verifyRescuerCredential(
   cred: RescuerCredential,
   caPublicKey: Uint8Array,
   currentTimestampSec: number = Math.floor(Date.now() / 1000),
-  revocationList?: CredentialRevocationList | null
+  revocationList?: CredentialRevocationList | null,
 ): Promise<{ valid: boolean; reason: CredentialVerifyResult }> {
   // 1. Basic structural checks
   if (
@@ -186,9 +182,7 @@ export function exportCredentialToken(cred: RescuerCredential): string {
  */
 export function importCredentialToken(token: string): RescuerCredential {
   const clean = token.trim();
-  const rawBase64 = clean.startsWith('RESCUER-V1:')
-    ? clean.slice('RESCUER-V1:'.length)
-    : clean;
+  const rawBase64 = clean.startsWith('RESCUER-V1:') ? clean.slice('RESCUER-V1:'.length) : clean;
 
   const jsonStr = Buffer.from(rawBase64, 'base64').toString('utf8');
   const parsed = JSON.parse(jsonStr);
@@ -218,7 +212,7 @@ export async function createSignedRevocationList(
   agencyId: string,
   revokedIds: string[],
   revokedKeysHex: string[],
-  caPrivateKey: Uint8Array
+  caPrivateKey: Uint8Array,
 ): Promise<CredentialRevocationList> {
   const crypto = await SodiumCrypto.getInstance();
   const updatedAt = Math.floor(Date.now() / 1000);
@@ -229,7 +223,7 @@ export async function createSignedRevocationList(
       revokedCredentialIds: [...revokedIds].sort(),
       revokedPublicKeysHex: [...revokedKeysHex].sort(),
       updatedAt,
-    })
+    }),
   );
 
   const caSignature = await crypto.sign(payload, caPrivateKey);

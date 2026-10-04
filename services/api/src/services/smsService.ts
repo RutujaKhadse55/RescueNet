@@ -26,7 +26,7 @@ export class SmsService {
   public static verifyWebhookSignature(
     provider: string,
     signature: string | undefined,
-    body: any
+    body: any,
   ): boolean {
     if (config.NODE_ENV === 'test') return true;
     if (!signature) return false;
@@ -54,14 +54,15 @@ export class SmsService {
     smsId: string;
     acceptedPackets: number;
   }> {
-    const smsId = input.messageId || `sms_in_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
+    const smsId =
+      input.messageId || `sms_in_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
     const fromHash = crypto.createHash('sha256').update(input.from).digest();
 
     // 1. Record in sms_inbound table
     await db.query(
       `INSERT INTO sms_inbound (id, provider_msg_id, from_hash, from_enc, body, parse_status, received_at)
        VALUES ($1, $2, $3, $4, $5, 'processing', now());`,
-      [smsId, smsId, fromHash, Buffer.from(input.from), input.body]
+      [smsId, smsId, fromHash, Buffer.from(input.from), input.body],
     );
 
     // 2. Decode SMS payload (Check if binary hex/base64 or compact SMS profile)
@@ -70,9 +71,7 @@ export class SmsService {
 
     // Check if base64 or hex packet
     if (/^[0-9a-fA-F]+$/.test(cleanBody) && cleanBody.length >= 42) {
-      rawPacketBytes = new Uint8Array(
-        cleanBody.match(/.{1,2}/g)!.map((byte) => parseInt(byte, 16))
-      );
+      rawPacketBytes = new Uint8Array(cleanBody.match(/.{1,2}/g)!.map(byte => parseInt(byte, 16)));
     } else {
       // Check compact SMS profile or human-readable fallback
       try {
@@ -127,7 +126,7 @@ export class SmsService {
             sequenceNumber: 1,
             keyPair,
           },
-          cryptoInstance
+          cryptoInstance,
         );
       } catch {
         rawPacketBytes = null;

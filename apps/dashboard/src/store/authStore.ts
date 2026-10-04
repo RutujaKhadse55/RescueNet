@@ -18,7 +18,11 @@ const STORAGE_AUTH_KEY = 'rescuenet_dashboard_auth';
 const SESSION_DURATION_MS = 30 * 60 * 1000; // 30 minutes
 const WARNING_WINDOW_MS = 2 * 60 * 1000; // 2 minutes before expiry
 
-function loadStoredAuth(): { user: User | null; token: string | null; sessionExpiresAt: number | null } {
+function loadStoredAuth(): {
+  user: User | null;
+  token: string | null;
+  sessionExpiresAt: number | null;
+} {
   try {
     const raw = localStorage.getItem(STORAGE_AUTH_KEY);
     if (raw) {
@@ -52,10 +56,10 @@ export const useAuthStore = create<AuthState>((set, get) => {
           role === 'admin'
             ? 'NDRF Cmdr. Rajesh Sharma'
             : role === 'dispatcher'
-            ? 'Duty Officer Ananya Rao'
-            : role === 'rescuer'
-            ? 'Team Lead Vikram Jadhav'
-            : 'Observer Priya Nair',
+              ? 'Duty Officer Ananya Rao'
+              : role === 'rescuer'
+                ? 'Team Lead Vikram Jadhav'
+                : 'Observer Priya Nair',
         role,
         agencyId: '11111111-1111-1111-1111-111111111111',
         active: true,
@@ -109,7 +113,7 @@ export const useAuthStore = create<AuthState>((set, get) => {
               user: current.user,
               token: current.token,
               sessionExpiresAt: newExpiry,
-            })
+            }),
           );
         } catch {
           // ignore

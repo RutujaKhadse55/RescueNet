@@ -13,10 +13,10 @@ import {
   Maximize2,
   Layers,
   Phone,
-  Radio,
   Activity,
   Compass,
   Check,
+  Sparkles,
 } from 'lucide-react';
 import L from 'leaflet';
 import { useRescueStore, AdminNav, SosIncident, ClusterMember } from '../../store/rescueStore';
@@ -36,11 +36,15 @@ export const AdminControlCenter: React.FC = () => {
     showClusterBoundaries,
     toggleIndividualPins,
     toggleClusterBoundaries,
+    seedSimulation,
+    cleanSimulation,
+    simulateDisasterSos,
   } = useRescueStore();
 
   const [assignModalIncident, setAssignModalIncident] = useState<SosIncident | null>(null);
   const [selectedTeamName, setSelectedTeamName] = useState<string>('Rescue Team Alpha');
   const [expandedClusterId, setExpandedClusterId] = useState<string | null>('SOS #1024');
+  const [simMenuOpen, setSimMenuOpen] = useState<boolean>(false);
 
   // Leaflet map reference & state
   const mapContainerRef = useRef<HTMLDivElement>(null);
@@ -50,7 +54,7 @@ export const AdminControlCenter: React.FC = () => {
   const clusterBadgesRef = useRef<{ [key: string]: L.Marker }>({});
   const peopleMarkersRef = useRef<{ [key: string]: L.Marker[] }>({});
 
-  const activeIncident = sosList.find((s) => s.id === selectedSosId) || sosList[0];
+  const activeIncident = sosList.find(s => s.id === selectedSosId) || sosList[0];
 
   // Helper to fit map bounds accurately
   const fitMapToAllIncidents = (mapToFit?: L.Map | null) => {
@@ -59,10 +63,10 @@ export const AdminControlCenter: React.FC = () => {
 
     try {
       const bounds = L.latLngBounds([]);
-      sosList.forEach((inc) => {
+      sosList.forEach(inc => {
         bounds.extend([inc.lat, inc.lon]);
         if (inc.clusterMembers) {
-          inc.clusterMembers.forEach((p) => bounds.extend([p.lat, p.lon]));
+          inc.clusterMembers.forEach(p => bounds.extend([p.lat, p.lon]));
         }
       });
 
@@ -97,11 +101,14 @@ export const AdminControlCenter: React.FC = () => {
     // Standard OpenStreetMap tiles (100% reliable, zero API key needed)
     const tileLayer = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
       maxZoom: 19,
-      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+      attribution:
+        '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
     });
 
     tileLayer.on('tileerror', () => {
-      tileLayer.setUrl('https://services.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}');
+      tileLayer.setUrl(
+        'https://services.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}',
+      );
     });
 
     tileLayer.addTo(map);
@@ -140,18 +147,18 @@ export const AdminControlCenter: React.FC = () => {
     const map = mapInstance;
 
     // Clean up previous elements
-    Object.values(clusterCirclesRef.current).forEach((c) => c.remove());
+    Object.values(clusterCirclesRef.current).forEach(c => c.remove());
     clusterCirclesRef.current = {};
 
-    Object.values(clusterBadgesRef.current).forEach((b) => b.remove());
+    Object.values(clusterBadgesRef.current).forEach(b => b.remove());
     clusterBadgesRef.current = {};
 
-    Object.values(peopleMarkersRef.current).forEach((markers) => {
-      markers.forEach((m) => m.remove());
+    Object.values(peopleMarkersRef.current).forEach(markers => {
+      markers.forEach(m => m.remove());
     });
     peopleMarkersRef.current = {};
 
-    sosList.forEach((incident) => {
+    sosList.forEach(incident => {
       const isSelected = incident.id === selectedSosId;
       const isResolved = incident.status === 'Resolved';
       const isAssigned = incident.status === 'Assigned' || incident.status === 'In Progress';
@@ -194,7 +201,9 @@ export const AdminControlCenter: React.FC = () => {
         iconAnchor: [0, -8],
       });
 
-      const badgeMarker = L.marker([incident.lat + 0.00045, incident.lon], { icon: clusterBadgeIcon }).addTo(map);
+      const badgeMarker = L.marker([incident.lat + 0.00045, incident.lon], {
+        icon: clusterBadgeIcon,
+      }).addTo(map);
       badgeMarker.on('click', () => {
         selectSos(incident.id);
       });
@@ -253,16 +262,40 @@ export const AdminControlCenter: React.FC = () => {
         peopleMarkersRef.current[incident.id] = personMarkers;
       }
     });
-  }, [mapInstance, sosList, selectedSosId, selectedPersonId, showClusterBoundaries, showIndividualPins, selectSos, selectPerson]);
+  }, [
+    mapInstance,
+    sosList,
+    selectedSosId,
+    selectedPersonId,
+    showClusterBoundaries,
+    showIndividualPins,
+    selectSos,
+    selectPerson,
+  ]);
 
-  // Center on selected incident smoothly
+  // Center on selected incident smoothly - ONLY when user selects a different incident
+  const prevSelectedSosIdRef = useRef<string | null>(null);
   useEffect(() => {
     if (!selectedSosId || !mapInstance) return;
-    const incident = sosList.find((s) => s.id === selectedSosId);
+    if (prevSelectedSosIdRef.current === selectedSosId) return;
+    prevSelectedSosIdRef.current = selectedSosId;
+    const incident = sosList.find(s => s.id === selectedSosId);
     if (incident && mapInstance) {
-      mapInstance.flyTo([incident.lat, incident.lon], 16, { duration: 0.6 });
+      mapInstance.flyTo([incident.lat, incident.lon], 16, { duration: 0.5 });
     }
   }, [selectedSosId, mapInstance, sosList]);
+
+  // Auto-fit map when a NEW incident arrives (count increases)
+  const prevSosCountRef = useRef<number>(0);
+  useEffect(() => {
+    if (!mapInstance) return;
+    const currentCount = sosList.length;
+    if (currentCount > prevSosCountRef.current && prevSosCountRef.current > 0) {
+      // New incident arrived - fit all incidents so the new pin is visible
+      setTimeout(() => fitMapToAllIncidents(mapInstance), 150);
+    }
+    prevSosCountRef.current = currentCount;
+  }, [sosList.length, mapInstance]);
 
   const handleConfirmAssignment = () => {
     if (!assignModalIncident) return;
@@ -270,15 +303,23 @@ export const AdminControlCenter: React.FC = () => {
     setAssignModalIncident(null);
   };
 
-  const navTabs: { id: AdminNav; label: string; icon: React.ReactNode }[] = [
+  const navTabs: { id: AdminNav; label: string; icon: React.ReactNode; badge?: number }[] = [
     { id: 'requests', label: 'SOS Incident Queue', icon: <ShieldAlert size={16} /> },
     { id: 'map', label: 'Full Dispatch Map', icon: <MapPin size={16} /> },
     { id: 'teams', label: 'Rescue Response Teams', icon: <Users size={16} /> },
   ];
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', width: '100%', overflow: 'hidden', background: '#f8fafc' }}>
-      
+    <div
+      style={{
+        display: 'flex',
+        flexDirection: 'column',
+        height: '100%',
+        width: '100%',
+        overflow: 'hidden',
+        background: '#f8fafc',
+      }}
+    >
       {/* ========================================================
           1. SUB-NAV / CONTROL BAR (PROFESSIONAL LIGHT THEME)
       ======================================================== */}
@@ -292,6 +333,7 @@ export const AdminControlCenter: React.FC = () => {
           justifyContent: 'space-between',
           flexShrink: 0,
           boxShadow: '0 1px 3px rgba(0, 0, 0, 0.02)',
+          position: 'relative',
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
@@ -309,7 +351,14 @@ export const AdminControlCenter: React.FC = () => {
             <ShieldAlert size={18} color="#dc2626" />
           </div>
           <div>
-            <div style={{ fontSize: '0.95rem', fontWeight: 800, color: '#0f172a', letterSpacing: '-0.01em' }}>
+            <div
+              style={{
+                fontSize: '0.95rem',
+                fontWeight: 800,
+                color: '#0f172a',
+                letterSpacing: '-0.01em',
+              }}
+            >
               Command & Control Dispatch
             </div>
             <div style={{ fontSize: '0.72rem', color: '#64748b' }}>
@@ -318,45 +367,110 @@ export const AdminControlCenter: React.FC = () => {
           </div>
         </div>
 
-        {/* View Tabs */}
-        <div
-          style={{
-            display: 'flex',
-            background: '#f1f5f9',
-            padding: '3px',
-            borderRadius: '8px',
-            border: '1px solid #e2e8f0',
-            gap: '3px',
-          }}
-        >
-          {navTabs.map((tab) => {
-            const isActive = adminNav === tab.id;
-            return (
-              <button
-                key={tab.id}
-                onClick={() => setAdminNav(tab.id)}
-                id={`admin-nav-${tab.id}`}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.4rem',
-                  padding: '0.4rem 0.85rem',
-                  background: isActive ? '#ffffff' : 'transparent',
-                  border: 'none',
-                  borderRadius: '6px',
-                  color: isActive ? '#0f172a' : '#64748b',
-                  fontWeight: isActive ? 800 : 600,
-                  fontSize: '0.78rem',
-                  cursor: 'pointer',
-                  boxShadow: isActive ? '0 1px 3px rgba(0,0,0,0.06)' : 'none',
-                  transition: 'all 0.15s ease',
-                }}
-              >
-                {tab.icon}
-                <span>{tab.label}</span>
-              </button>
-            );
-          })}
+        {/* Controls and View Tabs */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+          {/* Quick Simulation / Demo Buttons */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+            <button
+              onClick={() => seedSimulation()}
+              id="admin-seed-demo-btn"
+              title="Seed nearby survivor clusters for judges demo"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.35rem',
+                padding: '0.4rem 0.75rem',
+                background: '#eff6ff',
+                border: '1px solid #bfdbfe',
+                borderRadius: '7px',
+                color: '#1d4ed8',
+                fontSize: '0.76rem',
+                fontWeight: 800,
+                cursor: 'pointer',
+                transition: 'all 0.15s ease',
+              }}
+            >
+              <Sparkles size={13} color="#2563eb" />
+              <span>Seed Demo</span>
+            </button>
+
+            <button
+              onClick={() => cleanSimulation()}
+              id="admin-clean-demo-btn"
+              title="Clean all simulated clusters and chat messages"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.35rem',
+                padding: '0.4rem 0.65rem',
+                background: '#f8fafc',
+                border: '1px solid #e2e8f0',
+                borderRadius: '7px',
+                color: '#64748b',
+                fontSize: '0.76rem',
+                fontWeight: 600,
+                cursor: 'pointer',
+                transition: 'all 0.15s ease',
+              }}
+            >
+              <span>Clear</span>
+            </button>
+          </div>
+
+          {/* Navigation View Tabs */}
+          <div
+            style={{
+              display: 'flex',
+              background: '#f1f5f9',
+              padding: '3px',
+              borderRadius: '8px',
+              border: '1px solid #e2e8f0',
+              gap: '3px',
+            }}
+          >
+            {navTabs.map(tab => {
+              const isActive = adminNav === tab.id;
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => setAdminNav(tab.id)}
+                  id={`admin-nav-${tab.id}`}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.4rem',
+                    padding: '0.4rem 0.85rem',
+                    background: isActive ? '#ffffff' : 'transparent',
+                    border: 'none',
+                    borderRadius: '6px',
+                    color: isActive ? '#0f172a' : '#64748b',
+                    fontWeight: isActive ? 800 : 600,
+                    fontSize: '0.78rem',
+                    cursor: 'pointer',
+                    boxShadow: isActive ? '0 1px 3px rgba(0,0,0,0.06)' : 'none',
+                    transition: 'all 0.15s ease',
+                  }}
+                >
+                  {tab.icon}
+                  <span>{tab.label}</span>
+                  {tab.badge !== undefined && tab.badge > 0 && (
+                    <span
+                      style={{
+                        background: isActive ? '#2563eb' : '#cbd5e1',
+                        color: isActive ? '#ffffff' : '#334155',
+                        fontSize: '0.65rem',
+                        fontWeight: 900,
+                        padding: '1px 5px',
+                        borderRadius: '999px',
+                      }}
+                    >
+                      {tab.badge}
+                    </span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
         </div>
       </div>
 
@@ -364,13 +478,11 @@ export const AdminControlCenter: React.FC = () => {
           2. MAIN CONTENT AREA
       ======================================================== */}
       <div style={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
-
         {/* ========================================================
             VIEW 1: SOS REQUESTS (SPLIT LIST + MAP)
         ======================================================== */}
         {(adminNav === 'requests' || adminNav === 'map') && (
           <div style={{ display: 'flex', width: '100%', height: '100%', overflow: 'hidden' }}>
-            
             {/* LEFT PANEL: SOS INCIDENTS LIST */}
             <div
               style={{
@@ -414,259 +526,420 @@ export const AdminControlCenter: React.FC = () => {
                     fontWeight: 800,
                   }}
                 >
-                  {sosList.filter((s) => s.status !== 'Resolved').length} Unresolved
+                  {sosList.filter(s => s.status !== 'Resolved').length} Unresolved
                 </span>
               </div>
 
               {/* Scrollable Incident Cards List */}
-              <div style={{ flex: 1, overflowY: 'auto', padding: '0.85rem', display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
-                {sosList.map((item) => {
-                  const isSelected = item.id === selectedSosId;
-                  const isEmergency = item.urgency === 'Emergency';
-                  const isAssigned = item.status === 'Assigned' || item.status === 'In Progress';
-                  const isResolved = item.status === 'Resolved';
-                  const isExpanded = expandedClusterId === item.id;
-                  const members = item.clusterMembers || [];
-
-                  return (
+              <div
+                style={{
+                  flex: 1,
+                  overflowY: 'auto',
+                  padding: '0.85rem',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '0.85rem',
+                }}
+              >
+                {sosList.length === 0 ? (
+                  <div
+                    style={{
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      padding: '3rem 1.5rem',
+                      textAlign: 'center',
+                      gap: '0.85rem',
+                      background: '#ffffff',
+                      borderRadius: '12px',
+                      border: '2px dashed #cbd5e1',
+                    }}
+                  >
                     <div
-                      key={item.id}
-                      onClick={() => selectSos(item.id)}
-                      id={`sos-card-${item.id.replace(/[^a-zA-Z0-9]/g, '')}`}
                       style={{
-                        background: isSelected ? '#eff6ff' : '#ffffff',
-                        border: isSelected
-                          ? '2px solid #2563eb'
-                          : isEmergency && !isAssigned && !isResolved
-                          ? '1px solid #fca5a5'
-                          : '1px solid #e2e8f0',
-                        borderRadius: '12px',
-                        padding: '1rem',
-                        cursor: 'pointer',
+                        width: '52px',
+                        height: '52px',
+                        borderRadius: '50%',
+                        background: '#eff6ff',
                         display: 'flex',
-                        flexDirection: 'column',
-                        gap: '0.65rem',
-                        boxShadow: isSelected
-                          ? '0 4px 14px rgba(37, 99, 235, 0.12)'
-                          : '0 1px 3px rgba(0, 0, 0, 0.04)',
-                        transition: 'all 0.15s ease',
+                        alignItems: 'center',
+                        justifyContent: 'center',
                       }}
                     >
-                      {/* Top Header: ID, Urgency, Status */}
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
-                          <span style={{ fontSize: '1.05rem', fontWeight: 900, color: '#0f172a' }}>
-                            {item.id}
-                          </span>
-                          <span style={{ fontSize: '0.75rem', color: '#64748b' }}>
-                            ({item.survivorName})
-                          </span>
-                        </div>
-
-                        <span
-                          style={{
-                            fontSize: '0.7rem',
-                            fontWeight: 800,
-                            padding: '0.2rem 0.55rem',
-                            borderRadius: '4px',
-                            textTransform: 'uppercase',
-                            background: isResolved
-                              ? '#f0fdf4'
-                              : isAssigned
-                              ? '#eff6ff'
-                              : '#fef2f2',
-                            color: isResolved ? '#16a34a' : isAssigned ? '#2563eb' : '#dc2626',
-                            border: isResolved
-                              ? '1px solid #86efac'
-                              : isAssigned
-                              ? '1px solid #bfdbfe'
-                              : '1px solid #fca5a5',
-                          }}
-                        >
-                          {item.status}
-                        </span>
+                      <Activity size={26} color="#2563eb" />
+                    </div>
+                    <div>
+                      <div style={{ fontWeight: 800, fontSize: '0.98rem', color: '#0f172a' }}>
+                        Listening for Live SOS Telemetry...
                       </div>
-
-                      {/* Location & Time */}
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem', fontSize: '0.78rem', color: '#334155' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-                            <MapPin size={14} color="#dc2626" />
-                            <span>📍 <b>{item.lat.toFixed(4)}, {item.lon.toFixed(4)}</b></span>
-                          </div>
-                          <span style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', color: '#64748b', fontSize: '0.72rem' }}>
-                            <Clock size={12} />
-                            <span>{item.timeReceived}</span>
-                          </span>
-                        </div>
-
-                        {/* Cluster Info */}
-                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '0.1rem' }}>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', color: '#0369a1', fontWeight: 700 }}>
-                            <Users size={14} color="#0284c7" />
-                            <span>👥 Cluster: {members.length} survivors nearby</span>
-                          </div>
-                          <span style={{ fontSize: '0.7rem', color: '#64748b' }}>
-                            Radius ~{item.clusterRadiusMeters}m
-                          </span>
-                        </div>
-                      </div>
-
-                      {/* INDIVIDUAL PEOPLE EXPANDABLE DRAWER */}
                       <div
                         style={{
-                          background: '#fafaf9',
-                          border: '1px solid #e2e8f0',
-                          borderRadius: '8px',
-                          overflow: 'hidden',
+                          fontSize: '0.78rem',
+                          color: '#64748b',
+                          marginTop: '0.35rem',
+                          lineHeight: 1.5,
                         }}
                       >
-                        <div
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setExpandedClusterId(isExpanded ? null : item.id);
-                          }}
-                          style={{
-                            padding: '0.45rem 0.65rem',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'space-between',
-                            fontSize: '0.75rem',
-                            fontWeight: 700,
-                            color: '#0f172a',
-                            cursor: 'pointer',
-                            background: isExpanded ? '#f1f5f9' : '#fafaf9',
-                          }}
-                        >
-                          <span style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-                            <Users size={13} color="#2563eb" />
-                            <span>Individual People in Cluster ({members.length})</span>
-                          </span>
-                          {isExpanded ? <ChevronUp size={14} color="#64748b" /> : <ChevronDown size={14} color="#64748b" />}
-                        </div>
-
-                        {isExpanded && (
-                          <div style={{ padding: '0.5rem', display: 'flex', flexDirection: 'column', gap: '0.4rem', borderTop: '1px solid #e2e8f0' }}>
-                            {members.map((person, idx) => {
-                              const isSelectedPerson = selectedPersonId === person.id;
-                              return (
-                                <div
-                                  key={person.id}
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    selectPerson(person.id);
-                                    if (mapInstanceRef.current) {
-                                      mapInstanceRef.current.flyTo([person.lat, person.lon], 17, { duration: 0.5 });
-                                    }
-                                  }}
-                                  style={{
-                                    background: isSelectedPerson ? '#eff6ff' : '#ffffff',
-                                    border: isSelectedPerson ? '1px solid #2563eb' : '1px solid #e2e8f0',
-                                    borderRadius: '6px',
-                                    padding: '0.45rem 0.6rem',
-                                    display: 'flex',
-                                    flexDirection: 'column',
-                                    gap: '0.2rem',
-                                    fontSize: '0.72rem',
-                                    cursor: 'pointer',
-                                  }}
-                                >
-                                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                    <div style={{ fontWeight: 800, color: '#0f172a' }}>
-                                      {idx + 1}. {person.name}
-                                    </div>
-                                    <span style={{ fontSize: '0.68rem', color: '#64748b', fontWeight: 600 }}>
-                                      {person.distanceMeters === 0 ? 'Center' : `+${person.distanceMeters}m`}
-                                    </span>
-                                  </div>
-                                  <div style={{ color: '#475569', fontSize: '0.7rem' }}>
-                                    {person.condition}
-                                  </div>
-                                  {person.emergencyNeeds && person.emergencyNeeds.length > 0 && (
-                                    <div style={{ display: 'flex', gap: '0.3rem', flexWrap: 'wrap', marginTop: '0.1rem' }}>
-                                      {person.emergencyNeeds.map((need) => (
-                                        <span
-                                          key={need}
-                                          style={{
-                                            background: '#fef2f2',
-                                            color: '#dc2626',
-                                            padding: '1px 5px',
-                                            borderRadius: '4px',
-                                            fontSize: '0.65rem',
-                                            fontWeight: 700,
-                                          }}
-                                        >
-                                          {need}
-                                        </span>
-                                      ))}
-                                      {person.phone && (
-                                        <span style={{ fontSize: '0.65rem', color: '#64748b', display: 'flex', alignItems: 'center', gap: '2px' }}>
-                                          <Phone size={10} />
-                                          {person.phone}
-                                        </span>
-                                      )}
-                                    </div>
-                                  )}
-                                </div>
-                              );
-                            })}
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Team Assignment & Action */}
-                      <div
-                        style={{
-                          borderTop: '1px solid #e2e8f0',
-                          paddingTop: '0.6rem',
-                          display: 'flex',
-                          justifyContent: 'space-between',
-                          alignItems: 'center',
-                        }}
-                      >
-                        <div style={{ fontSize: '0.75rem' }}>
-                          Assigned Team:{' '}
-                          <strong style={{ color: item.assignedTeam ? '#2563eb' : '#dc2626' }}>
-                            {item.assignedTeam || 'None (Pending)'}
-                          </strong>
-                        </div>
-
-                        {!isResolved && (
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setAssignModalIncident(item);
-                            }}
-                            id={`btn-assign-team-${item.id.replace(/[^a-zA-Z0-9]/g, '')}`}
-                            style={{
-                              padding: '0.4rem 0.85rem',
-                              background: isAssigned ? '#f1f5f9' : '#dc2626',
-                              color: isAssigned ? '#0f172a' : '#ffffff',
-                              border: isAssigned ? '1px solid #cbd5e1' : 'none',
-                              borderRadius: '6px',
-                              fontSize: '0.75rem',
-                              fontWeight: 800,
-                              cursor: 'pointer',
-                              display: 'flex',
-                              alignItems: 'center',
-                              gap: '0.35rem',
-                              boxShadow: isAssigned ? 'none' : '0 2px 6px rgba(220, 38, 38, 0.25)',
-                            }}
-                          >
-                            <UserCheck size={14} />
-                            <span>{isAssigned ? 'REASSIGN TEAM' : 'ASSIGN TEAM'}</span>
-                          </button>
-                        )}
+                        Trigger an emergency SOS from your Android emulator or mobile phone.
+                        <br />
+                        The incident will appear here in real time with its{' '}
+                        <b>exact GPS location</b>.
                       </div>
                     </div>
-                  );
-                })}
+                  </div>
+                ) : (
+                  sosList.map(item => {
+                    const isSelected = item.id === selectedSosId;
+                    const isEmergency = item.urgency === 'Emergency';
+                    const isAssigned = item.status === 'Assigned' || item.status === 'In Progress';
+                    const isResolved = item.status === 'Resolved';
+                    const isExpanded = expandedClusterId === item.id;
+                    const members = item.clusterMembers || [];
+
+                    return (
+                      <div
+                        key={item.id}
+                        onClick={() => selectSos(item.id)}
+                        id={`sos-card-${item.id.replace(/[^a-zA-Z0-9]/g, '')}`}
+                        style={{
+                          background: isSelected ? '#eff6ff' : '#ffffff',
+                          border: isSelected
+                            ? '2px solid #2563eb'
+                            : isEmergency && !isAssigned && !isResolved
+                              ? '1px solid #fca5a5'
+                              : '1px solid #e2e8f0',
+                          borderRadius: '12px',
+                          padding: '1rem',
+                          cursor: 'pointer',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          gap: '0.65rem',
+                          boxShadow: isSelected
+                            ? '0 4px 14px rgba(37, 99, 235, 0.12)'
+                            : '0 1px 3px rgba(0, 0, 0, 0.04)',
+                          transition: 'all 0.15s ease',
+                        }}
+                      >
+                        {/* Top Header: ID, Urgency, Status */}
+                        <div
+                          style={{
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: 'center',
+                          }}
+                        >
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
+                            <span
+                              style={{ fontSize: '1.05rem', fontWeight: 900, color: '#0f172a' }}
+                            >
+                              {item.id}
+                            </span>
+                            <span style={{ fontSize: '0.75rem', color: '#64748b' }}>
+                              ({item.survivorName})
+                            </span>
+                          </div>
+
+                          <span
+                            style={{
+                              fontSize: '0.7rem',
+                              fontWeight: 800,
+                              padding: '0.2rem 0.55rem',
+                              borderRadius: '4px',
+                              textTransform: 'uppercase',
+                              background: isResolved
+                                ? '#f0fdf4'
+                                : isAssigned
+                                  ? '#eff6ff'
+                                  : '#fef2f2',
+                              color: isResolved ? '#16a34a' : isAssigned ? '#2563eb' : '#dc2626',
+                              border: isResolved
+                                ? '1px solid #86efac'
+                                : isAssigned
+                                  ? '1px solid #bfdbfe'
+                                  : '1px solid #fca5a5',
+                            }}
+                          >
+                            {item.status}
+                          </span>
+                        </div>
+
+                        {/* Location & Time */}
+                        <div
+                          style={{
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: '0.3rem',
+                            fontSize: '0.78rem',
+                            color: '#334155',
+                          }}
+                        >
+                          <div
+                            style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'space-between',
+                            }}
+                          >
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                              <MapPin size={14} color="#dc2626" />
+                              <span>
+                                📍 Exact GPS:{' '}
+                                <b>
+                                  {item.lat.toFixed(6)}°N, {item.lon.toFixed(6)}°E
+                                </b>
+                              </span>
+                            </div>
+                            <span
+                              style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '0.3rem',
+                                color: '#64748b',
+                                fontSize: '0.72rem',
+                              }}
+                            >
+                              <Clock size={12} />
+                              <span>{item.timeReceived}</span>
+                            </span>
+                          </div>
+
+                          {/* Cluster Info */}
+                          <div
+                            style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'space-between',
+                              marginTop: '0.1rem',
+                            }}
+                          >
+                            <div
+                              style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '0.35rem',
+                                color: '#0369a1',
+                                fontWeight: 700,
+                              }}
+                            >
+                              <Users size={14} color="#0284c7" />
+                              <span>👥 Cluster: {members.length} survivors nearby</span>
+                            </div>
+                            <span style={{ fontSize: '0.7rem', color: '#64748b' }}>
+                              Radius ~{item.clusterRadiusMeters}m
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* INDIVIDUAL PEOPLE EXPANDABLE DRAWER */}
+                        <div
+                          style={{
+                            background: '#fafaf9',
+                            border: '1px solid #e2e8f0',
+                            borderRadius: '8px',
+                            overflow: 'hidden',
+                          }}
+                        >
+                          <div
+                            onClick={e => {
+                              e.stopPropagation();
+                              setExpandedClusterId(isExpanded ? null : item.id);
+                            }}
+                            style={{
+                              padding: '0.45rem 0.65rem',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'space-between',
+                              fontSize: '0.75rem',
+                              fontWeight: 700,
+                              color: '#0f172a',
+                              cursor: 'pointer',
+                              background: isExpanded ? '#f1f5f9' : '#fafaf9',
+                            }}
+                          >
+                            <span style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                              <Users size={13} color="#2563eb" />
+                              <span>Individual People in Cluster ({members.length})</span>
+                            </span>
+                            {isExpanded ? (
+                              <ChevronUp size={14} color="#64748b" />
+                            ) : (
+                              <ChevronDown size={14} color="#64748b" />
+                            )}
+                          </div>
+
+                          {isExpanded && (
+                            <div
+                              style={{
+                                padding: '0.5rem',
+                                display: 'flex',
+                                flexDirection: 'column',
+                                gap: '0.4rem',
+                                borderTop: '1px solid #e2e8f0',
+                              }}
+                            >
+                              {members.map((person, idx) => {
+                                const isSelectedPerson = selectedPersonId === person.id;
+                                return (
+                                  <div
+                                    key={person.id}
+                                    onClick={e => {
+                                      e.stopPropagation();
+                                      selectPerson(person.id);
+                                      if (mapInstanceRef.current) {
+                                        mapInstanceRef.current.flyTo([person.lat, person.lon], 17, {
+                                          duration: 0.5,
+                                        });
+                                      }
+                                    }}
+                                    style={{
+                                      background: isSelectedPerson ? '#eff6ff' : '#ffffff',
+                                      border: isSelectedPerson
+                                        ? '1px solid #2563eb'
+                                        : '1px solid #e2e8f0',
+                                      borderRadius: '6px',
+                                      padding: '0.45rem 0.6rem',
+                                      display: 'flex',
+                                      flexDirection: 'column',
+                                      gap: '0.2rem',
+                                      fontSize: '0.72rem',
+                                      cursor: 'pointer',
+                                    }}
+                                  >
+                                    <div
+                                      style={{
+                                        display: 'flex',
+                                        justifyContent: 'space-between',
+                                        alignItems: 'center',
+                                      }}
+                                    >
+                                      <div style={{ fontWeight: 800, color: '#0f172a' }}>
+                                        {idx + 1}. {person.name}
+                                      </div>
+                                      <span
+                                        style={{
+                                          fontSize: '0.68rem',
+                                          color: '#64748b',
+                                          fontWeight: 600,
+                                        }}
+                                      >
+                                        {person.distanceMeters === 0
+                                          ? 'Center'
+                                          : `+${person.distanceMeters}m`}
+                                      </span>
+                                    </div>
+                                    <div style={{ color: '#475569', fontSize: '0.7rem' }}>
+                                      {person.condition}
+                                    </div>
+                                    {person.emergencyNeeds && person.emergencyNeeds.length > 0 && (
+                                      <div
+                                        style={{
+                                          display: 'flex',
+                                          gap: '0.3rem',
+                                          flexWrap: 'wrap',
+                                          marginTop: '0.1rem',
+                                        }}
+                                      >
+                                        {person.emergencyNeeds.map(need => (
+                                          <span
+                                            key={need}
+                                            style={{
+                                              background: '#fef2f2',
+                                              color: '#dc2626',
+                                              padding: '1px 5px',
+                                              borderRadius: '4px',
+                                              fontSize: '0.65rem',
+                                              fontWeight: 700,
+                                            }}
+                                          >
+                                            {need}
+                                          </span>
+                                        ))}
+                                        {person.phone && (
+                                          <span
+                                            style={{
+                                              fontSize: '0.65rem',
+                                              color: '#64748b',
+                                              display: 'flex',
+                                              alignItems: 'center',
+                                              gap: '2px',
+                                            }}
+                                          >
+                                            <Phone size={10} />
+                                            {person.phone}
+                                          </span>
+                                        )}
+                                      </div>
+                                    )}
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Team Assignment & Action */}
+                        <div
+                          style={{
+                            borderTop: '1px solid #e2e8f0',
+                            paddingTop: '0.6rem',
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: 'center',
+                          }}
+                        >
+                          <div style={{ fontSize: '0.75rem' }}>
+                            Assigned Team:{' '}
+                            <strong style={{ color: item.assignedTeam ? '#2563eb' : '#dc2626' }}>
+                              {item.assignedTeam || 'None (Pending)'}
+                            </strong>
+                          </div>
+
+                          <div style={{ display: 'flex', gap: '0.45rem', alignItems: 'center' }}>
+                            {!isResolved && (
+                              <button
+                                onClick={e => {
+                                  e.stopPropagation();
+                                  setAssignModalIncident(item);
+                                }}
+                                id={`btn-assign-team-${item.id.replace(/[^a-zA-Z0-9]/g, '')}`}
+                                style={{
+                                  padding: '0.4rem 0.85rem',
+                                  background: isAssigned ? '#f1f5f9' : '#dc2626',
+                                  color: isAssigned ? '#0f172a' : '#ffffff',
+                                  border: isAssigned ? '1px solid #cbd5e1' : 'none',
+                                  borderRadius: '6px',
+                                  fontSize: '0.75rem',
+                                  fontWeight: 800,
+                                  cursor: 'pointer',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  gap: '0.35rem',
+                                  boxShadow: isAssigned
+                                    ? 'none'
+                                    : '0 2px 6px rgba(220, 38, 38, 0.25)',
+                                }}
+                              >
+                                <UserCheck size={14} />
+                                <span>{isAssigned ? 'REASSIGN' : 'ASSIGN TEAM'}</span>
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })
+                )}
               </div>
             </div>
 
             {/* RIGHT PANEL: FULL GIS DISPATCH MAP */}
             <div style={{ flex: 1, position: 'relative', height: '100%', background: '#f1f5f9' }}>
-              <div ref={mapContainerRef} style={{ width: '100%', height: '100%' }} id="admin-dispatch-map" />
+              <div
+                ref={mapContainerRef}
+                style={{ width: '100%', height: '100%' }}
+                id="admin-dispatch-map"
+              />
 
               {/* Floating Map Controls at Top Left */}
               <div
@@ -685,7 +958,17 @@ export const AdminControlCenter: React.FC = () => {
                   gap: '0.85rem',
                 }}
               >
-                <label style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', fontSize: '0.75rem', fontWeight: 700, color: '#334155', cursor: 'pointer' }}>
+                <label
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.35rem',
+                    fontSize: '0.75rem',
+                    fontWeight: 700,
+                    color: '#334155',
+                    cursor: 'pointer',
+                  }}
+                >
                   <input
                     type="checkbox"
                     checked={showClusterBoundaries}
@@ -694,7 +977,17 @@ export const AdminControlCenter: React.FC = () => {
                   <span>Cluster Zones</span>
                 </label>
 
-                <label style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', fontSize: '0.75rem', fontWeight: 700, color: '#334155', cursor: 'pointer' }}>
+                <label
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.35rem',
+                    fontSize: '0.75rem',
+                    fontWeight: 700,
+                    color: '#334155',
+                    cursor: 'pointer',
+                  }}
+                >
                   <input
                     type="checkbox"
                     checked={showIndividualPins}
@@ -745,7 +1038,13 @@ export const AdminControlCenter: React.FC = () => {
                     gap: '0.4rem',
                   }}
                 >
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div
+                    style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                    }}
+                  >
                     <span style={{ fontSize: '0.9rem', fontWeight: 900, color: '#0f172a' }}>
                       {activeIncident.id}
                     </span>
@@ -764,11 +1063,18 @@ export const AdminControlCenter: React.FC = () => {
                   </div>
 
                   <div style={{ fontSize: '0.78rem', color: '#475569' }}>
-                    <b>Survivor Cluster:</b> {activeIncident.clusterMembers.length} people nearby • 📍 {activeIncident.lat.toFixed(4)}, {activeIncident.lon.toFixed(4)}
+                    <b>Survivor Cluster:</b> {activeIncident.clusterMembers.length} people nearby •
+                    📍 Exact GPS:{' '}
+                    <b>
+                      {activeIncident.lat.toFixed(6)}°N, {activeIncident.lon.toFixed(6)}°E
+                    </b>
                   </div>
 
                   <div style={{ fontSize: '0.75rem', color: '#64748b' }}>
-                    Assigned: <strong style={{ color: activeIncident.assignedTeam ? '#2563eb' : '#dc2626' }}>{activeIncident.assignedTeam || 'None'}</strong>
+                    Assigned:{' '}
+                    <strong style={{ color: activeIncident.assignedTeam ? '#2563eb' : '#dc2626' }}>
+                      {activeIncident.assignedTeam || 'None'}
+                    </strong>
                   </div>
 
                   {activeIncident.status !== 'Resolved' && (
@@ -786,7 +1092,9 @@ export const AdminControlCenter: React.FC = () => {
                         cursor: 'pointer',
                       }}
                     >
-                      {activeIncident.assignedTeam ? 'Reassign Team' : 'Assign Team to this Cluster'}
+                      {activeIncident.assignedTeam
+                        ? 'Reassign Team'
+                        : 'Assign Team to this Cluster'}
                     </button>
                   )}
                 </div>
@@ -799,7 +1107,16 @@ export const AdminControlCenter: React.FC = () => {
             VIEW 2: RESCUE TEAMS LIST
         ======================================================== */}
         {adminNav === 'teams' && (
-          <div style={{ flex: 1, padding: '1.5rem', overflowY: 'auto', maxWidth: '880px', margin: '0 auto', width: '100%' }}>
+          <div
+            style={{
+              flex: 1,
+              padding: '1.5rem',
+              overflowY: 'auto',
+              maxWidth: '880px',
+              margin: '0 auto',
+              width: '100%',
+            }}
+          >
             <div style={{ marginBottom: '1.25rem' }}>
               <h2 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#0f172a' }}>
                 Field Rescue Teams
@@ -809,8 +1126,14 @@ export const AdminControlCenter: React.FC = () => {
               </div>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '1rem' }}>
-              {teams.map((t) => {
+            <div
+              style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
+                gap: '1rem',
+              }}
+            >
+              {teams.map(t => {
                 const isAvailable = t.status === 'Available';
                 return (
                   <div
@@ -826,7 +1149,13 @@ export const AdminControlCenter: React.FC = () => {
                       boxShadow: '0 1px 3px rgba(0, 0, 0, 0.04)',
                     }}
                   >
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div
+                      style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                      }}
+                    >
                       <div style={{ fontWeight: 800, fontSize: '0.98rem', color: '#0f172a' }}>
                         {t.name}
                       </div>
@@ -846,12 +1175,25 @@ export const AdminControlCenter: React.FC = () => {
                     </div>
 
                     <div style={{ fontSize: '0.8rem', color: '#334155' }}>
-                      <div><b>Lead:</b> {t.lead}</div>
-                      <div><b>Strength:</b> {t.members} trained rescuers</div>
-                      <div><b>Vehicle:</b> {t.vehicle}</div>
+                      <div>
+                        <b>Lead:</b> {t.lead}
+                      </div>
+                      <div>
+                        <b>Strength:</b> {t.members} trained rescuers
+                      </div>
+                      <div>
+                        <b>Vehicle:</b> {t.vehicle}
+                      </div>
                     </div>
 
-                    <div style={{ fontSize: '0.75rem', color: '#64748b', borderTop: '1px solid #e2e8f0', paddingTop: '0.5rem' }}>
+                    <div
+                      style={{
+                        fontSize: '0.75rem',
+                        color: '#64748b',
+                        borderTop: '1px solid #e2e8f0',
+                        paddingTop: '0.5rem',
+                      }}
+                    >
                       Active Assignment:{' '}
                       <strong style={{ color: t.currentSosId ? '#2563eb' : '#64748b' }}>
                         {t.currentSosId || 'Standing by (No Active Case)'}
@@ -880,7 +1222,6 @@ export const AdminControlCenter: React.FC = () => {
             </div>
           </div>
         )}
-
       </div>
 
       {/* ========================================================
@@ -920,7 +1261,8 @@ export const AdminControlCenter: React.FC = () => {
                   Assign Rescue Team
                 </div>
                 <div style={{ fontSize: '0.78rem', color: '#64748b', marginTop: '0.15rem' }}>
-                  Target: <b>{assignModalIncident.id}</b> ({assignModalIncident.clusterMembers.length} survivors in cluster)
+                  Target: <b>{assignModalIncident.id}</b> (
+                  {assignModalIncident.clusterMembers.length} survivors in cluster)
                 </div>
               </div>
               <button
@@ -937,7 +1279,7 @@ export const AdminControlCenter: React.FC = () => {
                 Select Available Field Unit:
               </div>
 
-              {teams.map((t) => {
+              {teams.map(t => {
                 const isSelected = selectedTeamName === t.name;
                 const isAvailable = t.status === 'Available';
                 return (
@@ -1028,7 +1370,6 @@ export const AdminControlCenter: React.FC = () => {
           </div>
         </div>
       )}
-
     </div>
   );
 };

@@ -17,7 +17,7 @@ export async function incidentsRoutes(server: FastifyInstance) {
     async (_req: FastifyRequest, reply: FastifyReply) => {
       const res = await db.query(`SELECT * FROM incidents ORDER BY opened_at DESC;`);
       return reply.send(res.rows);
-    }
+    },
   );
 
   // Create incident
@@ -40,10 +40,7 @@ export async function incidentsRoutes(server: FastifyInstance) {
         },
       },
     },
-    async (
-      req: any,
-      reply: FastifyReply
-    ) => {
+    async (req: any, reply: FastifyReply) => {
       const { name, hazard, region, isDrill } = req.body;
       const agencyId = req.user?.agencyId || '11111111-1111-1111-1111-111111111111';
       const id = `inc_${Date.now()}`;
@@ -52,11 +49,11 @@ export async function incidentsRoutes(server: FastifyInstance) {
         `INSERT INTO incidents (id, agency_id, name, hazard, region, is_drill, opened_at)
          VALUES ($1, $2, $3, $4, $5, $6, now())
          RETURNING *;`,
-        [id, agencyId, name, hazard, region ? JSON.stringify(region) : null, Boolean(isDrill)]
+        [id, agencyId, name, hazard, region ? JSON.stringify(region) : null, Boolean(isDrill)],
       );
 
       return reply.status(201).send(res.rows[0]);
-    }
+    },
   );
 
   // Update incident
@@ -84,16 +81,13 @@ export async function incidentsRoutes(server: FastifyInstance) {
         },
       },
     },
-    async (
-      req: any,
-      reply: FastifyReply
-    ) => {
+    async (req: any, reply: FastifyReply) => {
       const { id } = req.params;
       const { status } = req.body;
 
       const res = await db.query(
         `UPDATE incidents SET status = $1, closed_at = CASE WHEN $1 = 'closed' THEN now() ELSE null END WHERE id = $2 RETURNING *;`,
-        [status, id]
+        [status, id],
       );
 
       if (res.rows.length === 0) {
@@ -101,7 +95,7 @@ export async function incidentsRoutes(server: FastifyInstance) {
       }
 
       return reply.send(res.rows[0]);
-    }
+    },
   );
 
   // Get clusters for incident with filters
@@ -110,7 +104,8 @@ export async function incidentsRoutes(server: FastifyInstance) {
     {
       preHandler: [authenticate],
       schema: {
-        description: 'Retrieves clusters for an incident with status/priority filtering, sorted by priority',
+        description:
+          'Retrieves clusters for an incident with status/priority filtering, sorted by priority',
         tags: ['Incidents'],
         params: {
           type: 'object',
@@ -129,10 +124,7 @@ export async function incidentsRoutes(server: FastifyInstance) {
         },
       },
     },
-    async (
-      req: any,
-      reply: FastifyReply
-    ) => {
+    async (req: any, reply: FastifyReply) => {
       const { id } = req.params;
       const { state, minPriority, search } = req.query;
 
@@ -144,6 +136,6 @@ export async function incidentsRoutes(server: FastifyInstance) {
       });
 
       return reply.send(clusters);
-    }
+    },
   );
 }

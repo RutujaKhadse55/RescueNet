@@ -4,14 +4,7 @@
  */
 
 import React from 'react';
-import {
-  Modal,
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  ScrollView,
-} from 'react-native';
+import { Modal, View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
 
 interface WhatsNewModalProps {
   visible: boolean;
@@ -53,12 +46,7 @@ export const WhatsNewModal: React.FC<WhatsNewModalProps> = ({
   ];
 
   return (
-    <Modal
-      visible={visible}
-      animationType="slide"
-      transparent={true}
-      onRequestClose={onDismiss}
-    >
+    <Modal visible={visible} animationType="slide" transparent={true} onRequestClose={onDismiss}>
       <View style={styles.overlay}>
         <View style={styles.modalCard}>
           <View style={styles.header}>
@@ -81,11 +69,7 @@ export const WhatsNewModal: React.FC<WhatsNewModalProps> = ({
             ))}
           </ScrollView>
 
-          <TouchableOpacity
-            style={styles.dismissButton}
-            onPress={onDismiss}
-            activeOpacity={0.8}
-          >
+          <TouchableOpacity style={styles.dismissButton} onPress={onDismiss} activeOpacity={0.8}>
             <Text style={styles.dismissButtonText}>Got It, Stay Prepared</Text>
           </TouchableOpacity>
         </View>

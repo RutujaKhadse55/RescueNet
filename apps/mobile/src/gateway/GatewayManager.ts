@@ -80,7 +80,12 @@ export class GatewayManager {
     if (this.transport) {
       // Gateway role: continuous scanning, high duty cycle
       await this.transport
-        .startAdvertising('LOW_LATENCY', 'gateway', { hasSos: false, lowBattery: false, beaconOnly: false }, '00000000')
+        .startAdvertising(
+          'LOW_LATENCY',
+          'gateway',
+          { hasSos: false, lowBattery: false, beaconOnly: false },
+          '00000000',
+        )
         .catch(() => {});
       await this.transport.startScanning('LOW_LATENCY').catch(() => {});
     }
@@ -115,7 +120,12 @@ export class GatewayManager {
 
     if (this.transport) {
       await this.transport
-        .startAdvertising('BALANCED', 'survivor', { hasSos: false, lowBattery: false, beaconOnly: false }, '00000000')
+        .startAdvertising(
+          'BALANCED',
+          'survivor',
+          { hasSos: false, lowBattery: false, beaconOnly: false },
+          '00000000',
+        )
         .catch(() => {});
     }
   }
@@ -163,5 +173,3 @@ export class GatewayManager {
     }
   }
 }
-
-

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useRef } from 'react';
 import {
   View,
   Text,
@@ -6,243 +6,272 @@ import {
   TouchableOpacity,
   ScrollView,
   StyleSheet,
+  KeyboardAvoidingView,
+  Platform,
+  StatusBar,
 } from 'react-native';
-import { colors, layout, spacing, typography } from '../theme';
-import { useTranslation } from '../i18n/LanguageContext';
-import { ChatMessageRecord, ConversationRecord } from '../db/repositories/ChatRepository';
-
-export interface ChatChannel {
-  id: string;
-  name: string;
-  role: 'rescuer' | 'survivor' | 'broadcast';
-  subtitle: string;
-  badge?: string;
-  isAssignedTeam?: boolean;
-}
+import { ChatMessageRecord } from '../db/repositories/ChatRepository';
+import { NeighborRecord } from '../db/repositories/NeighborRepository';
 
 interface ChatScreenProps {
-  conversations?: ConversationRecord[];
   messages?: ChatMessageRecord[];
   activeChannelId?: string;
   assignedTeam?: string | null;
+  neighbors?: NeighborRecord[];
   onSelectChannel?: (channelId: string) => void;
   onSendMessage?: (content: string, channelId?: string) => void;
 }
 
 export const ChatScreen: React.FC<ChatScreenProps> = ({
-  conversations = [],
   messages = [],
-  activeChannelId = 'conv_local_mesh',
-  assignedTeam,
-  onSelectChannel,
+  assignedTeam = null,
+  neighbors = [],
   onSendMessage,
 }) => {
-  const { t } = useTranslation();
   const [inputText, setInputText] = useState('');
-  const [currentChannelId, setCurrentChannelId] = useState(activeChannelId);
+  const scrollViewRef = useRef<ScrollView>(null);
 
-  useEffect(() => {
-    if (activeChannelId) {
-      setCurrentChannelId(activeChannelId);
-    }
-  }, [activeChannelId]);
+  // Default peer list if none discovered yet over BLE
+  const activePeers =
+    neighbors.length > 0
+      ? neighbors.map((n, idx) => ({
+          fp: n.fp,
+          name: `Node #${n.fp.slice(0, 4)}`,
+          triage: idx % 2 === 1 || n.fp.includes('8f2e') ? 'RED' : 'YELLOW',
+          distM: Math.max(12, Math.min(80, Math.round(Math.abs(n.last_rssi || -68) * 0.52))),
+          battery: n.battery || 78,
+        }))
+      : [
+          {
+            fp: '4a9b2c8f1e7d3a01',
+            name: 'Node #4a9b',
+            triage: 'YELLOW',
+            distM: 28,
+            battery: 84,
+          },
+          {
+            fp: '8f2e1a3b5c7d9e02',
+            name: 'Node #8f2e',
+            triage: 'RED',
+            distM: 42,
+            battery: 52,
+          },
+        ];
 
-  const channels: ChatChannel[] = [
-    {
-      id: 'conv_local_mesh',
-      name: 'Survivor B (Priya Patil)',
-      role: 'survivor',
-      subtitle: 'Cluster #cl_pune_ghats_01 • 25m away',
-      badge: 'NEARBY PEER',
-    },
-    {
-      id: 'conv_survivor_c',
-      name: 'Survivor C (Amit Deshmukh)',
-      role: 'survivor',
-      subtitle: 'Cluster #cl_pune_ghats_01 • Trapped',
-      badge: 'NEARBY PEER',
-    },
-    {
-      id: 'conv_survivor_d',
-      name: 'Survivor D (Sunil Kulkarni)',
-      role: 'survivor',
-      subtitle: 'Cluster #cl_pune_ghats_01 • Safe Platform',
-      badge: 'NEARBY PEER',
-    },
-    {
-      id: 'team_alpha_chat',
-      name: assignedTeam || 'Rescue Team Alpha',
-      role: 'rescuer',
-      subtitle: assignedTeam ? `${assignedTeam} • Dispatched Unit (TR-01)` : 'Pending Dispatcher Allocation',
-      badge: assignedTeam ? 'DISPATCHED TEAM' : 'AWAITING DISPATCH',
-      isAssignedTeam: Boolean(assignedTeam),
-    },
-    {
-      id: 'cl_pune_ghats_01',
-      name: 'Cluster Broadcast (#cl_pune)',
-      role: 'broadcast',
-      subtitle: 'All 5 survivors in Sector 4',
-      badge: 'GROUP',
-    },
-  ];
-
-  const activeChannel: ChatChannel = channels.find((c) => c.id === currentChannelId) ?? channels[0]!;
-
-  const handleSelectChannel = (chId: string) => {
-    setCurrentChannelId(chId);
-    if (onSelectChannel) {
-      onSelectChannel(chId);
-    }
-  };
-
-  const handleSend = () => {
-    if (inputText.trim() && onSendMessage) {
-      onSendMessage(inputText.trim(), activeChannel.id);
+  const handleSend = (textToSend?: string) => {
+    const text = (textToSend || inputText).trim();
+    if (text && onSendMessage) {
+      onSendMessage(text, 'cl_pune_ghats_01');
       setInputText('');
+
+      setTimeout(() => {
+        scrollViewRef.current?.scrollToEnd({ animated: true });
+      }, 100);
     }
   };
 
-  // Filter messages for current channel or show shared mesh conversation
-  const displayMessages = messages.filter(
-    (m) =>
-      m.conversation_id === activeChannel.id ||
-      activeChannel.id === 'conv_local_mesh' ||
-      m.conversation_id === 'cl_pune_ghats_01'
-  );
+  // Filter messages for the broadcast channel
+  // CRITICAL REQUIREMENT:
+  // If team is NOT assigned (assignedTeam === null), do NOT show Team Alpha messages!
+  // If team IS assigned, show Team Alpha messages!
+  const broadcastMessages = messages.filter(m => {
+    const isTeamMsg =
+      m.sender_fp === 'team_alpha' ||
+      m.recipient_fp === 'team_alpha' ||
+      (m.content && m.content.toLowerCase().includes('team alpha')) ||
+      (m.content && m.content.toLowerCase().includes('ndrf tactical'));
+
+    if (!assignedTeam && isTeamMsg) {
+      return false; // Hide Team Alpha until assigned!
+    }
+    return true;
+  });
 
   return (
-    <View style={styles.container}>
-      {/* 1. Channel Selector Carousel */}
-      <View style={styles.channelBar}>
+    <KeyboardAvoidingView
+      style={styles.container}
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+    >
+      <StatusBar backgroundColor="#008069" barStyle="light-content" />
+
+      {/* 1. WhatsApp Top Bar */}
+      <View style={styles.topHeader}>
+        <View style={styles.topHeaderContent}>
+          <View style={styles.headerLeft}>
+            <View style={styles.broadcastIconCircle}>
+              <Text style={styles.broadcastIconText}>📡</Text>
+            </View>
+            <View>
+              <Text style={styles.headerTitle}>BLE Mesh Broadcast</Text>
+              <View style={styles.headerSubRow}>
+                <View style={styles.onlineDot} />
+                <Text style={styles.headerSubtitle}>
+                  {activePeers.length + 1} Devices in Radio Range • Channel 38
+                </Text>
+              </View>
+            </View>
+          </View>
+
+          <View style={styles.e2eBadge}>
+            <Text style={styles.e2eLock}>🔒</Text>
+            <Text style={styles.e2eText}>OFFLINE</Text>
+          </View>
+        </View>
+
+        {/* 2. Rescuer Team Assignment Status Banner */}
+        <View
+          style={[
+            styles.teamStatusCard,
+            assignedTeam ? styles.teamStatusCardAssigned : styles.teamStatusCardNotAssigned,
+          ]}
+        >
+          <View style={styles.teamStatusIconWrap}>
+            <Text style={styles.teamStatusIcon}>{assignedTeam ? '🧑‍🚒' : '⏳'}</Text>
+          </View>
+          <View style={{ flex: 1 }}>
+            <View style={styles.teamStatusTitleRow}>
+              <Text
+                style={[
+                  styles.teamStatusTitle,
+                  assignedTeam ? styles.teamStatusTitleAssigned : styles.teamStatusTitleNotAssigned,
+                ]}
+              >
+                {assignedTeam ? `${assignedTeam} ASSIGNED` : 'Rescue Team: NOT ASSIGNED'}
+              </Text>
+              <View
+                style={[
+                  styles.teamBadgePill,
+                  assignedTeam ? styles.teamBadgeAssigned : styles.teamBadgeNotAssigned,
+                ]}
+              >
+                <Text
+                  style={[
+                    styles.teamBadgeText,
+                    assignedTeam ? styles.teamBadgeTextAssigned : styles.teamBadgeTextNotAssigned,
+                  ]}
+                >
+                  {assignedTeam ? 'EN ROUTE' : 'SEARCHING'}
+                </Text>
+              </View>
+            </View>
+            <Text style={styles.teamStatusDesc}>
+              {assignedTeam
+                ? 'Official NDRF tactical unit dispatched. Responders receiving your signal.'
+                : 'Emergency distress beacon active on local frequencies. Awaiting dispatch from Command Center.'}
+            </Text>
+          </View>
+        </View>
+      </View>
+
+      {/* 3. Discovered Mesh Peers Horizontal Bar */}
+      <View style={styles.peersBar}>
+        <Text style={styles.peersBarLabel}>CONNECTED PEERS:</Text>
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.channelScroll}
+          contentContainerStyle={styles.peersList}
         >
-          {channels.map((ch) => {
-            const isActive = ch.id === activeChannel.id;
-            return (
-              <TouchableOpacity
-                key={ch.id}
-                style={[
-                  styles.channelChip,
-                  isActive && styles.channelChipActive,
-                  ch.isAssignedTeam && styles.channelChipTeam,
-                  ch.isAssignedTeam && isActive && styles.channelChipTeamActive,
-                ]}
-                onPress={() => handleSelectChannel(ch.id)}
-                activeOpacity={0.8}
-              >
-                <Text style={styles.channelChipIcon}>
-                  {ch.role === 'rescuer' ? '🧑‍🚒' : ch.role === 'broadcast' ? '📡' : '📱'}
-                </Text>
-                <View>
-                  <Text
-                    style={[
-                      styles.channelChipName,
-                      isActive && styles.channelChipNameActive,
-                    ]}
-                  >
-                    {ch.name}
-                  </Text>
-                  {ch.badge && (
-                    <Text
-                      style={[
-                        styles.channelChipBadge,
-                        ch.isAssignedTeam ? styles.badgeTeamColor : styles.badgePeerColor,
-                      ]}
-                    >
-                      {ch.badge}
-                    </Text>
-                  )}
-                </View>
-              </TouchableOpacity>
-            );
-          })}
+          <View style={[styles.peerChip, styles.peerChipYou]}>
+            <Text style={styles.peerChipText}>📍 You (Host)</Text>
+          </View>
+          {activePeers.map(p => (
+            <View
+              key={p.fp}
+              style={[
+                styles.peerChip,
+                p.triage === 'RED' ? styles.peerChipRed : styles.peerChipYellow,
+              ]}
+            >
+              <Text style={styles.peerChipText}>
+                {p.triage === 'RED' ? '🔴' : '🟡'} {p.name} (~{p.distM}m • {p.battery}%)
+              </Text>
+            </View>
+          ))}
+          {assignedTeam && (
+            <View style={[styles.peerChip, styles.peerChipRescuer]}>
+              <Text style={styles.peerChipText}>🧑‍🚒 {assignedTeam} (ETA ~3m)</Text>
+            </View>
+          )}
         </ScrollView>
       </View>
 
-      {/* 2. Active Channel Header */}
-      <View style={styles.header}>
-        <View style={styles.headerLeft}>
-          <View style={styles.headerIconWrapper}>
-            <Text style={styles.headerBigIcon}>
-              {activeChannel.role === 'rescuer' ? '🧑‍🚒' : '📱'}
-            </Text>
-          </View>
-          <View>
-            <View style={styles.headerTitleRow}>
-              <Text style={styles.title}>{activeChannel.name}</Text>
-              {activeChannel.isAssignedTeam && (
-                <View style={styles.verifiedBadge}>
-                  <Text style={styles.verifiedBadgeText}>✓ ASSIGNED</Text>
-                </View>
-              )}
-            </View>
-            <Text style={styles.subtitle}>{activeChannel.subtitle}</Text>
-          </View>
-        </View>
-
-        <View style={styles.e2eBadge}>
-          <Text style={styles.e2eText}>🔒 E2E ENCRYPTED</Text>
-        </View>
-      </View>
-
-      {/* 3. Messages Scroll Area */}
+      {/* 4. Messages Thread */}
       <ScrollView
+        ref={scrollViewRef}
         style={styles.messageScroll}
         contentContainerStyle={styles.messageScrollContent}
+        onContentSizeChange={() => scrollViewRef.current?.scrollToEnd({ animated: true })}
       >
-        {displayMessages.length === 0 ? (
-          <View style={styles.emptyCard}>
-            <Text style={styles.emptyIcon}>💬</Text>
-            <Text style={styles.emptyText}>No messages in this channel yet</Text>
-            <Text style={styles.emptySubtext}>
-              {activeChannel.isAssignedTeam
-                ? 'Rescue Team Alpha is connected over Internet/BLE Mesh. Send a message to coordinate triage or provide hazard updates.'
-                : 'Send encrypted messages to nearby survivors in your cluster over offline multi-hop BLE mesh.'}
+        {/* Security Info Pill */}
+        <View style={styles.securityPill}>
+          <Text style={styles.securityPillText}>
+            🔒 Messages broadcast over local 2.4 GHz Bluetooth mesh radio without cellular towers or
+            internet. All nearby survivor devices receive these broadcasts.
+          </Text>
+        </View>
+
+        {broadcastMessages.length === 0 ? (
+          <View style={styles.emptyContainer}>
+            <Text style={styles.emptyIcon}>📢</Text>
+            <Text style={styles.emptyTitle}>Emergency Broadcast Channel Active</Text>
+            <Text style={styles.emptyDesc}>
+              Any message sent here is instantly broadcast to all {activePeers.length + 1} survivor
+              devices and rescue units in radio range.
             </Text>
           </View>
         ) : (
-          displayMessages.map((m) => {
-            const isOutbound = m.direction === 'outbound';
-            const isRescuer = m.sender_fp === 'team_alpha' || m.sender_fp.includes('rescuer');
+          broadcastMessages.map((msg, index) => {
+            const isMe = msg.direction === 'outbound';
+            const isRescuer =
+              msg.sender_fp === 'team_alpha' ||
+              (msg.content && msg.content.toLowerCase().includes('ndrf tactical'));
+            const timeStr = new Date(msg.created_at).toLocaleTimeString([], {
+              hour: '2-digit',
+              minute: '2-digit',
+            });
+
+            const senderLabel = isMe
+              ? 'You (Host Device)'
+              : isRescuer
+                ? '🧑‍🚒 NDRF Tactical Team Alpha'
+                : msg.sender_fp
+                  ? `Survivor Node #${msg.sender_fp.slice(0, 4)}`
+                  : 'Nearby Survivor';
 
             return (
               <View
-                key={m.message_id}
+                key={msg.message_id || index}
                 style={[
-                  styles.messageBubbleWrapper,
-                  isOutbound ? styles.outboundWrapper : styles.inboundWrapper,
+                  styles.bubbleRow,
+                  isMe ? styles.bubbleRowOutbound : styles.bubbleRowInbound,
                 ]}
               >
-                {!isOutbound && (
-                  <Text style={styles.senderHeader}>
-                    {isRescuer ? '🧑‍🚒 Rescue Team Alpha' : '📱 Nearby Survivor'}
-                  </Text>
-                )}
                 <View
                   style={[
-                    styles.messageBubble,
-                    isOutbound
-                      ? styles.outboundBubble
+                    styles.bubbleCard,
+                    isMe
+                      ? styles.bubbleCardOutbound
                       : isRescuer
-                      ? styles.rescuerBubble
-                      : styles.inboundBubble,
+                        ? styles.bubbleCardRescuer
+                        : styles.bubbleCardInbound,
                   ]}
                 >
-                  <Text style={styles.messageContent}>{m.content}</Text>
-                  <View style={styles.messageMetaRow}>
-                    <Text style={styles.ttlText}>
-                      {new Date(m.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} • TTL: {m.ttl} hops
-                    </Text>
-                    <Text style={styles.statusText}>
-                      {m.status === 'delivered'
-                        ? '✓✓ Delivered'
-                        : m.status === 'relayed'
-                        ? '✓ Relayed'
-                        : '⏳ Mesh Sent'}
-                    </Text>
+                  <Text
+                    style={[
+                      styles.bubbleSender,
+                      isMe
+                        ? styles.bubbleSenderYou
+                        : isRescuer
+                          ? styles.bubbleSenderRescuer
+                          : styles.bubbleSenderPeer,
+                    ]}
+                  >
+                    {senderLabel}
+                  </Text>
+                  <Text style={styles.bubbleContent}>{msg.content}</Text>
+                  <View style={styles.bubbleMeta}>
+                    <Text style={styles.bubbleTime}>{timeStr}</Text>
+                    {isMe && <Text style={styles.bubbleTicks}>✓✓</Text>}
                   </View>
                 </View>
               </View>
@@ -251,286 +280,477 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
         )}
       </ScrollView>
 
-      {/* 4. Bottom Message Composer */}
-      <View style={styles.composerBar}>
+      {/* 5. Quick Emergency Broadcast Actions */}
+      <View style={styles.quickBar}>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.quickBarContent}
+        >
+          <TouchableOpacity
+            style={styles.quickChip}
+            onPress={() =>
+              handleSend(
+                '📍 [BROADCAST]: GPS Fix Verified. Sheltered on elevated platform. Battery at 88%.',
+              )
+            }
+          >
+            <Text style={styles.quickChipText}>📍 Broadcast GPS</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.quickChip}
+            onPress={() =>
+              handleSend('🩹 [MEDICAL URGENCY]: Need first aid kit and splint for limb fracture.')
+            }
+          >
+            <Text style={styles.quickChipText}>🩹 Request Medical Aid</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.quickChip}
+            onPress={() =>
+              handleSend('💧 [SUPPLIES]: Clean drinking water needed for 3 sheltered survivors.')
+            }
+          >
+            <Text style={styles.quickChipText}>💧 Request Water</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.quickChip}
+            onPress={() =>
+              handleSend(
+                '✅ [STATUS UPDATE]: We are safe. Water level stabilized. Holding position.',
+              )
+            }
+          >
+            <Text style={styles.quickChipText}>✅ Report We Are Safe</Text>
+          </TouchableOpacity>
+        </ScrollView>
+      </View>
+
+      {/* 6. WhatsApp Broadcast Input Bar */}
+      <View style={styles.inputContainer}>
+        <TouchableOpacity
+          style={styles.attachBtn}
+          onPress={() => handleSend('🚨 Emergency Beacon Ping: Alive and listening on Channel 38.')}
+        >
+          <Text style={styles.attachIcon}>📎</Text>
+        </TouchableOpacity>
+
         <TextInput
-          style={styles.input}
+          style={styles.textInput}
+          placeholder="Broadcast to all nearby devices..."
+          placeholderTextColor="#94a3b8"
           value={inputText}
           onChangeText={setInputText}
-          placeholder={
-            activeChannel.isAssignedTeam
-              ? 'Message Rescue Team Alpha...'
-              : 'Type message to nearby survivor...'
-          }
-          placeholderTextColor="#64748b"
-          multiline={false}
+          multiline
         />
+
         <TouchableOpacity
-          style={[styles.sendButton, !inputText.trim() && styles.sendButtonDisabled]}
-          onPress={handleSend}
-          disabled={!inputText.trim()}
+          style={[styles.sendBtn, inputText.trim().length === 0 && styles.sendBtnDisabled]}
+          onPress={() => handleSend()}
           activeOpacity={0.8}
         >
-          <Text style={styles.sendButtonText}>Send</Text>
+          <Text style={styles.sendIcon}>➤</Text>
         </TouchableOpacity>
       </View>
-    </View>
+    </KeyboardAvoidingView>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0a0f1d',
+    backgroundColor: '#efeae2', // WhatsApp chat wallpaper tint
   },
-  channelBar: {
-    backgroundColor: '#0f172a',
-    borderBottomWidth: 1,
-    borderBottomColor: '#1e293b',
-    paddingVertical: 8,
+  topHeader: {
+    backgroundColor: '#008069', // WhatsApp Dark Emerald Green
+    paddingTop: Platform.OS === 'ios' ? 44 : 12,
+    paddingHorizontal: 14,
+    paddingBottom: 10,
+    elevation: 4,
   },
-  channelScroll: {
-    paddingHorizontal: spacing.md,
-    gap: 8,
-  },
-  channelChip: {
+  topHeaderContent: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#1e293b',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#334155',
-    gap: 6,
-  },
-  channelChipActive: {
-    backgroundColor: '#1e3a8a',
-    borderColor: '#3b82f6',
-  },
-  channelChipTeam: {
-    borderColor: '#10b981',
-  },
-  channelChipTeamActive: {
-    backgroundColor: '#064e3b',
-    borderColor: '#34d399',
-  },
-  channelChipIcon: {
-    fontSize: 16,
-  },
-  channelChipName: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: '#cbd5e1',
-  },
-  channelChipNameActive: {
-    color: '#ffffff',
-    fontWeight: '800',
-  },
-  channelChipBadge: {
-    fontSize: 8,
-    fontWeight: '900',
-    marginTop: 1,
-  },
-  badgeTeamColor: {
-    color: '#34d399',
-  },
-  badgePeerColor: {
-    color: '#94a3b8',
-  },
-  header: {
-    flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-    backgroundColor: 'rgba(15, 23, 42, 0.95)',
-    borderBottomWidth: 1,
-    borderBottomColor: '#1e293b',
+    marginBottom: 8,
   },
   headerLeft: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
-    flex: 1,
   },
-  headerIconWrapper: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
-    backgroundColor: '#1e293b',
-    justifyContent: 'center',
+  broadcastIconCircle: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
     alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#334155',
+    justifyContent: 'center',
   },
-  headerBigIcon: {
+  broadcastIconText: {
     fontSize: 20,
   },
-  headerTitleRow: {
+  headerTitle: {
+    color: '#ffffff',
+    fontSize: 18,
+    fontWeight: '800',
+    letterSpacing: -0.2,
+  },
+  headerSubRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
+    marginTop: 2,
   },
-  title: {
-    fontSize: 15,
-    fontWeight: '800',
-    color: '#f8fafc',
+  onlineDot: {
+    width: 7,
+    height: 7,
+    borderRadius: 999,
+    backgroundColor: '#25d366', // WhatsApp green dot
   },
-  verifiedBadge: {
-    backgroundColor: 'rgba(16, 185, 129, 0.2)',
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 4,
-    borderWidth: 1,
-    borderColor: '#10b981',
-  },
-  verifiedBadgeText: {
-    fontSize: 9,
-    fontWeight: '900',
-    color: '#34d399',
-  },
-  subtitle: {
+  headerSubtitle: {
+    color: '#e2f4ed',
     fontSize: 11,
-    color: '#94a3b8',
-    marginTop: 1,
+    fontWeight: '600',
   },
   e2eBadge: {
-    backgroundColor: 'rgba(59, 130, 246, 0.15)',
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
     paddingHorizontal: 8,
     paddingVertical: 4,
-    borderRadius: 6,
-    borderWidth: 1,
-    borderColor: 'rgba(59, 130, 246, 0.4)',
+    borderRadius: 12,
+    gap: 4,
+  },
+  e2eLock: {
+    fontSize: 10,
   },
   e2eText: {
+    color: '#ffffff',
+    fontSize: 10,
+    fontWeight: '800',
+  },
+
+  // Rescuer Status Card
+  teamStatusCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    borderRadius: 10,
+    padding: 10,
+    marginTop: 4,
+    borderWidth: 1,
+  },
+  teamStatusCardNotAssigned: {
+    backgroundColor: '#fffbeb',
+    borderColor: '#fde68a',
+  },
+  teamStatusCardAssigned: {
+    backgroundColor: '#ecfdf5',
+    borderColor: '#a7f3d0',
+  },
+  teamStatusIconWrap: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    backgroundColor: '#ffffff',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  teamStatusIcon: {
+    fontSize: 18,
+  },
+  teamStatusTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 2,
+  },
+  teamStatusTitle: {
+    fontSize: 13,
+    fontWeight: '800',
+  },
+  teamStatusTitleNotAssigned: {
+    color: '#b45309',
+  },
+  teamStatusTitleAssigned: {
+    color: '#065f46',
+  },
+  teamBadgePill: {
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 6,
+  },
+  teamBadgeNotAssigned: {
+    backgroundColor: '#fef3c7',
+  },
+  teamBadgeText: {
+    fontSize: 9,
+    fontWeight: '800' as const,
+  },
+  teamBadgeTextNotAssigned: {
+    color: '#92400e',
     fontSize: 9,
     fontWeight: '800',
-    color: '#60a5fa',
   },
-  messageScroll: {
-    flex: 1,
-    backgroundColor: '#0a0f1d',
+  teamBadgeAssigned: {
+    backgroundColor: '#d1fae5',
   },
-  messageScrollContent: {
-    padding: spacing.md,
-    gap: 10,
+  teamBadgeTextAssigned: {
+    color: '#047857',
+    fontSize: 9,
+    fontWeight: '800',
   },
-  emptyCard: {
-    padding: spacing.xl,
-    backgroundColor: '#0f172a',
+  teamStatusDesc: {
+    fontSize: 11,
+    color: '#475569',
+    lineHeight: 15,
+  },
+
+  // Peers Bar
+  peersBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#ffffff',
+    borderBottomWidth: 1,
+    borderBottomColor: '#e2e8f0',
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+  },
+  peersBarLabel: {
+    fontSize: 10,
+    fontWeight: '800',
+    color: '#64748b',
+    marginRight: 8,
+    letterSpacing: 0.5,
+  },
+  peersList: {
+    gap: 6,
+  },
+  peerChip: {
+    paddingHorizontal: 8,
+    paddingVertical: 3,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#1e293b',
-    alignItems: 'center',
-    marginTop: spacing.xl,
   },
-  emptyIcon: {
-    fontSize: 32,
-    marginBottom: spacing.sm,
+  peerChipYou: {
+    backgroundColor: '#eff6ff',
+    borderColor: '#bfdbfe',
   },
-  emptyText: {
-    fontSize: 14,
-    fontWeight: '800',
-    color: '#e2e8f0',
+  peerChipYellow: {
+    backgroundColor: '#fefce8',
+    borderColor: '#fef08a',
   },
-  emptySubtext: {
+  peerChipRed: {
+    backgroundColor: '#fef2f2',
+    borderColor: '#fecaca',
+  },
+  peerChipRescuer: {
+    backgroundColor: '#f0fdf4',
+    borderColor: '#86efac',
+  },
+  peerChipText: {
     fontSize: 11,
-    color: '#94a3b8',
-    textAlign: 'center',
-    marginTop: 6,
-    lineHeight: 16,
-  },
-  messageBubbleWrapper: {
-    marginBottom: 4,
-  },
-  outboundWrapper: {
-    alignItems: 'flex-end',
-  },
-  inboundWrapper: {
-    alignItems: 'flex-start',
-  },
-  senderHeader: {
-    fontSize: 10,
     fontWeight: '700',
-    color: '#94a3b8',
-    marginBottom: 2,
-    marginLeft: 4,
+    color: '#0f172a',
   },
-  messageBubble: {
-    maxWidth: '82%',
-    padding: 12,
-    borderRadius: 14,
-  },
-  outboundBubble: {
-    backgroundColor: '#2563eb',
-    borderBottomRightRadius: 2,
-  },
-  inboundBubble: {
-    backgroundColor: '#1e293b',
-    borderBottomLeftRadius: 2,
-    borderWidth: 1,
-    borderColor: '#334155',
-  },
-  rescuerBubble: {
-    backgroundColor: '#064e3b',
-    borderBottomLeftRadius: 2,
-    borderWidth: 1,
-    borderColor: '#059669',
-  },
-  messageContent: {
-    fontSize: 14,
-    color: '#ffffff',
-    lineHeight: 20,
-  },
-  messageMetaRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginTop: 6,
-    gap: 8,
-  },
-  ttlText: {
-    fontSize: 9,
-    color: 'rgba(255, 255, 255, 0.7)',
-  },
-  statusText: {
-    fontSize: 9,
-    fontWeight: '700',
-    color: 'rgba(255, 255, 255, 0.9)',
-  },
-  composerBar: {
-    flexDirection: 'row',
-    padding: spacing.sm,
-    backgroundColor: '#0f172a',
-    borderTopWidth: 1,
-    borderTopColor: '#1e293b',
-    gap: 8,
-    alignItems: 'center',
-  },
-  input: {
+
+  // Message Scroll
+  messageScroll: {
     flex: 1,
-    backgroundColor: '#1e293b',
-    borderRadius: 10,
+  },
+  messageScrollContent: {
     paddingHorizontal: 12,
     paddingVertical: 10,
-    fontSize: 14,
-    color: '#f8fafc',
-    borderWidth: 1,
-    borderColor: '#334155',
   },
-  sendButton: {
-    backgroundColor: '#2563eb',
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    borderRadius: 10,
+  securityPill: {
+    backgroundColor: '#fff9c4',
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 8,
+    alignSelf: 'center',
+    marginBottom: 12,
+    maxWidth: '92%',
+    elevation: 1,
   },
-  sendButtonDisabled: {
-    backgroundColor: '#334155',
+  securityPillText: {
+    fontSize: 11,
+    color: '#5d4037',
+    textAlign: 'center',
+    lineHeight: 15,
   },
-  sendButtonText: {
-    color: '#ffffff',
+  emptyContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 40,
+    paddingHorizontal: 20,
+    backgroundColor: 'rgba(255, 255, 255, 0.8)',
+    borderRadius: 12,
+    marginTop: 20,
+  },
+  emptyIcon: {
+    fontSize: 36,
+    marginBottom: 6,
+  },
+  emptyTitle: {
+    fontSize: 16,
     fontWeight: '800',
+    color: '#0f172a',
+  },
+  emptyDesc: {
+    fontSize: 12,
+    color: '#64748b',
+    textAlign: 'center',
+    marginTop: 4,
+    lineHeight: 18,
+  },
+  bubbleRow: {
+    marginBottom: 8,
+    flexDirection: 'row',
+  },
+  bubbleRowOutbound: {
+    justifyContent: 'flex-end',
+  },
+  bubbleRowInbound: {
+    justifyContent: 'flex-start',
+  },
+  bubbleCard: {
+    maxWidth: '82%',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 10,
+    elevation: 1,
+    shadowColor: '#000000',
+    shadowOpacity: 0.08,
+    shadowOffset: { width: 0, height: 1 },
+    shadowRadius: 2,
+  },
+  bubbleCardOutbound: {
+    backgroundColor: '#d9fdd3', // WhatsApp Outgoing green
+    borderTopRightRadius: 2,
+  },
+  bubbleCardInbound: {
+    backgroundColor: '#ffffff', // WhatsApp Incoming white
+    borderTopLeftRadius: 2,
+  },
+  bubbleCardRescuer: {
+    backgroundColor: '#ffffff',
+    borderLeftWidth: 3.5,
+    borderLeftColor: '#16a34a',
+    borderTopLeftRadius: 2,
+  },
+  bubbleSender: {
+    fontSize: 11,
+    fontWeight: '800',
+    marginBottom: 2,
+  },
+  bubbleSenderYou: {
+    color: '#15803d',
+  },
+  bubbleSenderPeer: {
+    color: '#0284c7',
+  },
+  bubbleSenderRescuer: {
+    color: '#16a34a',
+  },
+  bubbleContent: {
     fontSize: 14,
+    color: '#111b21',
+    lineHeight: 19,
+  },
+  bubbleMeta: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'flex-end',
+    gap: 4,
+    marginTop: 3,
+  },
+  bubbleTime: {
+    fontSize: 10,
+    color: '#667781',
+    fontWeight: '500',
+  },
+  bubbleTicks: {
+    fontSize: 12,
+    color: '#53bdeb', // WhatsApp Blue checkmark
+    fontWeight: '900',
+  },
+
+  // Quick Action Chips
+  quickBar: {
+    backgroundColor: '#f0f2f5',
+    borderTopWidth: 1,
+    borderTopColor: '#e2e8f0',
+    paddingVertical: 6,
+  },
+  quickBarContent: {
+    paddingHorizontal: 10,
+    gap: 8,
+  },
+  quickChip: {
+    backgroundColor: '#ffffff',
+    borderWidth: 1,
+    borderColor: '#cbd5e1',
+    borderRadius: 16,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+  },
+  quickChipText: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#0f172a',
+  },
+
+  // Input Bar
+  inputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#f0f2f5',
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    gap: 8,
+  },
+  attachBtn: {
+    width: 36,
+    height: 36,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  attachIcon: {
+    fontSize: 20,
+    color: '#54656f',
+  },
+  textInput: {
+    flex: 1,
+    backgroundColor: '#ffffff',
+    borderRadius: 22,
+    paddingHorizontal: 16,
+    paddingVertical: Platform.OS === 'ios' ? 8 : 6,
+    fontSize: 14,
+    color: '#111b21',
+    maxHeight: 100,
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+  },
+  sendBtn: {
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    backgroundColor: '#008069',
+    alignItems: 'center',
+    justifyContent: 'center',
+    elevation: 2,
+  },
+  sendBtnDisabled: {
+    opacity: 0.6,
+  },
+  sendIcon: {
+    color: '#ffffff',
+    fontSize: 16,
+    fontWeight: '900',
+    marginLeft: 2,
   },
 });

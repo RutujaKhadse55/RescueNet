@@ -4,9 +4,9 @@ import { useDashboardStore } from '../../store/dashboardStore';
 import { useTranslation } from '../../i18n/useTranslation';
 
 export const UndoToast: React.FC = () => {
-  const undoAction = useDashboardStore((s) => s.undoAction);
-  const triggerUndo = useDashboardStore((s) => s.triggerUndo);
-  const clearUndo = useDashboardStore((s) => s.clearUndo);
+  const undoAction = useDashboardStore(s => s.undoAction);
+  const triggerUndo = useDashboardStore(s => s.triggerUndo);
+  const clearUndo = useDashboardStore(s => s.clearUndo);
   const { t } = useTranslation();
 
   const [secondsRemaining, setSecondsRemaining] = useState(10);
@@ -45,7 +45,12 @@ export const UndoToast: React.FC = () => {
         {t.btnUndo}
       </button>
       <button
-        style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}
+        style={{
+          background: 'transparent',
+          border: 'none',
+          color: 'var(--text-muted)',
+          cursor: 'pointer',
+        }}
         onClick={clearUndo}
         aria-label="Dismiss undo notification"
       >

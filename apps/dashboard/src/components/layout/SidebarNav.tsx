@@ -78,7 +78,8 @@ export const SidebarNav: React.FC = () => {
         id="nav-tab-simulator"
         style={{
           marginLeft: 'auto',
-          backgroundColor: activeNav === 'simulator' ? 'rgba(59, 130, 246, 0.3)' : 'rgba(16, 185, 129, 0.15)',
+          backgroundColor:
+            activeNav === 'simulator' ? 'rgba(59, 130, 246, 0.3)' : 'rgba(16, 185, 129, 0.15)',
           border: '1px solid rgba(16, 185, 129, 0.4)',
           color: '#34d399',
           fontWeight: 600,

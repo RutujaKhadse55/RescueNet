@@ -39,14 +39,14 @@ export class ClusterRepository {
         c.priority_score,
         c.state,
         c.updated_at,
-      ]
+      ],
     );
   }
 
   async getCluster(clusterId: string): Promise<ClusterRecord | null> {
     const res = await this.driver.execute<ClusterRecord>(
       `SELECT * FROM clusters WHERE cluster_id = ?;`,
-      [clusterId]
+      [clusterId],
     );
     return res.rows[0] ?? null;
   }
@@ -57,19 +57,19 @@ export class ClusterRepository {
 
   async getAllClusters(): Promise<ClusterRecord[]> {
     const res = await this.driver.execute<ClusterRecord>(
-      `SELECT * FROM clusters ORDER BY priority_score DESC;`
+      `SELECT * FROM clusters ORDER BY priority_score DESC;`,
     );
     return res.rows;
   }
 
   async updateStatus(
     clusterId: string,
-    state: 'new' | 'assigned' | 'en_route' | 'reached' | 'closed' | 'false_alarm'
+    state: 'new' | 'assigned' | 'en_route' | 'reached' | 'closed' | 'false_alarm',
   ): Promise<void> {
     const now = new Date().toISOString();
     await this.driver.execute(
       `UPDATE clusters SET state = ?, updated_at = ? WHERE cluster_id = ?;`,
-      [state, now, clusterId]
+      [state, now, clusterId],
     );
   }
 
@@ -77,14 +77,14 @@ export class ClusterRepository {
     await this.driver.execute(
       `INSERT OR REPLACE INTO cluster_members (cluster_id, origin_fp, joined_at)
        VALUES (?, ?, ?);`,
-      [member.cluster_id, member.origin_fp, member.joined_at]
+      [member.cluster_id, member.origin_fp, member.joined_at],
     );
   }
 
   async getMembers(clusterId: string): Promise<ClusterMemberRecord[]> {
     const res = await this.driver.execute<ClusterMemberRecord>(
       `SELECT * FROM cluster_members WHERE cluster_id = ?;`,
-      [clusterId]
+      [clusterId],
     );
     return res.rows;
   }

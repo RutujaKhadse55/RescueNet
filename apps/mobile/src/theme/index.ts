@@ -21,10 +21,10 @@ export const colors = {
   // Status & Emergency Accents
   sosRed: '#dc2626',
   sosRedGlow: 'rgba(220, 38, 38, 0.25)',
-  triageRed: '#dc2626',       // Immediate
-  triageYellow: '#d97706',    // Delayed
-  triageGreen: '#16a34a',     // Minor
-  triageBlack: '#4b5563',     // Expectant / Deceased
+  triageRed: '#dc2626', // Immediate
+  triageYellow: '#d97706', // Delayed
+  triageGreen: '#16a34a', // Minor
+  triageBlack: '#4b5563', // Expectant / Deceased
 
   // System states
   success: '#16a34a',

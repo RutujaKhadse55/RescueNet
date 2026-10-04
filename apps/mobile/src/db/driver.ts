@@ -44,7 +44,10 @@ export class InMemoryDatabaseDriver implements IDatabaseDriver {
     }
   }
 
-  async execute<T = Record<string, unknown>>(sql: string, params: unknown[] = []): Promise<QueryResult<T>> {
+  async execute<T = Record<string, unknown>>(
+    sql: string,
+    params: unknown[] = [],
+  ): Promise<QueryResult<T>> {
     if (!this.open) {
       throw new Error('Database is closed');
     }
@@ -77,10 +80,12 @@ export class InMemoryDatabaseDriver implements IDatabaseDriver {
 
     // 4. INSERT OR REPLACE / INSERT INTO
     if (upper.startsWith('INSERT')) {
-      const match = trimmed.match(/INSERT(?:\s+OR\s+REPLACE)?\s+INTO\s+([a-zA-Z0-9_]+)\s*\(([\s\S]+?)\)\s*VALUES\s*\(([\s\S]+?)\)/i);
+      const match = trimmed.match(
+        /INSERT(?:\s+OR\s+REPLACE)?\s+INTO\s+([a-zA-Z0-9_]+)\s*\(([\s\S]+?)\)\s*VALUES\s*\(([\s\S]+?)\)/i,
+      );
       if (match && match[1] && match[2]) {
         const tableName = match[1];
-        const columns = match[2].split(',').map((c) => c.trim().replace(/[\r\n]+/g, ''));
+        const columns = match[2].split(',').map(c => c.trim().replace(/[\r\n]+/g, ''));
         let table = this.tables.get(tableName);
         if (!table) {
           table = [];
@@ -101,8 +106,8 @@ export class InMemoryDatabaseDriver implements IDatabaseDriver {
           pkCols = ['cluster_id', 'origin_fp'];
         }
 
-        const existingIdx = table.findIndex((r) =>
-          pkCols.every((pk) => r[pk] !== undefined && r[pk] === newRow[pk])
+        const existingIdx = table.findIndex(r =>
+          pkCols.every(pk => r[pk] !== undefined && r[pk] === newRow[pk]),
         );
 
         if (existingIdx >= 0) {
@@ -117,7 +122,9 @@ export class InMemoryDatabaseDriver implements IDatabaseDriver {
 
     // 5. UPDATE
     if (upper.startsWith('UPDATE')) {
-      const match = trimmed.match(/UPDATE\s+([a-zA-Z0-9_]+)\s+SET\s+([\s\S]+?)(?:\s+WHERE\s+([\s\S]+))?$/i);
+      const match = trimmed.match(
+        /UPDATE\s+([a-zA-Z0-9_]+)\s+SET\s+([\s\S]+?)(?:\s+WHERE\s+([\s\S]+))?$/i,
+      );
       if (match && match[1] && match[2]) {
         const tableName = match[1];
         const setClause = match[2];
@@ -127,7 +134,7 @@ export class InMemoryDatabaseDriver implements IDatabaseDriver {
         let rowsAffected = 0;
 
         // Assignments
-        const assignments = setClause.split(',').map((s) => s.trim());
+        const assignments = setClause.split(',').map(s => s.trim());
         const setPlaceholdersCount = (setClause.match(/\?/g) || []).length;
 
         for (const row of table) {
@@ -139,7 +146,7 @@ export class InMemoryDatabaseDriver implements IDatabaseDriver {
           if (matchesWhere) {
             let pCursor = 0;
             for (const assign of assignments) {
-              const parts = assign.split('=').map((s) => s.trim());
+              const parts = assign.split('=').map(s => s.trim());
               const col = parts[0];
               const expr = parts[1];
               if (!col || !expr) continue;
@@ -151,7 +158,8 @@ export class InMemoryDatabaseDriver implements IDatabaseDriver {
                 const minMatch = expr.match(/^MIN\s*\(\s*([a-zA-Z0-9_]+)\s*,\s*(\?|[0-9]+)\s*\)/i);
                 if (minMatch && minMatch[1] && minMatch[2]) {
                   const curr = (row[minMatch[1]] as number) ?? Infinity;
-                  const candidate = minMatch[2] === '?' ? (params[pCursor++] as number) : parseInt(minMatch[2], 10);
+                  const candidate =
+                    minMatch[2] === '?' ? (params[pCursor++] as number) : parseInt(minMatch[2], 10);
                   row[col] = Math.min(curr, candidate);
                 }
               } else if (expr.includes('+')) {
@@ -204,7 +212,9 @@ export class InMemoryDatabaseDriver implements IDatabaseDriver {
 
     // 7. SELECT
     if (upper.startsWith('SELECT')) {
-      const match = trimmed.match(/SELECT\s+([\s\S]+?)\s+FROM\s+([a-zA-Z0-9_]+)(?:\s+WHERE\s+([\s\S]+?))?(?:\s+ORDER\s+BY\s+([\s\S]+?))?(?:\s+LIMIT\s+([0-9]+))?$/i);
+      const match = trimmed.match(
+        /SELECT\s+([\s\S]+?)\s+FROM\s+([a-zA-Z0-9_]+)(?:\s+WHERE\s+([\s\S]+?))?(?:\s+ORDER\s+BY\s+([\s\S]+?))?(?:\s+LIMIT\s+([0-9]+))?$/i,
+      );
       if (match && match[1] && match[2]) {
         const selectFields = match[1].trim();
         const tableName = match[2].trim();
@@ -213,7 +223,7 @@ export class InMemoryDatabaseDriver implements IDatabaseDriver {
         const limitClause = match[5]?.trim();
 
         const table = this.tables.get(tableName) || [];
-        let filtered = table.filter((row) => {
+        let filtered = table.filter(row => {
           if (!whereClause) return true;
           return this.evaluateWhere(row, whereClause, params, 0);
         });
@@ -250,10 +260,10 @@ export class InMemoryDatabaseDriver implements IDatabaseDriver {
 
         // Handle specific columns or *
         if (selectFields === '*') {
-          return { rows: filtered.map((r) => ({ ...r })) as T[], rowsAffected: 0 };
+          return { rows: filtered.map(r => ({ ...r })) as T[], rowsAffected: 0 };
         } else {
-          const cols = selectFields.split(',').map((c) => c.trim());
-          const projected = filtered.map((r) => {
+          const cols = selectFields.split(',').map(c => c.trim());
+          const projected = filtered.map(r => {
             const obj: Record<string, unknown> = {};
             for (const c of cols) {
               if (c) {
@@ -274,7 +284,7 @@ export class InMemoryDatabaseDriver implements IDatabaseDriver {
     row: Record<string, unknown>,
     whereClause: string,
     params: unknown[],
-    paramOffset: number = 0
+    paramOffset: number = 0,
   ): boolean {
     const clauses = whereClause.split(/\s+AND\s+/i);
     let pIdx = paramOffset;
@@ -288,7 +298,7 @@ export class InMemoryDatabaseDriver implements IDatabaseDriver {
         const col = c.replace(' IS NOT NULL', '').trim();
         if (row[col] === null || row[col] === undefined) return false;
       } else if (c.includes('=')) {
-        const parts = c.split('=').map((s) => s.trim());
+        const parts = c.split('=').map(s => s.trim());
         const col = parts[0];
         const rhs = parts[1];
         if (!col || rhs === undefined) continue;
@@ -301,28 +311,28 @@ export class InMemoryDatabaseDriver implements IDatabaseDriver {
         }
         if (String(row[col]) !== String(expected)) return false;
       } else if (c.includes('<=')) {
-        const parts = c.split('<=').map((s) => s.trim());
+        const parts = c.split('<=').map(s => s.trim());
         const col = parts[0];
         const rhs = parts[1];
         if (!col || rhs === undefined) continue;
         const expected = rhs === '?' ? Number(params[pIdx++]) : Number(rhs);
         if (Number(row[col]) > expected) return false;
       } else if (c.includes('>=')) {
-        const parts = c.split('>=').map((s) => s.trim());
+        const parts = c.split('>=').map(s => s.trim());
         const col = parts[0];
         const rhs = parts[1];
         if (!col || rhs === undefined) continue;
         const expected = rhs === '?' ? Number(params[pIdx++]) : Number(rhs);
         if (Number(row[col]) < expected) return false;
       } else if (c.includes('<')) {
-        const parts = c.split('<').map((s) => s.trim());
+        const parts = c.split('<').map(s => s.trim());
         const col = parts[0];
         const rhs = parts[1];
         if (!col || rhs === undefined) continue;
         const expected = rhs === '?' ? Number(params[pIdx++]) : Number(rhs);
         if (Number(row[col]) >= expected) return false;
       } else if (c.includes('>')) {
-        const parts = c.split('>').map((s) => s.trim());
+        const parts = c.split('>').map(s => s.trim());
         const col = parts[0];
         const rhs = parts[1];
         if (!col || rhs === undefined) continue;
@@ -349,19 +359,27 @@ export class OpSqliteDriver implements IDatabaseDriver {
   }
 
   async init(): Promise<void> {
-    throw new Error('Native op-sqlite is not installed in bare sideload build, use InMemoryDatabaseDriver');
+    throw new Error(
+      'Native op-sqlite is not installed in bare sideload build, use InMemoryDatabaseDriver',
+    );
   }
 
   isOpen(): boolean {
     return this.db !== null;
   }
 
-  async execute<T = Record<string, unknown>>(sql: string, params: unknown[] = []): Promise<QueryResult<T>> {
+  async execute<T = Record<string, unknown>>(
+    sql: string,
+    params: unknown[] = [],
+  ): Promise<QueryResult<T>> {
     if (!this.db) {
       throw new Error('OpSqlite database is not open');
     }
     const d = this.db as {
-      execute: (sql: string, params?: unknown[]) => { rows?: { _array: T[] }; rowsAffected?: number; insertId?: number };
+      execute: (
+        sql: string,
+        params?: unknown[],
+      ) => { rows?: { _array: T[] }; rowsAffected?: number; insertId?: number };
     };
     const res = d.execute(sql, params);
     return {

@@ -37,22 +37,19 @@ export class OutboxRepository {
         record.created_at,
         record.retry_count,
         record.status,
-      ]
+      ],
     );
   }
 
   async getPendingUplinks(): Promise<OutboxUplinkRecord[]> {
     const res = await this.driver.execute<OutboxUplinkRecord>(
-      `SELECT * FROM outbox_uplink WHERE status = 'pending' ORDER BY created_at ASC;`
+      `SELECT * FROM outbox_uplink WHERE status = 'pending' ORDER BY created_at ASC;`,
     );
     return res.rows;
   }
 
   async markUplinkSent(id: string): Promise<void> {
-    await this.driver.execute(
-      `UPDATE outbox_uplink SET status = 'sent' WHERE id = ?;`,
-      [id]
-    );
+    await this.driver.execute(`UPDATE outbox_uplink SET status = 'sent' WHERE id = ?;`, [id]);
   }
 
   async queueSms(record: OutboxSmsRecord): Promise<void> {
@@ -67,21 +64,18 @@ export class OutboxRepository {
         record.created_at,
         record.retry_count,
         record.status,
-      ]
+      ],
     );
   }
 
   async getPendingSms(): Promise<OutboxSmsRecord[]> {
     const res = await this.driver.execute<OutboxSmsRecord>(
-      `SELECT * FROM outbox_sms WHERE status = 'pending' ORDER BY created_at ASC;`
+      `SELECT * FROM outbox_sms WHERE status = 'pending' ORDER BY created_at ASC;`,
     );
     return res.rows;
   }
 
   async markSmsSent(id: string): Promise<void> {
-    await this.driver.execute(
-      `UPDATE outbox_sms SET status = 'sent' WHERE id = ?;`,
-      [id]
-    );
+    await this.driver.execute(`UPDATE outbox_sms SET status = 'sent' WHERE id = ?;`, [id]);
   }
 }

@@ -43,7 +43,7 @@ export interface PeerLocation {
   headingDegrees?: number;
   timestamp: number; // Unix epoch (s)
   stalenessMinutes: number;
-  isStale: boolean;  // > 10 min
+  isStale: boolean; // > 10 min
   distanceMeters?: number;
   bearingDegrees?: number;
 }
@@ -80,15 +80,15 @@ export class LiveLocationService {
   private broadcastTimer: NodeJS.Timeout | null = null;
 
   // Adaptive intervals (ms)
-  private static readonly INTERVAL_MOVING_MS  = 30_000;   // 30 s when moving
-  private static readonly INTERVAL_STILL_MS   = 120_000;  // 2 min when still
-  private static readonly STALE_MINUTES       = 10;
+  private static readonly INTERVAL_MOVING_MS = 30_000; // 30 s when moving
+  private static readonly INTERVAL_STILL_MS = 120_000; // 2 min when still
+  private static readonly STALE_MINUTES = 10;
 
   constructor(
     db: DatabaseManager,
     cryptoInstance: ICrypto,
     userKeyPair: KeyPair,
-    meshEngine?: MeshEngine
+    meshEngine?: MeshEngine,
   ) {
     this.db = db;
     this.crypto = cryptoInstance;
@@ -150,11 +150,7 @@ export class LiveLocationService {
    * Drops a shared meet-up pin (rally, safe high ground, hazard, medical).
    * Broadcasts as a signed LOCATION packet visible to the cluster.
    */
-  public async dropMeetupPin(
-    label: MeetupPinLabel,
-    lat: number,
-    lon: number
-  ): Promise<MeetupPin> {
+  public async dropMeetupPin(label: MeetupPinLabel, lat: number, lon: number): Promise<MeetupPin> {
     const pinId = `pin_${Date.now()}`;
     const myFpHex = Buffer.from(this.userKeyPair.publicKey.subarray(0, 8)).toString('hex');
     const pin: MeetupPin = {
@@ -191,14 +187,14 @@ export class LiveLocationService {
 
     const dist = haversineDistanceMeters(
       { latitude: this.myLastLocation.latitude, longitude: this.myLastLocation.longitude },
-      { latitude: peer.latitude, longitude: peer.longitude }
+      { latitude: peer.latitude, longitude: peer.longitude },
     );
 
     const bearing = this.calculateBearing(
       this.myLastLocation.latitude,
       this.myLastLocation.longitude,
       peer.latitude,
-      peer.longitude
+      peer.longitude,
     );
 
     const relativeAngle = (bearing - this.myCompassHeading + 360) % 360;
@@ -215,9 +211,13 @@ export class LiveLocationService {
 
   public getPeerLocations(): PeerLocation[] {
     const nowSec = Math.floor(Date.now() / 1000);
-    return Array.from(this.peerLocations.values()).map((p) => {
+    return Array.from(this.peerLocations.values()).map(p => {
       const ageMin = Math.floor((nowSec - p.timestamp) / 60);
-      return { ...p, stalenessMinutes: ageMin, isStale: ageMin > LiveLocationService.STALE_MINUTES };
+      return {
+        ...p,
+        stalenessMinutes: ageMin,
+        isStale: ageMin > LiveLocationService.STALE_MINUTES,
+      };
     });
   }
 
@@ -252,13 +252,13 @@ export class LiveLocationService {
       if (this.myLastLocation) {
         peerLoc.distanceMeters = haversineDistanceMeters(
           { latitude: this.myLastLocation.latitude, longitude: this.myLastLocation.longitude },
-          { latitude: peerLoc.latitude, longitude: peerLoc.longitude }
+          { latitude: peerLoc.latitude, longitude: peerLoc.longitude },
         );
         peerLoc.bearingDegrees = this.calculateBearing(
           this.myLastLocation.latitude,
           this.myLastLocation.longitude,
           peerLoc.latitude,
-          peerLoc.longitude
+          peerLoc.longitude,
         );
       }
 
@@ -285,7 +285,7 @@ export class LiveLocationService {
           this.myLastLocation.latitude,
           this.myLastLocation.longitude,
           this.myLastLocation.accuracy,
-          this.myCompassHeading
+          this.myCompassHeading,
         ).catch(() => {});
       }
     }, intervalMs);
@@ -306,7 +306,7 @@ export class LiveLocationService {
     lat: number,
     lon: number,
     accuracy: number,
-    _heading: number
+    _heading: number,
   ): Promise<Uint8Array | null> {
     const myFpBytes = this.userKeyPair.publicKey.subarray(0, 8);
     const packetId = this.crypto.randomBytes(8);
@@ -316,7 +316,7 @@ export class LiveLocationService {
         version: 1,
         type: PacketType.LOCATION,
         flags: 0,
-        ttl: 3,   // TTL 3 hops; 30-min retention in mesh
+        ttl: 3, // TTL 3 hops; 30-min retention in mesh
         hop: 0,
         packetId,
         originFp: myFpBytes,
@@ -351,13 +351,13 @@ export class LiveLocationService {
     for (const p of this.peerLocations.values()) {
       p.distanceMeters = haversineDistanceMeters(
         { latitude: this.myLastLocation.latitude, longitude: this.myLastLocation.longitude },
-        { latitude: p.latitude, longitude: p.longitude }
+        { latitude: p.latitude, longitude: p.longitude },
       );
       p.bearingDegrees = this.calculateBearing(
         this.myLastLocation.latitude,
         this.myLastLocation.longitude,
         p.latitude,
-        p.longitude
+        p.longitude,
       );
     }
   }
@@ -372,4 +372,3 @@ export class LiveLocationService {
     return (toDeg(Math.atan2(y, x)) + 360) % 360;
   }
 }
-

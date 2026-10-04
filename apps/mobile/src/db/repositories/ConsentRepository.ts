@@ -30,13 +30,17 @@ export class ConsentRepository {
     await this.driver.execute(
       `INSERT OR REPLACE INTO consent (version, consented_at, json_data)
        VALUES (?, ?, ?);`,
-      [version, timestamp, jsonData]
+      [version, timestamp, jsonData],
     );
   }
 
-  async getLatestConsent(): Promise<{ version: number; consented_at: string; data: ConsentData } | null> {
+  async getLatestConsent(): Promise<{
+    version: number;
+    consented_at: string;
+    data: ConsentData;
+  } | null> {
     const res = await this.driver.execute<ConsentRecord>(
-      `SELECT * FROM consent ORDER BY version DESC LIMIT 1;`
+      `SELECT * FROM consent ORDER BY version DESC LIMIT 1;`,
     );
     const row = res.rows[0];
     if (!row) return null;

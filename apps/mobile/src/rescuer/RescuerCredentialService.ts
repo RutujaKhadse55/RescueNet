@@ -34,11 +34,7 @@ export class RescuerCredentialService {
   private knownRescuerKeys: Map<string, RescuerCredential> = new Map();
   private onRoleChangeCallback?: (isRescuer: boolean) => void;
 
-  constructor(
-    db: DatabaseManager,
-    crypto: ICrypto,
-    agencyCaPublicKey?: Uint8Array
-  ) {
+  constructor(db: DatabaseManager, crypto: ICrypto, agencyCaPublicKey?: Uint8Array) {
     this.db = db;
     this.crypto = crypto;
     // Default 32-byte placeholder until configured from server/settings
@@ -84,15 +80,12 @@ export class RescuerCredentialService {
           cred,
           this.agencyCaPublicKey,
           Math.floor(Date.now() / 1000),
-          this.revocationList
+          this.revocationList,
         );
 
         if (verify.valid) {
           this.activeCredential = cred;
-          this.knownRescuerKeys.set(
-            Buffer.from(cred.rescuerPublicKey).toString('hex'),
-            cred
-          );
+          this.knownRescuerKeys.set(Buffer.from(cred.rescuerPublicKey).toString('hex'), cred);
         } else {
           // Stored credential expired or revoked
           this.activeCredential = null;
@@ -149,22 +142,21 @@ export class RescuerCredentialService {
         cred,
         this.agencyCaPublicKey,
         Math.floor(Date.now() / 1000),
-        this.revocationList
+        this.revocationList,
       );
 
       if (!verification.valid) {
         let msg = 'Invalid credential';
         if (verification.reason === CredentialVerifyResult.EXPIRED) msg = 'Credential has expired';
-        if (verification.reason === CredentialVerifyResult.REVOKED) msg = 'Credential is on revocation list';
-        if (verification.reason === CredentialVerifyResult.INVALID_SIGNATURE) msg = 'Agency CA signature invalid';
+        if (verification.reason === CredentialVerifyResult.REVOKED)
+          msg = 'Credential is on revocation list';
+        if (verification.reason === CredentialVerifyResult.INVALID_SIGNATURE)
+          msg = 'Agency CA signature invalid';
         return { success: false, error: msg };
       }
 
       this.activeCredential = cred;
-      this.knownRescuerKeys.set(
-        Buffer.from(cred.rescuerPublicKey).toString('hex'),
-        cred
-      );
+      this.knownRescuerKeys.set(Buffer.from(cred.rescuerPublicKey).toString('hex'), cred);
 
       // Persist in settings
       await this.db.settings.set(
@@ -173,7 +165,7 @@ export class RescuerCredentialService {
           ...cred,
           rescuerPublicKeyHex: Buffer.from(cred.rescuerPublicKey).toString('hex'),
           caSignatureHex: Buffer.from(cred.caSignature).toString('hex'),
-        })
+        }),
       );
 
       await this.db.events.logEvent('rescuer_enrolled', {
@@ -200,7 +192,7 @@ export class RescuerCredentialService {
       cred,
       this.agencyCaPublicKey,
       Math.floor(Date.now() / 1000),
-      this.revocationList
+      this.revocationList,
     );
 
     if (verification.valid) {
@@ -214,7 +206,9 @@ export class RescuerCredentialService {
   /**
    * Updates and verifies the Credential Revocation List (CRL).
    */
-  public async updateRevocationList(crl: CredentialRevocationList): Promise<{ success: boolean; error?: string }> {
+  public async updateRevocationList(
+    crl: CredentialRevocationList,
+  ): Promise<{ success: boolean; error?: string }> {
     try {
       // 1. Verify CRL signature with Agency CA public key
       const payload = new TextEncoder().encode(
@@ -223,14 +217,10 @@ export class RescuerCredentialService {
           revokedCredentialIds: [...crl.revokedCredentialIds].sort(),
           revokedPublicKeysHex: [...crl.revokedPublicKeysHex].sort(),
           updatedAt: crl.updatedAt,
-        })
+        }),
       );
 
-      const isValid = await this.crypto.verify(
-        crl.caSignature,
-        payload,
-        this.agencyCaPublicKey
-      );
+      const isValid = await this.crypto.verify(crl.caSignature, payload, this.agencyCaPublicKey);
 
       if (!isValid) {
         return { success: false, error: 'CRL signature verification failed' };
@@ -247,7 +237,7 @@ export class RescuerCredentialService {
           revokedPublicKeysHex: crl.revokedPublicKeysHex,
           updatedAt: crl.updatedAt,
           caSignatureHex: Buffer.from(crl.caSignature).toString('hex'),
-        })
+        }),
       );
 
       // Check if current active credential was revoked!
@@ -255,7 +245,7 @@ export class RescuerCredentialService {
         const isRevoked =
           crl.revokedCredentialIds.includes(this.activeCredential.credentialId) ||
           crl.revokedPublicKeysHex.includes(
-            Buffer.from(this.activeCredential.rescuerPublicKey).toString('hex')
+            Buffer.from(this.activeCredential.rescuerPublicKey).toString('hex'),
           );
 
         if (isRevoked) {
@@ -281,7 +271,9 @@ export class RescuerCredentialService {
    * 3. Signer public key must be an authorized rescuer (or matching active credential or CA trust).
    * 4. Ed25519 signature of the packet must be cryptographically valid.
    */
-  public async verifyRescuerPacket(rawBytes: Uint8Array): Promise<{ valid: boolean; reason?: string }> {
+  public async verifyRescuerPacket(
+    rawBytes: Uint8Array,
+  ): Promise<{ valid: boolean; reason?: string }> {
     if (rawBytes.length < 21) {
       return { valid: false, reason: 'Packet too short' };
     }

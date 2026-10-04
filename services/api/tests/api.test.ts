@@ -1,9 +1,5 @@
 import { buildServer } from '../src/server';
-import {
-  PROTOCOL_VERSION,
-  SodiumCrypto,
-  createAndSignSos,
-} from '@rescuenet/core';
+import { PROTOCOL_VERSION, SodiumCrypto, createAndSignSos } from '@rescuenet/core';
 import { db } from '../src/db/client';
 
 describe('Phase 9: Backend API, Ingest, Server Clustering, and ACK Flow', () => {
@@ -88,7 +84,7 @@ describe('Phase 9: Backend API, Ingest, Server Clustering, and ACK Flow', () => 
           sequenceNumber: 1,
           keyPair,
         },
-        crypto
+        crypto,
       );
 
       uplinkPacketsHex.push(Buffer.from(sosBytes).toString('hex'));
@@ -192,7 +188,9 @@ describe('Phase 9: Backend API, Ingest, Server Clustering, and ACK Flow', () => 
     expect(ackBody.meshPacketHex).toBeDefined();
 
     // Acceptance 5a: An sms_outbound row is created
-    const smsOutRes = await db.query(`SELECT * FROM sms_outbound WHERE ack_id = $1;`, [ackBody.ackId]);
+    const smsOutRes = await db.query(`SELECT * FROM sms_outbound WHERE ack_id = $1;`, [
+      ackBody.ackId,
+    ]);
     expect(smsOutRes.rows.length).toBeGreaterThan(0);
     expect(smsOutRes.rows[0].body).toContain('Help is on the way');
 
@@ -223,8 +221,8 @@ describe('Phase 9: Backend API, Ingest, Server Clustering, and ACK Flow', () => 
           ttl: 5,
           hop: 0,
           timestamp: now,
-          latitude: 18.5204 + (i * 0.0001),
-          longitude: 73.8567 + (i * 0.0001),
+          latitude: 18.5204 + i * 0.0001,
+          longitude: 73.8567 + i * 0.0001,
           accuracyMeters: 10,
           status: 1,
           peopleCount: 1,
@@ -233,7 +231,7 @@ describe('Phase 9: Backend API, Ingest, Server Clustering, and ACK Flow', () => 
           sequenceNumber: 1,
           keyPair,
         },
-        crypto
+        crypto,
       );
 
       batchHex.push(Buffer.from(packet).toString('hex'));

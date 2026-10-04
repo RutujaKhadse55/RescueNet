@@ -15,7 +15,7 @@ export async function teamsRoutes(server: FastifyInstance) {
     async (_req: FastifyRequest, reply: FastifyReply) => {
       const res = await db.query(`SELECT * FROM teams;`);
       return reply.send(res.rows);
-    }
+    },
   );
 
   const positionSchema = {
@@ -52,12 +52,20 @@ export async function teamsRoutes(server: FastifyInstance) {
 
     await db.query(
       `UPDATE teams SET last_position = ST_SetSRID(ST_MakePoint($1, $2), 4326)::geography, last_position_at = now() WHERE id = $3 RETURNING *;`,
-      [longitude, latitude, id]
+      [longitude, latitude, id],
     );
 
     return reply.send({ id, latitude, longitude, updatedAt: new Date().toISOString() });
   };
 
-  server.patch('/teams/:id/position', { preHandler: [optionalAuth], schema: positionSchema }, updatePositionHandler);
-  server.post('/teams/:id/position', { preHandler: [optionalAuth], schema: positionSchema }, updatePositionHandler);
+  server.patch(
+    '/teams/:id/position',
+    { preHandler: [optionalAuth], schema: positionSchema },
+    updatePositionHandler,
+  );
+  server.post(
+    '/teams/:id/position',
+    { preHandler: [optionalAuth], schema: positionSchema },
+    updatePositionHandler,
+  );
 }

@@ -14,10 +14,10 @@ export async function adminRoutes(server: FastifyInstance) {
     },
     async (_req: FastifyRequest, reply: FastifyReply) => {
       const res = await db.query(
-        `SELECT id, agency_id, email, full_name, role, active, created_at FROM users;`
+        `SELECT id, agency_id, email, full_name, role, active, created_at FROM users;`,
       );
       return reply.send(res.rows);
-    }
+    },
   );
 
   server.post(
@@ -39,10 +39,7 @@ export async function adminRoutes(server: FastifyInstance) {
         },
       },
     },
-    async (
-      req: any,
-      reply: FastifyReply
-    ) => {
+    async (req: any, reply: FastifyReply) => {
       const { email, password, fullName, role } = req.body;
       const agencyId = req.user!.agencyId;
       const hash = await SecurityService.hashPassword(password);
@@ -51,13 +48,13 @@ export async function adminRoutes(server: FastifyInstance) {
       await db.query(
         `INSERT INTO users (id, agency_id, email, password_hash, full_name, role, active)
          VALUES ($1, $2, $3, $4, $5, $6, true);`,
-        [id, agencyId, email.toLowerCase(), hash, fullName, role]
+        [id, agencyId, email.toLowerCase(), hash, fullName, role],
       );
 
       await AuditService.log('create_user', 'user', id, req.user!.userId, req.ip, { email, role });
 
       return reply.status(201).send({ id, email, fullName, role });
-    }
+    },
   );
 
   // Agencies
@@ -70,7 +67,7 @@ export async function adminRoutes(server: FastifyInstance) {
     async (_req: FastifyRequest, reply: FastifyReply) => {
       const res = await db.query(`SELECT id, name, created_at FROM agencies;`);
       return reply.send(res.rows);
-    }
+    },
   );
 
   // SMS Numbers
@@ -83,7 +80,7 @@ export async function adminRoutes(server: FastifyInstance) {
     async (_req: FastifyRequest, reply: FastifyReply) => {
       const res = await db.query(`SELECT * FROM sms_gateway_numbers;`);
       return reply.send(res.rows);
-    }
+    },
   );
 
   // Manual purge past retention policy
@@ -91,11 +88,16 @@ export async function adminRoutes(server: FastifyInstance) {
     '/admin/purge',
     {
       preHandler: [authenticate, requireRole(['admin'])],
-      schema: { description: 'Triggers manual data purge for records exceeding retention period', tags: ['Admin'] },
+      schema: {
+        description: 'Triggers manual data purge for records exceeding retention period',
+        tags: ['Admin'],
+      },
     },
     async (req: FastifyRequest, reply: FastifyReply) => {
       const now = new Date().toISOString();
-      await AuditService.log('manual_data_purge', 'system', null, req.user!.userId, req.ip, { executedAt: now });
+      await AuditService.log('manual_data_purge', 'system', null, req.user!.userId, req.ip, {
+        executedAt: now,
+      });
 
       return reply.send({
         status: 'purged',
@@ -103,6 +105,6 @@ export async function adminRoutes(server: FastifyInstance) {
         retentionPolicy: 'enforced',
         timestamp: now,
       });
-    }
+    },
   );
 }

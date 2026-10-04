@@ -23,6 +23,8 @@
     "db:migrate": "pnpm --filter @rescuenet/api migrate:up",
     "db:migrate:down": "pnpm --filter @rescuenet/api migrate:down",
     "db:seed": "pnpm --filter @rescuenet/api seed",
+    "seed:demo": "node scripts/seed-demo.mjs",
+    "seed:clean": "node scripts/clean-demo.mjs",
     "prepare": "husky"
   },
   "devDependencies": {

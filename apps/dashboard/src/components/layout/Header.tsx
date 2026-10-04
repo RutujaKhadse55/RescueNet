@@ -22,15 +22,21 @@ import { ShortcutsModal } from './ShortcutsModal';
 export const Header: React.FC = () => {
   const { user, logout, warningModalOpen, extendSession } = useAuthStore();
   const { incidents, activeIncident, setActiveIncident } = useDashboardStore();
-  const { highContrast, largeType, soundEnabled, toggleHighContrast, toggleLargeType, toggleSound } =
-    useSettingsStore();
+  const {
+    highContrast,
+    largeType,
+    soundEnabled,
+    toggleHighContrast,
+    toggleLargeType,
+    toggleSound,
+  } = useSettingsStore();
   const { t, language, toggleLanguage } = useTranslation();
 
   const [wsStatus, setWsStatus] = useState<WsStatus>(wsManager.getStatus());
   const [shortcutsOpen, setShortcutsOpen] = useState(false);
 
   useEffect(() => {
-    return wsManager.subscribeStatus((st) => setWsStatus(st));
+    return wsManager.subscribeStatus(st => setWsStatus(st));
   }, []);
 
   return (
@@ -43,7 +49,9 @@ export const Header: React.FC = () => {
           </div>
           <div>
             <div className="brand-title">{t.appName}</div>
-            <div className="brand-subtitle">{t.commandCenter} • v{PROTOCOL_VERSION}</div>
+            <div className="brand-subtitle">
+              {t.commandCenter} • v{PROTOCOL_VERSION}
+            </div>
           </div>
         </div>
 
@@ -55,11 +63,11 @@ export const Header: React.FC = () => {
               className="form-select"
               style={{ padding: '0.3rem 0.6rem', fontSize: '0.8rem', maxWidth: '280px' }}
               value={activeIncident.id}
-              onChange={(e) => setActiveIncident(e.target.value)}
+              onChange={e => setActiveIncident(e.target.value)}
               aria-label="Select disaster incident operation zone"
               id="select-incident-zone"
             >
-              {incidents.map((inc) => (
+              {incidents.map(inc => (
                 <option key={inc.id} value={inc.id}>
                   {inc.name} {inc.is_drill ? '(DRILL)' : ''}
                 </option>
@@ -77,8 +85,8 @@ export const Header: React.FC = () => {
               wsStatus === 'connected'
                 ? 'badge-ws-connected'
                 : wsStatus === 'reconnecting'
-                ? 'badge-ws-reconnecting'
-                : 'badge-ws-offline'
+                  ? 'badge-ws-reconnecting'
+                  : 'badge-ws-offline'
             }`}
             title={`WebSocket Gateway Link: ${wsStatus}`}
             id="ws-status-badge"
@@ -99,7 +107,11 @@ export const Header: React.FC = () => {
             aria-label={soundEnabled ? t.soundUnmuted : t.soundMuted}
             id="btn-toggle-sound"
           >
-            {soundEnabled ? <Volume2 size={16} /> : <VolumeX size={16} color="var(--accent-critical)" />}
+            {soundEnabled ? (
+              <Volume2 size={16} />
+            ) : (
+              <VolumeX size={16} color="var(--accent-critical)" />
+            )}
           </button>
 
           {/* High Contrast Toggle */}
@@ -172,8 +184,8 @@ export const Header: React.FC = () => {
                       user.role === 'admin'
                         ? 'var(--accent-critical)'
                         : user.role === 'dispatcher'
-                        ? '#60a5fa'
-                        : 'var(--accent-low)',
+                          ? '#60a5fa'
+                          : 'var(--accent-low)',
                     fontWeight: 700,
                   }}
                   id="user-role-display"

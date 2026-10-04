@@ -95,13 +95,17 @@ export const translations: Record<SupportedLanguage, Record<string, string>> = {
     // Consent Flow
     'consent.title': 'RescueNet Privacy & Consent',
     'consent.step1_title': 'What Information is Shared?',
-    'consent.step1_body': 'During disasters, RescueNet shares your rough GPS location, triage severity, and battery level so rescue teams (NDRF/SDRF) can find and prioritize you.',
+    'consent.step1_body':
+      'During disasters, RescueNet shares your rough GPS location, triage severity, and battery level so rescue teams (NDRF/SDRF) can find and prioritize you.',
     'consent.step2_title': 'Who Can See Your Data?',
-    'consent.step2_body': 'Only authorized emergency teams and incident command can view your raw coordinates. Intermediate phones forwarding your packets act as relays and cannot decrypt your private details.',
+    'consent.step2_body':
+      'Only authorized emergency teams and incident command can view your raw coordinates. Intermediate phones forwarding your packets act as relays and cannot decrypt your private details.',
     'consent.step3_title': 'Optional Features',
-    'consent.step3_body': 'Peer-to-peer chat and continuous live location sharing are strictly optional. Identity details (name, phone) are opt-in.',
+    'consent.step3_body':
+      'Peer-to-peer chat and continuous live location sharing are strictly optional. Identity details (name, phone) are opt-in.',
     'consent.step4_title': 'Data Retention & Deletion',
-    'consent.step4_body': 'Data in the mesh naturally expires. You can wipe all local stored records and keys at any time in Settings.',
+    'consent.step4_body':
+      'Data in the mesh naturally expires. You can wipe all local stored records and keys at any time in Settings.',
     'consent.opt_in_name': 'Full Name (Optional)',
     'consent.opt_in_phone': 'Phone Number (Optional)',
     'consent.accept_btn': 'I Understand & Agree',
@@ -110,9 +114,11 @@ export const translations: Record<SupportedLanguage, Record<string, string>> = {
     // Preparedness
     'prep.title': 'Preparedness Self-Test',
     'prep.score_label': 'Disaster Readiness Score',
-    'prep.monsoon_alert': 'Monsoon Season Notice: Ensure offline maps and battery exemptions are active before heavy rain begins.',
+    'prep.monsoon_alert':
+      'Monsoon Season Notice: Ensure offline maps and battery exemptions are active before heavy rain begins.',
     'prep.drill_mode': 'Drill / Exercise Mode',
-    'prep.drill_mode_desc': 'Tag packets with test_drill so command dashboard marks them as training exercise.',
+    'prep.drill_mode_desc':
+      'Tag packets with test_drill so command dashboard marks them as training exercise.',
     'prep.range_test': 'BLE Range Test',
     'prep.range_test_desc': 'Test mesh packet exchange range with a partner phone.',
     'prep.start_range_test': 'Start Range Ping',
@@ -120,15 +126,19 @@ export const translations: Record<SupportedLanguage, Record<string, string>> = {
     // Permissions
     'perm.title': 'Required Emergency Permissions',
     'perm.ble_title': 'Bluetooth Mesh Access',
-    'perm.ble_desc': 'Required to scan and transmit offline emergency packets to neighboring phones.',
+    'perm.ble_desc':
+      'Required to scan and transmit offline emergency packets to neighboring phones.',
     'perm.location_title': 'Accurate GPS & Background Relay',
-    'perm.location_desc': 'Rescuers need your coordinates. Android also requires location permission for Bluetooth scanning.',
+    'perm.location_desc':
+      'Rescuers need your coordinates. Android also requires location permission for Bluetooth scanning.',
     'perm.notif_title': 'Critical Emergency Alerts',
-    'perm.notif_desc': 'Wakes your phone when rescue teams send an acknowledgment or evacuation warning.',
+    'perm.notif_desc':
+      'Wakes your phone when rescue teams send an acknowledgment or evacuation warning.',
     'perm.sms_title': 'SMS Disaster Fallback',
     'perm.sms_desc': 'Sends compact 70-character encoded SMS if BLE mesh cannot find nearby peers.',
     'perm.battery_title': 'Ignore Battery Optimization',
-    'perm.battery_desc': 'Prevents Android OEM task killers from shutting down the background mesh relay.',
+    'perm.battery_desc':
+      'Prevents Android OEM task killers from shutting down the background mesh relay.',
     'perm.grant_btn': 'Grant Permission',
     'perm.open_settings': 'Open App Settings',
   },
@@ -194,13 +204,17 @@ export const translations: Record<SupportedLanguage, Record<string, string>> = {
     'settings.wipe_warning': 'यह सभी स्थानीय कुंजियां, संदेश और डेटा हमेशा के लिए हटा देगा।',
     'consent.title': 'गोपनीयता और सहमति',
     'consent.step1_title': 'क्या जानकारी साझा की जाती है?',
-    'consent.step1_body': 'आपदा में रेस्क्यूनेट आपका जीपीएस स्थान, आपातकालीन स्थिति और बैटरी स्तर साझा करता है ताकि बचाव दल आपको ढूंढ सकें।',
+    'consent.step1_body':
+      'आपदा में रेस्क्यूनेट आपका जीपीएस स्थान, आपातकालीन स्थिति और बैटरी स्तर साझा करता है ताकि बचाव दल आपको ढूंढ सकें।',
     'consent.step2_title': 'डेटा कौन देख सकता है?',
-    'consent.step2_body': 'केवल अधिकृत बचाव दल और नियंत्रण कक्ष आपका सटीक स्थान देख सकते हैं। रिले करने वाले अन्य फोन एन्क्रिप्टेड डेटा नहीं पढ़ सकते।',
+    'consent.step2_body':
+      'केवल अधिकृत बचाव दल और नियंत्रण कक्ष आपका सटीक स्थान देख सकते हैं। रिले करने वाले अन्य फोन एन्क्रिप्टेड डेटा नहीं पढ़ सकते।',
     'consent.step3_title': 'वैकल्पिक सुविधाएं',
-    'consent.step3_body': 'चैट और निरंतर स्थान साझा करना पूरी तरह वैकल्पिक है। नाम और फोन नंबर देना भी आपकी इच्छा पर है।',
+    'consent.step3_body':
+      'चैट और निरंतर स्थान साझा करना पूरी तरह वैकल्पिक है। नाम और फोन नंबर देना भी आपकी इच्छा पर है।',
     'consent.step4_title': 'डेटा प्रतिधारण और हटाना',
-    'consent.step4_body': 'मेश में डेटा समय सीमा के बाद स्वयं नष्ट हो जाता है। आप सेटिंग्स में जाकर कभी भी डेटा मिटा सकते हैं।',
+    'consent.step4_body':
+      'मेश में डेटा समय सीमा के बाद स्वयं नष्ट हो जाता है। आप सेटिंग्स में जाकर कभी भी डेटा मिटा सकते हैं।',
     'consent.opt_in_name': 'पूरा नाम (वैकल्पिक)',
     'consent.opt_in_phone': 'फोन नंबर (वैकल्पिक)',
     'consent.accept_btn': 'मैं समझता हूँ और सहमत हूँ',
@@ -289,9 +303,11 @@ export const translations: Record<SupportedLanguage, Record<string, string>> = {
     'settings.wipe_warning': 'याने सर्व नोंदी, संदेश आणि ओळख कायमची नष्ट होईल.',
     'consent.title': 'गोपनीयता व संमती',
     'consent.step1_title': 'कोणती माहिती शेअर केली जाते?',
-    'consent.step1_body': 'आपत्तीच्या वेळी रेस्क्यूनेट आपले GPS स्थान, स्थिती आणि बॅटरी शेअर करते जेणेकरून बचाव पथक आपल्याला शोधू शकेल.',
+    'consent.step1_body':
+      'आपत्तीच्या वेळी रेस्क्यूनेट आपले GPS स्थान, स्थिती आणि बॅटरी शेअर करते जेणेकरून बचाव पथक आपल्याला शोधू शकेल.',
     'consent.step2_title': 'माहिती कोणाला दिसते?',
-    'consent.step2_body': 'फक्त अधिकृत बचाव दल आणि नियंत्रण कक्ष स्थान पाहू शकतात. संदेश वाहून नेणारे इतर फोन ते वाचू शकत नाहीत.',
+    'consent.step2_body':
+      'फक्त अधिकृत बचाव दल आणि नियंत्रण कक्ष स्थान पाहू शकतात. संदेश वाहून नेणारे इतर फोन ते वाचू शकत नाहीत.',
     'consent.step3_title': 'ऐच्छिक वैशिष्ट्ये',
     'consent.step3_body': 'चॅट आणि थेट स्थान देणे पूर्णपणे ऐच्छिक आहे.',
     'consent.step4_title': 'डेटा नष्ट करणे',
@@ -302,7 +318,8 @@ export const translations: Record<SupportedLanguage, Record<string, string>> = {
     'consent.version_label': 'संमती धोरण v1.0',
     'prep.title': 'सज्जता चाचणी',
     'prep.score_label': 'आपत्ती सज्जता स्कोअर',
-    'prep.monsoon_alert': 'पावसाळा इशारा: मुसळधार पावसापूर्वी ऑफलाइन नकाशे आणि बॅटरी परवानग्या तपासा.',
+    'prep.monsoon_alert':
+      'पावसाळा इशारा: मुसळधार पावसापूर्वी ऑफलाइन नकाशे आणि बॅटरी परवानग्या तपासा.',
     'prep.drill_mode': 'सराव (ड्रिल) मोड',
     'prep.drill_mode_desc': 'संदेश मॉक सराव म्हणून नोंदवले जातील.',
     'prep.range_test': 'BLE रेंज चाचणी',
@@ -384,7 +401,8 @@ export const translations: Record<SupportedLanguage, Record<string, string>> = {
     'settings.wipe_warning': 'എല്ലാ വിവരങ്ങളും എന്നെന്നേക്കുമായി നീക്കം ചെയ്യപ്പെടും.',
     'consent.title': 'സ്വകാര്യതയും അനുമതിയും',
     'consent.step1_title': 'പങ്കുവെക്കുന്ന വിവരങ്ങൾ',
-    'consent.step1_body': 'രക്ഷാപ്രവർത്തകർക്ക് കണ്ടെത്താനായി ലൊക്കേഷനും ബാറ്ററിയും പങ്കുവെക്കുന്നു.',
+    'consent.step1_body':
+      'രക്ഷാപ്രവർത്തകർക്ക് കണ്ടെത്താനായി ലൊക്കേഷനും ബാറ്ററിയും പങ്കുവെക്കുന്നു.',
     'consent.step2_title': 'ആർക്കൊക്കെ കാണാം?',
     'consent.step2_body': 'അംഗീകൃത രക്ഷാപ്രവർത്തകർക്ക് മാത്രമേ കാണാനാകൂ.',
     'consent.step3_title': 'ഐച്ഛിക സേവനങ്ങൾ',
@@ -479,7 +497,8 @@ export const translations: Record<SupportedLanguage, Record<string, string>> = {
     'settings.wipe_warning': 'ಇದು ಎಲ್ಲ ಮಾಹಿತಿಯನ್ನು ಶಾಶ್ವತವಾಗಿ ಅಳಿಸಿಹಾಕುತ್ತದೆ.',
     'consent.title': 'ಗೌಪ್ಯತೆ ಮತ್ತು ಒಪ್ಪಿಗೆ',
     'consent.step1_title': 'ಯಾವ ಮಾಹಿತಿ ಹಂಚಿಕೊಳ್ಳಲಾಗುತ್ತದೆ?',
-    'consent.step1_body': 'ರಕ್ಷಣಾ ಕಾರ್ಯಕರ್ತರು ನಿಮ್ಮನ್ನು ಹುಡುಕಲು ಸ್ಥಳ ಮತ್ತು ಬ್ಯಾಟರಿ ಹಂಚಿಕೊಳ್ಳಲಾಗುತ್ತದೆ.',
+    'consent.step1_body':
+      'ರಕ್ಷಣಾ ಕಾರ್ಯಕರ್ತರು ನಿಮ್ಮನ್ನು ಹುಡುಕಲು ಸ್ಥಳ ಮತ್ತು ಬ್ಯಾಟರಿ ಹಂಚಿಕೊಳ್ಳಲಾಗುತ್ತದೆ.',
     'consent.step2_title': 'ಯಾರು ನೋಡಬಹುದು?',
     'consent.step2_body': 'ಕೇವಲ ಅಧಿಕೃತ ರಕ್ಷಣಾ ತಂಡಗಳು ಮಾತ್ರ ನೋಡಬಹುದು.',
     'consent.step3_title': 'ಐಚ್ಛಿಕ ಸೇವೆಗಳು',
@@ -492,7 +511,8 @@ export const translations: Record<SupportedLanguage, Record<string, string>> = {
     'consent.version_label': 'ನೀತಿ v1.0',
     'prep.title': 'ಸನ್ನದ್ಧತೆ ಪರೀಕ್ಷೆ',
     'prep.score_label': 'ಸಿದ್ಧತೆ ಸ್ಕೋರ್',
-    'prep.monsoon_alert': 'ಮುಂಗಾರು ಎಚ್ಚರಿಕೆ: ಭಾರೀ ಮಳೆಗೆ ಮುಂಚಿತವಾಗಿ ಆಫ್‌ಲೈನ್ ನಕ್ಷೆಗಳನ್ನು ಡೌನ್‌ಲೋಡ್ ಮಾಡಿ.',
+    'prep.monsoon_alert':
+      'ಮುಂಗಾರು ಎಚ್ಚರಿಕೆ: ಭಾರೀ ಮಳೆಗೆ ಮುಂಚಿತವಾಗಿ ಆಫ್‌ಲೈನ್ ನಕ್ಷೆಗಳನ್ನು ಡೌನ್‌ಲೋಡ್ ಮಾಡಿ.',
     'prep.drill_mode': 'ಡ್ರಿಲ್ ಮೋಡ್',
     'prep.drill_mode_desc': 'ಅಭ್ಯಾಸ ಪರೀಕ್ಷೆ ಎಂದು ಗುರುತಿಸಲಾಗುತ್ತದೆ.',
     'prep.range_test': 'BLE ರೇಂಜ್ ಪರೀಕ್ಷೆ',

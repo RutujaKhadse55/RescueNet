@@ -1,12 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  ScrollView,
-  Alert,
-} from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Alert } from 'react-native';
 import { colors, layout, spacing, typography } from '../theme';
 import { SosController, SosState } from '../sos/SosController';
 import { SurvivalModeManager } from '../sos/SurvivalModeManager';
@@ -31,7 +24,7 @@ export const SosStatusScreen: React.FC<SosStatusScreenProps> = ({
   const { t: _t } = useTranslation();
   const [state, setState] = useState<SosState>(sosController.getState());
   const [survivalMode, setSurvivalMode] = useState<boolean>(
-    SurvivalModeManager.getInstance().isInSurvivalMode()
+    SurvivalModeManager.getInstance().isInSurvivalMode(),
   );
 
   useEffect(() => {
@@ -56,25 +49,21 @@ export const SosStatusScreen: React.FC<SosStatusScreenProps> = ({
             await sosController.resolveSafe();
           },
         },
-      ]
+      ],
     );
   };
 
   const handleCancelSos = () => {
-    Alert.alert(
-      'Cancel SOS',
-      'Cancel this emergency broadcast entirely?',
-      [
-        { text: 'Keep Active', style: 'cancel' },
-        {
-          text: 'Cancel SOS',
-          style: 'destructive',
-          onPress: () => {
-            sosController.cancelSos();
-          },
+    Alert.alert('Cancel SOS', 'Cancel this emergency broadcast entirely?', [
+      { text: 'Keep Active', style: 'cancel' },
+      {
+        text: 'Cancel SOS',
+        style: 'destructive',
+        onPress: () => {
+          sosController.cancelSos();
         },
-      ]
-    );
+      },
+    ]);
   };
 
   // Determine Triage Case details
@@ -124,7 +113,7 @@ export const SosStatusScreen: React.FC<SosStatusScreenProps> = ({
 
   // Decode selected needs from bitmask
   const requestedNeeds: string[] = [];
-  const mask = state.needsMask || (NeedsBitmask.MEDICAL | NeedsBitmask.EVACUATION);
+  const mask = state.needsMask || NeedsBitmask.MEDICAL | NeedsBitmask.EVACUATION;
   if (mask & NeedsBitmask.MEDICAL) requestedNeeds.push('🏥 Medical Assistance');
   if (mask & NeedsBitmask.EVACUATION) requestedNeeds.push('🏗️ Trapped / Evacuation');
   if (mask & NeedsBitmask.WATER) requestedNeeds.push('💧 Clean Drinking Water');
@@ -132,25 +121,28 @@ export const SosStatusScreen: React.FC<SosStatusScreenProps> = ({
   if (mask & NeedsBitmask.SHELTER) requestedNeeds.push('⛺ Emergency Shelter');
 
   // Determine delivery route & status text automatically
-  const deliveryRouteText = state.hasUplinked || state.activeChannel === 'INTERNET'
-    ? 'Internet Uplink → Control Room Backend'
-    : state.activeChannel === 'SMS'
-    ? 'Emergency SMS → Dispatcher Gateway'
-    : state.deliveryCount > 0 || state.activeChannel === 'BLE_MESH'
-    ? 'BLE Mesh → Multi-Hop Peer Relay'
-    : 'Automatic Routing (Internet → SMS → BLE Mesh)';
+  const deliveryRouteText =
+    state.hasUplinked || state.activeChannel === 'INTERNET'
+      ? 'Internet Uplink → Control Room Backend'
+      : state.activeChannel === 'SMS'
+        ? 'Emergency SMS → Dispatcher Gateway'
+        : state.deliveryCount > 0 || state.activeChannel === 'BLE_MESH'
+          ? 'BLE Mesh → Multi-Hop Peer Relay'
+          : 'Automatic Routing (Internet → SMS → BLE Mesh)';
 
   const statusText = state.hasControlRoomAck
     ? 'Received by Control Center'
     : state.hasUplinked
-    ? 'Confirmed Ingested'
-    : 'Broadcasting Live';
+      ? 'Confirmed Ingested'
+      : 'Broadcasting Live';
 
   const milestones = [
     {
       id: 'saved',
       label: 'SOS Generated & Ed25519 Signed',
-      detail: state.activePacketId ? `Packet #${state.activePacketId.slice(0, 8)}` : 'Signed with hardware private key',
+      detail: state.activePacketId
+        ? `Packet #${state.activePacketId.slice(0, 8)}`
+        : 'Signed with hardware private key',
       completed: !!state.activePacketId,
     },
     {
@@ -161,8 +153,12 @@ export const SosStatusScreen: React.FC<SosStatusScreenProps> = ({
     },
     {
       id: 'uplink',
-      label: state.hasUplinked ? 'Reached Control Center via Uplink' : 'Dispatched via Emergency Gateway',
-      detail: state.hasUplinked ? 'Delivered to API backend & Admin Dashboard' : 'Queued for gateway ingestion',
+      label: state.hasUplinked
+        ? 'Reached Control Center via Uplink'
+        : 'Dispatched via Emergency Gateway',
+      detail: state.hasUplinked
+        ? 'Delivered to API backend & Admin Dashboard'
+        : 'Queued for gateway ingestion',
       completed: true,
     },
     {
@@ -185,8 +181,8 @@ export const SosStatusScreen: React.FC<SosStatusScreenProps> = ({
             {state.phase === 'ACTIVE_BROADCASTING'
               ? 'SOS ACTIVE & BROADCASTING'
               : state.phase === 'RESOLVED_SAFE'
-              ? 'RESOLVED: SAFE'
-              : 'SOS INACTIVE'}
+                ? 'RESOLVED: SAFE'
+                : 'SOS INACTIVE'}
           </Text>
           <Text style={styles.bannerSubtitle}>
             Route: {deliveryRouteText} • {statusText}
@@ -211,7 +207,12 @@ export const SosStatusScreen: React.FC<SosStatusScreenProps> = ({
       <View style={[styles.card, { borderColor: triageCase.borderColor }]}>
         <View style={styles.caseHeaderRow}>
           <Text style={styles.cardHeader}>ACTIVE EMERGENCY TRIAGE CASE</Text>
-          <View style={[styles.caseBadge, { backgroundColor: triageCase.bgColor, borderColor: triageCase.borderColor }]}>
+          <View
+            style={[
+              styles.caseBadge,
+              { backgroundColor: triageCase.bgColor, borderColor: triageCase.borderColor },
+            ]}
+          >
             <Text style={[styles.caseBadgeText, { color: triageCase.color }]}>
               {triageCase.caseTag}
             </Text>
@@ -255,8 +256,12 @@ export const SosStatusScreen: React.FC<SosStatusScreenProps> = ({
                   <Text style={styles.dispatchedPillText}>DISPATCHED</Text>
                 </View>
               </View>
-              <Text style={styles.teamLead}>Capt. Vikram Singh • NDRF Tactical Rescue Truck TR-01</Text>
-              <Text style={styles.teamStatus}>Status: En Route • Approaching Sector 4 (ETA 6m)</Text>
+              <Text style={styles.teamLead}>
+                Capt. Vikram Singh • NDRF Tactical Rescue Truck TR-01
+              </Text>
+              <Text style={styles.teamStatus}>
+                Status: En Route • Approaching Sector 4 (ETA 6m)
+              </Text>
             </View>
           </View>
 
@@ -289,7 +294,8 @@ export const SosStatusScreen: React.FC<SosStatusScreenProps> = ({
           </View>
           <View style={styles.awaitingBanner}>
             <Text style={styles.awaitingBannerText}>
-              ℹ️ Direct rescuer chat unlocks automatically once a rescue team is dispatched from the dashboard.
+              ℹ️ Direct rescuer chat unlocks automatically once a rescue team is dispatched from the
+              dashboard.
             </Text>
           </View>
         </View>
@@ -299,7 +305,9 @@ export const SosStatusScreen: React.FC<SosStatusScreenProps> = ({
       <View style={styles.card}>
         <Text style={styles.cardHeader}>ACTIVE COMMUNICATION CHANNELS</Text>
         <View style={styles.routeBox}>
-          <Text style={styles.routeHeader}>Primary: {state.hasUplinked ? 'Internet Uplink (Direct)' : 'BLE Mesh Relay'}</Text>
+          <Text style={styles.routeHeader}>
+            Primary: {state.hasUplinked ? 'Internet Uplink (Direct)' : 'BLE Mesh Relay'}
+          </Text>
           <Text style={styles.routeDetail}>Route: {deliveryRouteText}</Text>
           <Text style={styles.routeDetail}>Fallback: Emergency SMS (+91 11 2345 6789) armed</Text>
         </View>
@@ -332,12 +340,7 @@ export const SosStatusScreen: React.FC<SosStatusScreenProps> = ({
                 )}
               </View>
               <View style={styles.milestoneTextContainer}>
-                <Text
-                  style={[
-                    styles.milestoneLabel,
-                    m.completed && styles.milestoneLabelDone,
-                  ]}
-                >
+                <Text style={[styles.milestoneLabel, m.completed && styles.milestoneLabelDone]}>
                   {m.label}
                 </Text>
                 <Text style={styles.milestoneDetail}>{m.detail}</Text>
@@ -350,29 +353,17 @@ export const SosStatusScreen: React.FC<SosStatusScreenProps> = ({
       {/* 6. Shared Coordinates Card */}
       <View style={styles.card}>
         <Text style={styles.cardHeader}>BROADCASTED GPS COORDINATES</Text>
-        <Text style={styles.locCoordinate}>
-          18.520400° N, 73.856700° E
-        </Text>
-        <Text style={styles.locDetail}>
-          Pune Ghats Sector 4 • Accuracy: ±0.9m HDOP
-        </Text>
+        <Text style={styles.locCoordinate}>18.520400° N, 73.856700° E</Text>
+        <Text style={styles.locDetail}>Pune Ghats Sector 4 • Accuracy: ±0.9m HDOP</Text>
       </View>
 
       {/* 7. Action Buttons */}
       <View style={styles.actions}>
-        <TouchableOpacity
-          style={styles.safeButton}
-          onPress={handleResolveSafe}
-          activeOpacity={0.8}
-        >
+        <TouchableOpacity style={styles.safeButton} onPress={handleResolveSafe} activeOpacity={0.8}>
           <Text style={styles.safeButtonText}>✓ I Am Safe Now (Resolve)</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity
-          style={styles.cancelButton}
-          onPress={handleCancelSos}
-          activeOpacity={0.8}
-        >
+        <TouchableOpacity style={styles.cancelButton} onPress={handleCancelSos} activeOpacity={0.8}>
           <Text style={styles.cancelButtonText}>Cancel Emergency SOS</Text>
         </TouchableOpacity>
       </View>
@@ -383,14 +374,14 @@ export const SosStatusScreen: React.FC<SosStatusScreenProps> = ({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0a0f1d',
+    backgroundColor: '#ffffff',
   },
   content: {
     padding: spacing.md,
     paddingBottom: spacing.xxl,
   },
   banner: {
-    backgroundColor: '#ef4444',
+    backgroundColor: '#dc2626',
     borderRadius: 12,
     padding: spacing.md,
     flexDirection: 'row',
@@ -424,7 +415,7 @@ const styles = StyleSheet.create({
     fontWeight: '800',
   },
   survivalNotice: {
-    backgroundColor: 'rgba(245, 158, 11, 0.15)',
+    backgroundColor: '#fef3c7',
     borderWidth: 1,
     borderColor: '#f59e0b',
     borderRadius: 8,
@@ -433,14 +424,14 @@ const styles = StyleSheet.create({
   },
   survivalNoticeText: {
     fontSize: 11,
-    color: '#fbbf24',
+    color: '#92400e',
     fontWeight: '600',
   },
   card: {
-    backgroundColor: '#0f172a',
-    borderRadius: 12,
+    backgroundColor: '#f8fafc',
+    borderRadius: 14,
     borderWidth: 1,
-    borderColor: '#1e293b',
+    borderColor: '#e2e8f0',
     padding: spacing.md,
     marginBottom: spacing.md,
   },
@@ -467,8 +458,10 @@ const styles = StyleSheet.create({
     fontWeight: '900',
   },
   caseMainBox: {
-    backgroundColor: '#1e293b',
+    backgroundColor: '#ffffff',
     borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
     padding: 10,
     marginBottom: 10,
   },
@@ -478,14 +471,14 @@ const styles = StyleSheet.create({
   },
   caseDescription: {
     fontSize: 11,
-    color: '#cbd5e1',
+    color: '#475569',
     marginTop: 4,
     lineHeight: 16,
   },
   needsLabel: {
     fontSize: 10,
     fontWeight: '800',
-    color: '#94a3b8',
+    color: '#64748b',
     marginBottom: 6,
   },
   needsList: {
@@ -495,35 +488,35 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   needChip: {
-    backgroundColor: '#1e293b',
+    backgroundColor: '#ffffff',
     paddingHorizontal: 10,
     paddingVertical: 5,
     borderRadius: 999,
     borderWidth: 1,
-    borderColor: '#334155',
+    borderColor: '#cbd5e1',
   },
   needChipText: {
     fontSize: 11,
     fontWeight: '700',
-    color: '#f8fafc',
+    color: '#0f172a',
   },
   caseMetaRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     paddingTop: 8,
     borderTopWidth: 1,
-    borderTopColor: '#1e293b',
+    borderTopColor: '#e2e8f0',
   },
   caseMetaItem: {
     fontSize: 11,
     fontWeight: '600',
-    color: '#94a3b8',
+    color: '#64748b',
   },
   rescueTeamCard: {
-    backgroundColor: '#064e3b',
-    borderRadius: 12,
+    backgroundColor: '#ecfdf5',
+    borderRadius: 14,
     borderWidth: 1,
-    borderColor: '#10b981',
+    borderColor: '#a7f3d0',
     padding: spacing.md,
     marginBottom: spacing.md,
   },
@@ -536,9 +529,9 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: '#065f46',
+    backgroundColor: '#10b981',
     borderWidth: 2,
-    borderColor: '#34d399',
+    borderColor: '#059669',
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -556,7 +549,7 @@ const styles = StyleSheet.create({
   teamName: {
     fontSize: 15,
     fontWeight: '900',
-    color: '#ffffff',
+    color: '#065f46',
   },
   dispatchedPill: {
     backgroundColor: '#10b981',
@@ -571,23 +564,21 @@ const styles = StyleSheet.create({
   },
   teamLead: {
     fontSize: 11,
-    color: '#a7f3d0',
+    color: '#047857',
     marginTop: 2,
   },
   teamStatus: {
     fontSize: 11,
     fontWeight: '700',
-    color: '#34d399',
+    color: '#059669',
     marginTop: 2,
   },
   chatWithTeamBtn: {
-    backgroundColor: '#059669',
+    backgroundColor: '#10b981',
     borderRadius: 8,
     paddingVertical: 10,
     alignItems: 'center',
     marginTop: 12,
-    borderWidth: 1,
-    borderColor: '#34d399',
   },
   chatWithTeamBtnText: {
     color: '#ffffff',
@@ -595,10 +586,10 @@ const styles = StyleSheet.create({
     fontSize: 13,
   },
   awaitingTeamCard: {
-    backgroundColor: '#1e293b',
-    borderRadius: 12,
+    backgroundColor: '#f8fafc',
+    borderRadius: 14,
     borderWidth: 1,
-    borderColor: '#334155',
+    borderColor: '#e2e8f0',
     padding: spacing.md,
     marginBottom: spacing.md,
   },
@@ -606,16 +597,16 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: '#334155',
-    borderWidth: 2,
-    borderColor: '#64748b',
+    backgroundColor: '#e2e8f0',
+    borderWidth: 1,
+    borderColor: '#cbd5e1',
     justifyContent: 'center',
     alignItems: 'center',
   },
   awaitingTitle: {
     fontSize: 15,
     fontWeight: '900',
-    color: '#f8fafc',
+    color: '#0f172a',
   },
   queuedPill: {
     backgroundColor: '#f59e0b',
@@ -626,46 +617,48 @@ const styles = StyleSheet.create({
   queuedPillText: {
     fontSize: 8,
     fontWeight: '900',
-    color: '#000000',
+    color: '#ffffff',
   },
   awaitingSub: {
     fontSize: 11,
-    color: '#94a3b8',
+    color: '#64748b',
     marginTop: 2,
   },
   awaitingStatus: {
     fontSize: 11,
     fontWeight: '600',
-    color: '#f59e0b',
+    color: '#d97706',
     marginTop: 2,
   },
   awaitingBanner: {
     marginTop: 10,
     padding: 8,
     borderRadius: 6,
-    backgroundColor: 'rgba(245, 158, 11, 0.1)',
+    backgroundColor: '#fffbeb',
     borderWidth: 1,
-    borderColor: 'rgba(245, 158, 11, 0.3)',
+    borderColor: '#fef3c7',
   },
   awaitingBannerText: {
     fontSize: 11,
-    color: '#fbbf24',
+    color: '#92400e',
     lineHeight: 16,
   },
   routeBox: {
-    backgroundColor: '#1e293b',
+    backgroundColor: '#ffffff',
     borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
     padding: 10,
     gap: 4,
   },
   routeHeader: {
     fontSize: 13,
     fontWeight: '800',
-    color: '#38bdf8',
+    color: '#2563eb',
   },
   routeDetail: {
     fontSize: 11,
-    color: '#cbd5e1',
+    color: '#475569',
   },
   milestoneList: {
     marginTop: 6,
@@ -689,7 +682,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#10b981',
   },
   milestoneCirclePending: {
-    backgroundColor: '#334155',
+    backgroundColor: '#cbd5e1',
   },
   milestoneIcon: {
     fontSize: 11,
@@ -705,7 +698,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#10b981',
   },
   milestoneLinePending: {
-    backgroundColor: '#334155',
+    backgroundColor: '#cbd5e1',
   },
   milestoneTextContainer: {
     flex: 1,
@@ -714,10 +707,11 @@ const styles = StyleSheet.create({
   milestoneLabel: {
     fontSize: 12,
     fontWeight: '700',
-    color: '#cbd5e1',
+    color: '#64748b',
   },
   milestoneLabelDone: {
-    color: '#f8fafc',
+    color: '#0f172a',
+    fontWeight: '800',
   },
   milestoneDetail: {
     fontSize: 10,
@@ -727,13 +721,13 @@ const styles = StyleSheet.create({
   locCoordinate: {
     fontSize: 15,
     fontWeight: '800',
-    color: '#f8fafc',
+    color: '#0f172a',
     fontFamily: 'monospace',
     marginTop: 4,
   },
   locDetail: {
     fontSize: 11,
-    color: '#94a3b8',
+    color: '#64748b',
     marginTop: 2,
   },
   actions: {
@@ -752,15 +746,15 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
   cancelButton: {
-    backgroundColor: '#1e293b',
+    backgroundColor: '#f1f5f9',
     borderRadius: 10,
     paddingVertical: 12,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#334155',
+    borderColor: '#e2e8f0',
   },
   cancelButtonText: {
-    color: '#ef4444',
+    color: '#dc2626',
     fontWeight: '700',
     fontSize: 13,
   },

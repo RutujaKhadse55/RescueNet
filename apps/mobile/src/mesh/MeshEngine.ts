@@ -129,19 +129,19 @@ export class MeshEngine {
     this.cleanups.push(
       this.transport.onNeighborDiscovered(async (neighbor: BleNeighbor) => {
         await this.handleNeighborDiscovered(neighbor);
-      })
+      }),
     );
 
     this.cleanups.push(
       this.transport.onRssiSample((deviceId: string, rssi: number) => {
         this.recordRssiSample(deviceId, rssi);
-      })
+      }),
     );
 
     this.cleanups.push(
       this.transport.onPacketFragmentReceived(async (deviceId: string, fragmentBase64: string) => {
         await this.handleIncomingFragment(deviceId, fragmentBase64);
-      })
+      }),
     );
 
     // 3. Start advertising our node
@@ -153,7 +153,7 @@ export class MeshEngine {
         lowBattery: this.batteryPercent <= 20 && !this.isCharging,
         beaconOnly: false,
       },
-      this.nodeId.substring(0, 8)
+      this.nodeId.substring(0, 8),
     );
 
     // 4. Start adaptive duty-cycling
@@ -262,7 +262,7 @@ export class MeshEngine {
     const all = await this.db.packets.getAllPackets(this.policy.maxQueueCapacity);
     const now = Math.floor(Date.now() / 1000);
 
-    return all.map((p) => {
+    return all.map(p => {
       const rank = TYPE_PRIORITY_RANK[p.packet_type as PacketType] ?? 99;
       const priorityScore = (10 - Math.min(10, rank)) / 10;
       const ageSeconds = now - Math.floor(new Date(p.received_at).getTime() / 1000);
@@ -284,7 +284,7 @@ export class MeshEngine {
   public async syncWithNeighbor(
     peerDeviceId: string,
     peerHandshake?: PeerHandshakeControl,
-    peerSummary?: SummaryVector
+    peerSummary?: SummaryVector,
   ): Promise<{ success: boolean; packetsSent: number; bytesTransferred: number }> {
     const now = Date.now();
     const lastContact = this.lastContactTimestamps.get(peerDeviceId) ?? 0;
@@ -363,7 +363,9 @@ export class MeshEngine {
           // but always keep underlying SOS packets.
           if (congested && record.packet_type === PacketType.SOS) {
             // Check if we hold a cluster summary
-            const clusterSummaries = await this.db.packets.getPacketsByType(PacketType.CLUSTER_SUMMARY);
+            const clusterSummaries = await this.db.packets.getPacketsByType(
+              PacketType.CLUSTER_SUMMARY,
+            );
             if (clusterSummaries.length > 0) {
               continue; // Gated: prefer sending cluster summary instead
             }
@@ -456,7 +458,7 @@ export class MeshEngine {
    * Synchronizes directly with another in-memory peer engine (deterministic graph test mode)
    */
   public async syncWithPeerEngine(
-    peerEngine: MeshEngine
+    peerEngine: MeshEngine,
   ): Promise<{ packetsSent: number; packetsReceived: number }> {
     const localControl = this.getLocalHandshakeControl();
     const peerControl = peerEngine.getLocalHandshakeControl();
@@ -484,7 +486,7 @@ export class MeshEngine {
   public async receivePacket(
     rawBytes: Uint8Array,
     fromNeighbor?: string,
-    fromServer: boolean = false
+    fromServer: boolean = false,
   ): Promise<{ accepted: boolean; lowTrust: boolean }> {
     if (fromServer) {
       // Server packets skip peer-rate-limit but still pass validation
@@ -498,7 +500,7 @@ export class MeshEngine {
    */
   public async ingestPacket(
     rawBytes: Uint8Array,
-    fromNeighbor?: string
+    fromNeighbor?: string,
   ): Promise<{ accepted: boolean; lowTrust: boolean }> {
     // 2. VALIDATION PIPELINE
     const validation = await this.validator.validatePacket(rawBytes);
@@ -527,13 +529,13 @@ export class MeshEngine {
     }
 
     const packetIdHex = Array.from(header.packetId)
-      .map((b) => b.toString(16).padStart(2, '0'))
+      .map(b => b.toString(16).padStart(2, '0'))
       .join('');
     const originFpHex = Array.from(header.originFp)
-      .map((b) => b.toString(16).padStart(2, '0'))
+      .map(b => b.toString(16).padStart(2, '0'))
       .join('');
     const rawHex = Array.from(rawBytes)
-      .map((b) => b.toString(16).padStart(2, '0'))
+      .map(b => b.toString(16).padStart(2, '0'))
       .join('');
 
     const isSos = header.type === PacketType.SOS ? 1 : 0;
@@ -583,13 +585,13 @@ export class MeshEngine {
     const header = decodeHeader(view);
 
     const packetIdHex = Array.from(header.packetId)
-      .map((b) => b.toString(16).padStart(2, '0'))
+      .map(b => b.toString(16).padStart(2, '0'))
       .join('');
     const originFpHex = Array.from(header.originFp)
-      .map((b) => b.toString(16).padStart(2, '0'))
+      .map(b => b.toString(16).padStart(2, '0'))
       .join('');
     const rawHex = Array.from(packetBytes)
-      .map((b) => b.toString(16).padStart(2, '0'))
+      .map(b => b.toString(16).padStart(2, '0'))
       .join('');
 
     const isSos = header.type === PacketType.SOS ? 1 : 0;
@@ -628,7 +630,7 @@ export class MeshEngine {
       const summaryPacket = await this.clusterer.createClusterSummaryPacket(
         c.cluster_id,
         this.keyPair,
-        seq
+        seq,
       );
       if (summaryPacket) {
         await this.createAndStorePacket(summaryPacket);
@@ -690,7 +692,7 @@ export class MeshEngine {
           capabilitiesMask: 0x01,
           clockOffsetMs: 0,
         },
-        peerSummary
+        peerSummary,
       );
     }
   }
@@ -710,7 +712,7 @@ export class MeshEngine {
 
     // Keep last 60 seconds
     const cutoff = now - 60_000;
-    const filtered = history.filter((h) => h.timestamp > cutoff);
+    const filtered = history.filter(h => h.timestamp > cutoff);
     this.neighborRssiHistory.set(deviceId, filtered);
   }
 
@@ -818,7 +820,7 @@ export class MeshEngine {
       'battery_drop_percent',
     ];
 
-    const rows = this.hourlyMetrics.map((m) => [
+    const rows = this.hourlyMetrics.map(m => [
       new Date(m.hourTimestamp * 1000).toISOString(),
       m.hourTimestamp,
       m.packetsSeen,
@@ -843,7 +845,7 @@ export class MeshEngine {
       ]);
     }
 
-    return [headers.join(','), ...rows.map((r) => r.join(','))].join('\n');
+    return [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
   }
 
   private hexToBytes(hex: string): Uint8Array {

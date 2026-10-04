@@ -15,9 +15,7 @@ export class MonsoonReminderService {
 
     return {
       isMonsoonSeason: isMonsoon,
-      alertTitle: isMonsoon
-        ? 'Monsoon Preparedness Warning'
-        : 'Pre-Monsoon Season Check',
+      alertTitle: isMonsoon ? 'Monsoon Preparedness Warning' : 'Pre-Monsoon Season Check',
       alertMessage: isMonsoon
         ? 'Active monsoon flood and landslide risks detected across Maharashtra, Kerala, and Himalayan belts. Keep offline map packs downloaded and verify BLE mesh readiness.'
         : 'Monsoon season begins in June. Prepare your emergency mesh profiles and offline maps ahead of time.',

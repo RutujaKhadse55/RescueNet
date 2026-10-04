@@ -22,7 +22,7 @@ export async function smsRoutes(server: FastifyInstance) {
         Params: { provider: 'twilio' | 'msg91' | 'custom_webhook' };
         Body: Record<string, any>;
       }>,
-      reply: FastifyReply
+      reply: FastifyReply,
     ) => {
       const { provider } = req.params;
       const signature =
@@ -64,6 +64,6 @@ export async function smsRoutes(server: FastifyInstance) {
       });
 
       return reply.status(200).send(res);
-    }
+    },
   );
 }

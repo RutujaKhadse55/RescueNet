@@ -26,8 +26,14 @@ export const AssignTeamModal: React.FC<AssignTeamModalProps> = ({ clusterId, isO
   };
 
   return (
-    <div className="modal-backdrop" onClick={onClose} role="dialog" aria-modal="true" aria-labelledby="modal-assign-title">
-      <div className="modal-box" onClick={(e) => e.stopPropagation()}>
+    <div
+      className="modal-backdrop"
+      onClick={onClose}
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="modal-assign-title"
+    >
+      <div className="modal-box" onClick={e => e.stopPropagation()}>
         <div className="modal-header">
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
             <Users size={18} color="var(--accent-blue)" />
@@ -37,7 +43,12 @@ export const AssignTeamModal: React.FC<AssignTeamModalProps> = ({ clusterId, isO
           </div>
           <button
             onClick={onClose}
-            style={{ background: 'transparent', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer' }}
+            style={{
+              background: 'transparent',
+              border: 'none',
+              color: 'var(--text-secondary)',
+              cursor: 'pointer',
+            }}
             aria-label="Close"
           >
             <X size={18} />
@@ -54,10 +65,10 @@ export const AssignTeamModal: React.FC<AssignTeamModalProps> = ({ clusterId, isO
                 id="select-team"
                 className="form-select"
                 value={selectedTeamId}
-                onChange={(e) => setSelectedTeamId(e.target.value)}
+                onChange={e => setSelectedTeamId(e.target.value)}
                 required
               >
-                {teams.map((team) => (
+                {teams.map(team => (
                   <option key={team.id} value={team.id}>
                     {team.name} ({team.status.toUpperCase()} - {team.member_count} responders)
                   </option>
@@ -76,7 +87,7 @@ export const AssignTeamModal: React.FC<AssignTeamModalProps> = ({ clusterId, isO
                 max="300"
                 className="form-input"
                 value={etaMinutes}
-                onChange={(e) => setEtaMinutes(Number(e.target.value))}
+                onChange={e => setEtaMinutes(Number(e.target.value))}
                 required
               />
             </div>

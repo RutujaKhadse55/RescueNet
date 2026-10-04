@@ -101,14 +101,19 @@ export class DeviceSecurityGovernor {
    * private keys, and authorization secrets from leaking into system logs.
    */
   public sanitizeLog(message: string): string {
-    return message
-      // Redact private keys (hex strings of 64 or 128 chars)
-      .replace(/\b[0-9a-fA-F]{64,128}\b/g, '[REDACTED_CRYPTO_KEY]')
-      // Redact exact GPS coordinates (e.g. 18.5204303, 73.8567437)
-      .replace(/([+-]?\d{1,3}\.\d{4,9})\s*,\s*([+-]?\d{1,3}\.\d{4,9})/g, '[REDACTED_PRECISE_GPS]')
-      // Redact E.164 phone numbers (+91...)
-      .replace(/\+\d{10,14}/g, '[REDACTED_PHONE]')
-      // Redact JWT Bearer tokens
-      .replace(/Bearer\s+[A-Za-z0-9-_=]+\.[A-Za-z0-9-_=]+\.?[A-Za-z0-9-_.+/=]*/g, 'Bearer [REDACTED_JWT]');
+    return (
+      message
+        // Redact private keys (hex strings of 64 or 128 chars)
+        .replace(/\b[0-9a-fA-F]{64,128}\b/g, '[REDACTED_CRYPTO_KEY]')
+        // Redact exact GPS coordinates (e.g. 18.5204303, 73.8567437)
+        .replace(/([+-]?\d{1,3}\.\d{4,9})\s*,\s*([+-]?\d{1,3}\.\d{4,9})/g, '[REDACTED_PRECISE_GPS]')
+        // Redact E.164 phone numbers (+91...)
+        .replace(/\+\d{10,14}/g, '[REDACTED_PHONE]')
+        // Redact JWT Bearer tokens
+        .replace(
+          /Bearer\s+[A-Za-z0-9-_=]+\.[A-Za-z0-9-_=]+\.?[A-Za-z0-9-_.+/=]*/g,
+          'Bearer [REDACTED_JWT]',
+        )
+    );
   }
 }

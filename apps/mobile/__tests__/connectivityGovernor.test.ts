@@ -59,7 +59,7 @@ describe('Phase 5: ConnectivityGovernor & Auto-Arm State Machine', () => {
     await governor.probeReachability();
 
     // Allow debounce timer to settle
-    await new Promise((resolve) => setTimeout(resolve, 80));
+    await new Promise(resolve => setTimeout(resolve, 80));
 
     expect(governor.getNetworkState()).toBe('ONLINE');
     expect(governor.getMeshMode()).toBe('IDLE');
@@ -77,7 +77,7 @@ describe('Phase 5: ConnectivityGovernor & Auto-Arm State Machine', () => {
     transport.simulateBluetoothState(true);
 
     // Wait for event cycle
-    await new Promise((resolve) => setTimeout(resolve, 20));
+    await new Promise(resolve => setTimeout(resolve, 20));
 
     expect(transport.isScanning()).toBe(true);
     expect(transport.isAdvertising()).toBe(true);

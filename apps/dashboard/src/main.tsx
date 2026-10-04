@@ -15,9 +15,13 @@ const queryClient = new QueryClient({
 });
 
 // Register Service Worker for offline resilience
-if (typeof window !== 'undefined' && 'serviceWorker' in navigator && process.env.NODE_ENV === 'production') {
+if (
+  typeof window !== 'undefined' &&
+  'serviceWorker' in navigator &&
+  process.env.NODE_ENV === 'production'
+) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/sw.js').catch((err) => {
+    navigator.serviceWorker.register('/sw.js').catch(err => {
       console.warn('Service worker registration failed:', err);
     });
   });

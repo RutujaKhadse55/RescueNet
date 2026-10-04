@@ -37,13 +37,13 @@ export class SimulationRunner {
   public runSingleSeed(
     strategy: SimulationStrategy,
     scenario: ScenarioConfig,
-    seed: number
+    seed: number,
   ): RunMetrics {
     const rng = this.createRng(seed);
     const radio = new RadioPropagationModel(
       scenario.pathLossExponent,
       scenario.shadowingStdDevDb,
-      scenario.obstacles
+      scenario.obstacles,
     );
     const mobility = new MobilityEngine(rng);
     const battery = new BatteryModel();
@@ -92,7 +92,7 @@ export class SimulationRunner {
 
     // 2. Generate initial SOS packets from survivors
     const generatedPackets: SimPacket[] = [];
-    nodes.forEach((node) => {
+    nodes.forEach(node => {
       if (node.role === 'survivor') {
         const pkt: SimPacket = {
           packetId: `sos_${node.id}`,
@@ -255,22 +255,23 @@ export class SimulationRunner {
 
     // 5. Compute summary statistics
     latenciesSec.sort((a, b) => a - b);
-    const medianLatency = latenciesSec.length > 0 ? latenciesSec[Math.floor(latenciesSec.length * 0.5)]! : 0;
-    const p95Latency = latenciesSec.length > 0 ? latenciesSec[Math.floor(latenciesSec.length * 0.95)]! : 0;
+    const medianLatency =
+      latenciesSec.length > 0 ? latenciesSec[Math.floor(latenciesSec.length * 0.5)]! : 0;
+    const p95Latency =
+      latenciesSec.length > 0 ? latenciesSec[Math.floor(latenciesSec.length * 0.95)]! : 0;
 
     let totalBatteryDrain = 0;
     let livingNodeCount = 0;
-    nodes.forEach((n) => {
+    nodes.forEach(n => {
       if (n.role !== 'gateway') {
         livingNodeCount++;
         totalBatteryDrain += 100 - n.batteryPercent;
       }
     });
 
-    const totalSurvivors = nodes.filter((n) => n.role === 'survivor').length;
-    const deliveryRate = totalSurvivors > 0
-      ? Math.min(100, (deliveredSurvivorsCount / totalSurvivors) * 100)
-      : 0;
+    const totalSurvivors = nodes.filter(n => n.role === 'survivor').length;
+    const deliveryRate =
+      totalSurvivors > 0 ? Math.min(100, (deliveredSurvivorsCount / totalSurvivors) * 100) : 0;
 
     return {
       strategy,
@@ -293,7 +294,7 @@ export class SimulationRunner {
    */
   private applySpatialClustering(nodes: SimNode[]): void {
     const EPS_METERS = 40;
-    const survivors = nodes.filter((n) => n.role === 'survivor' && n.buffer.length > 0);
+    const survivors = nodes.filter(n => n.role === 'survivor' && n.buffer.length > 0);
 
     const visited = new Set<string>();
     const clusters: SimNode[][] = [];
@@ -307,7 +308,7 @@ export class SimulationRunner {
         if (other.id === survivor.id) continue;
         const dist = Math.sqrt(
           (survivor.x - other.x) * (survivor.x - other.x) +
-          (survivor.y - other.y) * (survivor.y - other.y)
+            (survivor.y - other.y) * (survivor.y - other.y),
         );
         if (dist <= EPS_METERS) {
           visited.add(other.id);
@@ -359,7 +360,7 @@ export class SimulationRunner {
   public runBatch(
     strategy: SimulationStrategy,
     scenario: ScenarioConfig,
-    numSeeds: number = 30
+    numSeeds: number = 30,
   ): { runs: RunMetrics[]; summary: AggregatedMetrics } {
     const runs: RunMetrics[] = [];
 
@@ -384,14 +385,14 @@ export class SimulationRunner {
     const summary: AggregatedMetrics = {
       strategy,
       runs: numSeeds,
-      deliveryRate: calcMeanCi(runs.map((r) => r.deliveryRatePercent)),
-      latencyMedian: calcMeanCi(runs.map((r) => r.deliveryLatencyMedianSec)),
-      latencyP95: calcMeanCi(runs.map((r) => r.deliveryLatencyP95Sec)),
-      transmissions: calcMeanCi(runs.map((r) => r.totalTransmissions)),
-      bytesSentMb: calcMeanCi(runs.map((r) => r.totalBytesSentMb)),
-      batteryDrainPercent: calcMeanCi(runs.map((r) => r.avgBatteryDrainPercent)),
-      duplicateDeliveries: calcMeanCi(runs.map((r) => r.duplicateDeliveriesAtGateway)),
-      timeToFirstCluster: calcMeanCi(runs.map((r) => r.timeToFirstClusterSec)),
+      deliveryRate: calcMeanCi(runs.map(r => r.deliveryRatePercent)),
+      latencyMedian: calcMeanCi(runs.map(r => r.deliveryLatencyMedianSec)),
+      latencyP95: calcMeanCi(runs.map(r => r.deliveryLatencyP95Sec)),
+      transmissions: calcMeanCi(runs.map(r => r.totalTransmissions)),
+      bytesSentMb: calcMeanCi(runs.map(r => r.totalBytesSentMb)),
+      batteryDrainPercent: calcMeanCi(runs.map(r => r.avgBatteryDrainPercent)),
+      duplicateDeliveries: calcMeanCi(runs.map(r => r.duplicateDeliveriesAtGateway)),
+      timeToFirstCluster: calcMeanCi(runs.map(r => r.timeToFirstClusterSec)),
     };
 
     return { runs, summary };

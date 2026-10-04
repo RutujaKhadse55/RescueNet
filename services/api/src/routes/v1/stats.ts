@@ -19,12 +19,9 @@ export async function statsRoutes(server: FastifyInstance) {
 
       const totalClusters = clustersRes.rows.length;
       const activeClusters = clustersRes.rows.filter(
-        (c) => c.state !== 'closed' && c.state !== 'false_alarm'
+        c => c.state !== 'closed' && c.state !== 'false_alarm',
       ).length;
-      const totalSurvivors = clustersRes.rows.reduce(
-        (sum, c) => sum + (c.declared_people || 1),
-        0
-      );
+      const totalSurvivors = clustersRes.rows.reduce((sum, c) => sum + (c.declared_people || 1), 0);
 
       return reply.send({
         totalClusters,
@@ -34,6 +31,6 @@ export async function statsRoutes(server: FastifyInstance) {
         registeredDevices: devicesRes.rows.length,
         timestamp: new Date().toISOString(),
       });
-    }
+    },
   );
 }

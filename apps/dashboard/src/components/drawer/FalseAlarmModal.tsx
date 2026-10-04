@@ -29,8 +29,14 @@ export const FalseAlarmModal: React.FC<FalseAlarmModalProps> = ({ clusterId, isO
   };
 
   return (
-    <div className="modal-backdrop" onClick={onClose} role="dialog" aria-modal="true" aria-labelledby="modal-fa-title">
-      <div className="modal-box" onClick={(e) => e.stopPropagation()}>
+    <div
+      className="modal-backdrop"
+      onClick={onClose}
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="modal-fa-title"
+    >
+      <div className="modal-box" onClick={e => e.stopPropagation()}>
         <div className="modal-header">
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
             <AlertOctagon size={18} color="var(--accent-critical)" />
@@ -40,7 +46,12 @@ export const FalseAlarmModal: React.FC<FalseAlarmModalProps> = ({ clusterId, isO
           </div>
           <button
             onClick={onClose}
-            style={{ background: 'transparent', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer' }}
+            style={{
+              background: 'transparent',
+              border: 'none',
+              color: 'var(--text-secondary)',
+              cursor: 'pointer',
+            }}
             aria-label="Close"
           >
             <X size={18} />
@@ -76,7 +87,7 @@ export const FalseAlarmModal: React.FC<FalseAlarmModalProps> = ({ clusterId, isO
                 rows={3}
                 placeholder={t.falseAlarmReasonPlaceholder}
                 value={reason}
-                onChange={(e) => {
+                onChange={e => {
                   setReason(e.target.value);
                   setError(null);
                 }}
@@ -85,7 +96,8 @@ export const FalseAlarmModal: React.FC<FalseAlarmModalProps> = ({ clusterId, isO
             </div>
 
             <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-              Note: Marking as false alarm will close the triage incident and log an immutable entry into the operational audit log.
+              Note: Marking as false alarm will close the triage incident and log an immutable entry
+              into the operational audit log.
             </p>
           </div>
 

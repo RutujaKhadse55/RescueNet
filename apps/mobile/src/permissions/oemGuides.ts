@@ -42,7 +42,8 @@ export const OEM_GUIDES: Record<string, OemGuide> = {
       'In Recent Apps screen, swipe down on RescueNet to lock it.',
       'Disable "Super Power Saving" mode during flood/landslide alerts.',
     ],
-    warningNote: 'Funtouch OS disables background location and BLE scans without High Background Power enabled.',
+    warningNote:
+      'Funtouch OS disables background location and BLE scans without High Background Power enabled.',
   },
   samsung: {
     brand: 'samsung',
@@ -67,6 +68,7 @@ export const OEM_GUIDES: Record<string, OemGuide> = {
       'Open Settings -> Battery -> Advanced settings -> Optimize battery use -> RescueNet -> "Don\'t optimize".',
       'In Recent Apps screen, tap the three dots on RescueNet and select "Lock".',
     ],
-    warningNote: 'OxygenOS sleep standby optimization terminates Bluetooth mesh radio packets overnight.',
+    warningNote:
+      'OxygenOS sleep standby optimization terminates Bluetooth mesh radio packets overnight.',
   },
 };

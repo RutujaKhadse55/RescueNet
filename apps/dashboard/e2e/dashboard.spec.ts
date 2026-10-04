@@ -52,14 +52,16 @@ test.describe('RescueNet Control Room Tactical Dashboard E2E', () => {
     await expect(firstCard).toContainText('survivors');
   });
 
-  test('3. Receive new critical cluster via WebSocket simulation with flash alert', async ({ page }) => {
+  test('3. Receive new critical cluster via WebSocket simulation with flash alert', async ({
+    page,
+  }) => {
     await page.goto('/');
     await page.click('#quick-fill-dispatcher');
     await page.click('#btn-login-submit');
 
     // Trigger synthetic incoming WebSocket critical cluster
     const newClusterId = 'cl_e2e_incoming_crit_01';
-    await page.evaluate((id) => {
+    await page.evaluate(id => {
       // Access WebSocket manager via window or trigger event directly
       const event = {
         type: 'new_cluster',
@@ -107,7 +109,9 @@ test.describe('RescueNet Control Room Tactical Dashboard E2E', () => {
     await page.click('#tab-score-breakdown');
     await expect(page.locator('text=1. Triage Severity (35% weight)')).toBeVisible();
     await expect(page.locator('text=2. Survivor Group Scale (25% weight)')).toBeVisible();
-    await expect(page.locator('text=3. Time Elapsed / Battery Staleness (15% weight)')).toBeVisible();
+    await expect(
+      page.locator('text=3. Time Elapsed / Battery Staleness (15% weight)'),
+    ).toBeVisible();
     await expect(page.locator('text=4. Declared Emergency Needs (15% weight)')).toBeVisible();
     await expect(page.locator('text=5. Location Uncertainty Penalty (-10% weight)')).toBeVisible();
 
@@ -180,7 +184,10 @@ test.describe('RescueNet Control Room Tactical Dashboard E2E', () => {
     await expect(page.locator('#modal-fa-title')).toBeVisible();
 
     // Fill valid verification reason
-    await page.fill('#input-false-alarm-reason', 'Field scout team Bravo inspected site, verified zero victims, beacon was abandoned test tag');
+    await page.fill(
+      '#input-false-alarm-reason',
+      'Field scout team Bravo inspected site, verified zero victims, beacon was abandoned test tag',
+    );
     await page.click('#btn-submit-false-alarm');
 
     // Undo toast appears confirming state change
@@ -204,7 +211,9 @@ test.describe('RescueNet Control Room Tactical Dashboard E2E', () => {
     await expect(coordsDisplay).toContainText('RESTRICTED TO AUTHORIZED RESPONDERS');
   });
 
-  test('9. Accessibility (a11y) check: semantic landmarks, buttons, ARIA labels', async ({ page }) => {
+  test('9. Accessibility (a11y) check: semantic landmarks, buttons, ARIA labels', async ({
+    page,
+  }) => {
     await page.goto('/');
     await page.click('#quick-fill-dispatcher');
     await page.click('#btn-login-submit');
@@ -223,7 +232,9 @@ test.describe('RescueNet Control Room Tactical Dashboard E2E', () => {
     await expect(page.locator('#btn-open-shortcuts')).toHaveAttribute('aria-label');
   });
 
-  test('10. Lighthouse / Axe Accessibility audit score >= 90 (WCAG 2.1 AA compliance)', async ({ page }) => {
+  test('10. Lighthouse / Axe Accessibility audit score >= 90 (WCAG 2.1 AA compliance)', async ({
+    page,
+  }) => {
     await page.goto('/');
     await page.click('#quick-fill-dispatcher');
     await page.click('#btn-login-submit');
@@ -235,7 +246,7 @@ test.describe('RescueNet Control Room Tactical Dashboard E2E', () => {
       .analyze();
 
     const criticalViolations = results.violations.filter(
-      (v) => v.impact === 'critical' || v.impact === 'serious'
+      v => v.impact === 'critical' || v.impact === 'serious',
     );
 
     expect(criticalViolations).toEqual([]);

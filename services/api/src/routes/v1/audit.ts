@@ -8,7 +8,8 @@ export async function auditRoutes(server: FastifyInstance) {
     {
       preHandler: [authenticate, requireRole(['admin', 'dispatcher'])],
       schema: {
-        description: 'Retrieves immutable system audit records for data access and state modifications',
+        description:
+          'Retrieves immutable system audit records for data access and state modifications',
         tags: ['Audit'],
         querystring: {
           type: 'object',
@@ -20,11 +21,8 @@ export async function auditRoutes(server: FastifyInstance) {
     },
     async (req: any, reply: FastifyReply) => {
       const limit = req.query.limit || 100;
-      const res = await db.query(
-        `SELECT * FROM audit_log ORDER BY at DESC LIMIT $1;`,
-        [limit]
-      );
+      const res = await db.query(`SELECT * FROM audit_log ORDER BY at DESC LIMIT $1;`, [limit]);
       return reply.send(res.rows);
-    }
+    },
   );
 }

@@ -23,7 +23,7 @@ export class RadioPropagationModel {
   constructor(
     pathLossExponent: number = 2.8,
     shadowingStdDev: number = 4.0,
-    obstacles: Obstacle[] = []
+    obstacles: Obstacle[] = [],
   ) {
     this.pathLossExponent = pathLossExponent;
     this.shadowingStdDev = shadowingStdDev;
@@ -38,7 +38,7 @@ export class RadioPropagationModel {
     y1: number,
     x2: number,
     y2: number,
-    gaussianRandom: number = 0
+    gaussianRandom: number = 0,
   ): { rssi: number; isConnected: boolean; distanceMeters: number } {
     const dx = x2 - x1;
     const dy = y2 - y1;
@@ -79,7 +79,7 @@ export class RadioPropagationModel {
     p2_x: number,
     p2_y: number,
     p3_x: number,
-    p3_y: number
+    p3_y: number,
   ): boolean {
     const s1_x = p1_x - p0_x;
     const s1_y = p1_y - p0_y;

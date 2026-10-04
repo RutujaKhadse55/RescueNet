@@ -9,11 +9,7 @@ import {
   Alert,
 } from 'react-native';
 import { layout, spacing } from '../theme';
-import {
-  haversineDistanceMeters,
-  createAndSignAck,
-  PacketFlags,
-} from '@rescuenet/core';
+import { haversineDistanceMeters, createAndSignAck, PacketFlags } from '@rescuenet/core';
 import { DatabaseManager } from '../db/DatabaseManager';
 import { MeshEngine } from '../mesh/MeshEngine';
 import { RescuerCredentialService } from '../rescuer/RescuerCredentialService';
@@ -56,14 +52,14 @@ export const RescuerHomeScreen: React.FC<RescuerHomeScreenProps> = ({
       const records = await db.clusters.getAllClusters();
       const currentLoc = locationProvider.getLastKnownLocation();
 
-      const enriched: EnrichedCluster[] = records.map((c) => {
+      const enriched: EnrichedCluster[] = records.map(c => {
         let distanceMeters: number | undefined;
         if (currentLoc && currentLoc.latitude && currentLoc.longitude) {
           distanceMeters = Math.round(
             haversineDistanceMeters(
               { latitude: currentLoc.latitude, longitude: currentLoc.longitude },
-              { latitude: c.centroid_lat, longitude: c.centroid_lon }
-            )
+              { latitude: c.centroid_lat, longitude: c.centroid_lon },
+            ),
           );
         }
         return {
@@ -100,7 +96,7 @@ export const RescuerHomeScreen: React.FC<RescuerHomeScreenProps> = ({
   const sendRescuerAck = async (
     cluster: EnrichedCluster,
     status: number, // 1: Ack/Enroute, 3: Reached, 4: Closed
-    newDbState: ClusterRecord['state']
+    newDbState: ClusterRecord['state'],
   ) => {
     if (!cred) {
       Alert.alert('Unauthorized', 'Valid rescuer credential required to broadcast field actions.');
@@ -116,7 +112,10 @@ export const RescuerHomeScreen: React.FC<RescuerHomeScreenProps> = ({
     setActionInProgress(cluster.cluster_id);
     try {
       const targetBuffer = new Uint8Array(8);
-      const cleanHex = cluster.cluster_id.replace(/[^a-f0-9]/gi, '').padEnd(16, '0').slice(0, 16);
+      const cleanHex = cluster.cluster_id
+        .replace(/[^a-f0-9]/gi, '')
+        .padEnd(16, '0')
+        .slice(0, 16);
       targetBuffer.set(Buffer.from(cleanHex, 'hex'));
 
       const agencyIdNum = parseInt(cred.agencyId, 10) || 1;
@@ -131,7 +130,7 @@ export const RescuerHomeScreen: React.FC<RescuerHomeScreenProps> = ({
           agencyId: agencyIdNum,
           keyPair,
         },
-        db.getCrypto()
+        db.getCrypto(),
       );
 
       // Store in local mesh engine for relay
@@ -232,7 +231,7 @@ export const RescuerHomeScreen: React.FC<RescuerHomeScreenProps> = ({
       ) : (
         <FlatList
           data={clusters}
-          keyExtractor={(item) => item.cluster_id}
+          keyExtractor={item => item.cluster_id}
           contentContainerStyle={styles.listContent}
           renderItem={({ item }) => {
             const isProcessing = actionInProgress === item.cluster_id;
@@ -241,14 +240,14 @@ export const RescuerHomeScreen: React.FC<RescuerHomeScreenProps> = ({
                 {/* Card Header */}
                 <View style={styles.cardHeader}>
                   <View style={styles.cardHeaderLeft}>
-                    <View style={[styles.priorityBadge, getPriorityBadgeStyle(item.priority_score)]}>
+                    <View
+                      style={[styles.priorityBadge, getPriorityBadgeStyle(item.priority_score)]}
+                    >
                       <Text style={styles.priorityBadgeText}>
                         {getPriorityLabel(item.priority_score)} ({item.priority_score})
                       </Text>
                     </View>
-                    <Text style={styles.clusterIdText}>
-                      Cluster #{item.cluster_id.slice(0, 8)}
-                    </Text>
+                    <Text style={styles.clusterIdText}>Cluster #{item.cluster_id.slice(0, 8)}</Text>
                   </View>
                   <View style={[styles.stateBadge, getStateStyle(item.state)]}>
                     <Text style={styles.stateBadgeText}>{item.state.toUpperCase()}</Text>
@@ -262,11 +261,13 @@ export const RescuerHomeScreen: React.FC<RescuerHomeScreenProps> = ({
                   </Text>
                   {item.distanceMeters !== undefined ? (
                     <Text style={styles.detailItem}>
-                      📍 <Text style={styles.detailBold}>
+                      📍{' '}
+                      <Text style={styles.detailBold}>
                         {item.distanceMeters > 1000
                           ? `${(item.distanceMeters / 1000).toFixed(1)} km`
                           : `${item.distanceMeters} m`}
-                      </Text> away
+                      </Text>{' '}
+                      away
                     </Text>
                   ) : null}
                   <Text style={styles.detailItem}>
@@ -288,7 +289,11 @@ export const RescuerHomeScreen: React.FC<RescuerHomeScreenProps> = ({
 
                   {/* Mark reached */}
                   <TouchableOpacity
-                    style={[styles.actionBtn, styles.btnReached, isProcessing && styles.btnDisabled]}
+                    style={[
+                      styles.actionBtn,
+                      styles.btnReached,
+                      isProcessing && styles.btnDisabled,
+                    ]}
                     onPress={() => sendRescuerAck(item, 3, 'reached')}
                     disabled={isProcessing}
                     testID={`reached-cluster-btn-${item.cluster_id}`}

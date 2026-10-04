@@ -37,7 +37,7 @@ export const PriorityQueue: React.FC = () => {
   const { t } = useTranslation();
 
   // Filter clusters
-  const filteredClusters = clusters.filter((c) => {
+  const filteredClusters = clusters.filter(c => {
     // 1. Search Query
     if (searchQuery) {
       const q = searchQuery.toLowerCase();
@@ -54,7 +54,7 @@ export const PriorityQueue: React.FC = () => {
 
     // 3. Flags Filter
     if (filterFlags.length > 0) {
-      const hasFlags = filterFlags.every((f) => (c.flags || []).includes(f));
+      const hasFlags = filterFlags.every(f => (c.flags || []).includes(f));
       if (!hasFlags) return false;
     }
 
@@ -77,19 +77,29 @@ export const PriorityQueue: React.FC = () => {
     return (
       <div className="card-needs-icons" title="Declared Survivor Needs">
         {(mask & NeedsBitmask.MEDICAL) !== 0 && (
-          <span title="Medical Trauma"><HeartPulse size={14} color="#ef4444" /></span>
+          <span title="Medical Trauma">
+            <HeartPulse size={14} color="#ef4444" />
+          </span>
         )}
         {(mask & NeedsBitmask.WATER) !== 0 && (
-          <span title="Drinking Water"><Droplets size={14} color="#3b82f6" /></span>
+          <span title="Drinking Water">
+            <Droplets size={14} color="#3b82f6" />
+          </span>
         )}
         {(mask & NeedsBitmask.FOOD) !== 0 && (
-          <span title="Food Supply"><UtensilsCrossed size={14} color="#f59e0b" /></span>
+          <span title="Food Supply">
+            <UtensilsCrossed size={14} color="#f59e0b" />
+          </span>
         )}
         {(mask & NeedsBitmask.SHELTER) !== 0 && (
-          <span title="Shelter"><Home size={14} color="#a855f7" /></span>
+          <span title="Shelter">
+            <Home size={14} color="#a855f7" />
+          </span>
         )}
         {(mask & NeedsBitmask.EVACUATION) !== 0 && (
-          <span title="Evacuation Rescue"><Truck size={14} color="#ec4899" /></span>
+          <span title="Evacuation Rescue">
+            <Truck size={14} color="#ec4899" />
+          </span>
         )}
       </div>
     );
@@ -122,7 +132,12 @@ export const PriorityQueue: React.FC = () => {
           <Search
             size={14}
             color="var(--text-muted)"
-            style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)' }}
+            style={{
+              position: 'absolute',
+              left: '10px',
+              top: '50%',
+              transform: 'translateY(-50%)',
+            }}
           />
           <input
             type="search"
@@ -130,7 +145,7 @@ export const PriorityQueue: React.FC = () => {
             style={{ paddingLeft: '32px' }}
             placeholder={t.searchPlaceholder}
             value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            onChange={e => setSearchQuery(e.target.value)}
             aria-label="Search clusters by id or location"
             id="input-search-queue"
           />
@@ -138,7 +153,7 @@ export const PriorityQueue: React.FC = () => {
 
         {/* State filter row */}
         <div className="queue-filter-row" role="radiogroup" aria-label="Filter by state">
-          {['all', 'new', 'assigned', 'en_route', 'reached', 'closed', 'false_alarm'].map((st) => (
+          {['all', 'new', 'assigned', 'en_route', 'reached', 'closed', 'false_alarm'].map(st => (
             <button
               key={st}
               className={`filter-chip ${filterState === st ? 'active' : ''}`}
@@ -148,16 +163,16 @@ export const PriorityQueue: React.FC = () => {
               {st === 'all'
                 ? t.filterAll
                 : st === 'new'
-                ? t.stateNew
-                : st === 'assigned'
-                ? t.stateAssigned
-                : st === 'en_route'
-                ? t.stateEnRoute
-                : st === 'reached'
-                ? t.stateReached
-                : st === 'closed'
-                ? t.stateClosed
-                : t.stateFalseAlarm}
+                  ? t.stateNew
+                  : st === 'assigned'
+                    ? t.stateAssigned
+                    : st === 'en_route'
+                      ? t.stateEnRoute
+                      : st === 'reached'
+                        ? t.stateReached
+                        : st === 'closed'
+                          ? t.stateClosed
+                          : t.stateFalseAlarm}
             </button>
           ))}
         </div>
@@ -208,13 +223,25 @@ export const PriorityQueue: React.FC = () => {
       </div>
 
       {/* Cluster List */}
-      <div className="queue-list" role="list" aria-labelledby="queue-heading" id="cluster-queue-list">
+      <div
+        className="queue-list"
+        role="list"
+        aria-labelledby="queue-heading"
+        id="cluster-queue-list"
+      >
         {filteredClusters.length === 0 ? (
-          <div style={{ padding: '2rem 1rem', textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.85rem' }}>
+          <div
+            style={{
+              padding: '2rem 1rem',
+              textAlign: 'center',
+              color: 'var(--text-muted)',
+              fontSize: '0.85rem',
+            }}
+          >
             {t.noClustersFound}
           </div>
         ) : (
-          filteredClusters.map((cluster) => {
+          filteredClusters.map(cluster => {
             const isSelected = selectedClusterId === cluster.id;
             return (
               <div
@@ -223,13 +250,13 @@ export const PriorityQueue: React.FC = () => {
                 tabIndex={0}
                 className={`cluster-card ${cluster.priority_band} ${isSelected ? 'selected' : ''}`}
                 onClick={() => selectCluster(cluster.id)}
-                onKeyDown={(e) => {
+                onKeyDown={e => {
                   if (e.key === 'Enter' || e.key === ' ') {
                     selectCluster(cluster.id);
                   }
                 }}
                 aria-label={`Cluster ${cluster.id.slice(0, 8)}, Score ${cluster.priority_score.toFixed(
-                  2
+                  2,
                 )}, ${cluster.declared_people} survivors, Status ${cluster.state}`}
                 id={`cluster-card-${cluster.id}`}
               >
@@ -247,12 +274,12 @@ export const PriorityQueue: React.FC = () => {
                         cluster.state === 'assigned'
                           ? '#60a5fa'
                           : cluster.state === 'en_route'
-                          ? '#f59e0b'
-                          : cluster.state === 'reached'
-                          ? '#10b981'
-                          : cluster.state === 'false_alarm'
-                          ? 'var(--text-muted)'
-                          : 'var(--accent-critical)',
+                            ? '#f59e0b'
+                            : cluster.state === 'reached'
+                              ? '#10b981'
+                              : cluster.state === 'false_alarm'
+                                ? 'var(--text-muted)'
+                                : 'var(--accent-critical)',
                     }}
                   >
                     {cluster.state.replace('_', ' ')}
@@ -264,7 +291,13 @@ export const PriorityQueue: React.FC = () => {
                   <div className="card-people-count">
                     <Users size={18} color="var(--text-primary)" />
                     <span>{cluster.declared_people}</span>
-                    <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', fontWeight: 400 }}>
+                    <span
+                      style={{
+                        fontSize: '0.75rem',
+                        color: 'var(--text-secondary)',
+                        fontWeight: 400,
+                      }}
+                    >
                       survivors ({cluster.member_count} pings)
                     </span>
                   </div>
@@ -272,7 +305,15 @@ export const PriorityQueue: React.FC = () => {
                 </div>
 
                 {/* Floor / Location */}
-                <div style={{ fontSize: '0.78rem', color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                <div
+                  style={{
+                    fontSize: '0.78rem',
+                    color: 'var(--text-primary)',
+                    whiteSpace: 'nowrap',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                  }}
+                >
                   {cluster.floor_hint || 'Ground sector location'}
                 </div>
 
@@ -285,7 +326,9 @@ export const PriorityQueue: React.FC = () => {
 
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
                     {cluster.assigned_team_name ? (
-                      <span style={{ color: '#60a5fa', fontWeight: 600 }}>{cluster.assigned_team_name}</span>
+                      <span style={{ color: '#60a5fa', fontWeight: 600 }}>
+                        {cluster.assigned_team_name}
+                      </span>
                     ) : (
                       <span style={{ color: 'var(--text-muted)' }}>Unassigned</span>
                     )}
@@ -302,7 +345,9 @@ export const PriorityQueue: React.FC = () => {
                       <span title="Low Cryptographic Trust">🛡️</span>
                     )}
                     {cluster.best_battery < 30 && (
-                      <span title="Battery Critically Low" style={{ color: '#ef4444' }}>⚡{cluster.best_battery}%</span>
+                      <span title="Battery Critically Low" style={{ color: '#ef4444' }}>
+                        ⚡{cluster.best_battery}%
+                      </span>
                     )}
                   </div>
                 </div>

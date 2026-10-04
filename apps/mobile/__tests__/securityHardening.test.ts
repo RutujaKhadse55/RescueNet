@@ -59,7 +59,7 @@ describe('Phase 14: Security, Privacy & Abuse Hardening Suite', () => {
           sequenceNumber: 1,
           keyPair: testKeyPair,
         },
-        crypto
+        crypto,
       );
 
       const result = await validator.validatePacket(packet, now);
@@ -87,7 +87,7 @@ describe('Phase 14: Security, Privacy & Abuse Hardening Suite', () => {
           sequenceNumber: 2,
           keyPair: testKeyPair,
         },
-        crypto
+        crypto,
       );
 
       const result = await validator.validatePacket(packet, deviceClockNow);
@@ -113,7 +113,7 @@ describe('Phase 14: Security, Privacy & Abuse Hardening Suite', () => {
           sequenceNumber: 5,
           keyPair: testKeyPair,
         },
-        crypto
+        crypto,
       );
       const res1 = await validator.validatePacket(packet1, now);
       expect(res1.valid).toBe(true);
@@ -132,7 +132,7 @@ describe('Phase 14: Security, Privacy & Abuse Hardening Suite', () => {
           sequenceNumber: 4, // Stale!
           keyPair: testKeyPair,
         },
-        crypto
+        crypto,
       );
       const res2 = await validator.validatePacket(packet2, now);
       expect(res2.valid).toBe(false);
@@ -157,7 +157,7 @@ describe('Phase 14: Security, Privacy & Abuse Hardening Suite', () => {
           nonce: fixedNonce,
           keyPair: testKeyPair,
         },
-        crypto
+        crypto,
       );
       const res1 = await validator.validatePacket(packet1, now);
       expect(res1.valid).toBe(true);
@@ -176,7 +176,7 @@ describe('Phase 14: Security, Privacy & Abuse Hardening Suite', () => {
           nonce: fixedNonce, // Reused nonce!
           keyPair: testKeyPair,
         },
-        crypto
+        crypto,
       );
       const res2 = await validator.validatePacket(packet2, now);
       expect(res2.valid).toBe(false);
@@ -189,7 +189,9 @@ describe('Phase 14: Security, Privacy & Abuse Hardening Suite', () => {
       const now = Math.floor(Date.now() / 1000);
       const badKeyPair = await crypto.generateKeyPair();
       const originFp = await crypto.blake2b(badKeyPair.publicKey, 8);
-      const fpString = Array.from(originFp).map(b => b.toString(16).padStart(2, '0')).join('');
+      const fpString = Array.from(originFp)
+        .map(b => b.toString(16).padStart(2, '0'))
+        .join('');
 
       validator.banKey(fpString);
       expect(validator.isKeyBanned(fpString)).toBe(true);
@@ -207,7 +209,7 @@ describe('Phase 14: Security, Privacy & Abuse Hardening Suite', () => {
           sequenceNumber: 1,
           keyPair: badKeyPair,
         },
-        crypto
+        crypto,
       );
 
       const res = await validator.validatePacket(packet, now);
@@ -234,7 +236,7 @@ describe('Phase 14: Security, Privacy & Abuse Hardening Suite', () => {
             sequenceNumber: 1,
             keyPair: dummy,
           },
-          crypto
+          crypto,
         );
         await validator.validatePacket(p, now);
       }
@@ -255,7 +257,7 @@ describe('Phase 14: Security, Privacy & Abuse Hardening Suite', () => {
           sequenceNumber: 1,
           keyPair: testKeyPair,
         },
-        crypto
+        crypto,
       );
       // Corrupt signature bytes
       forged[forged.length - 5] ^= 0xff;
@@ -279,7 +281,7 @@ describe('Phase 14: Security, Privacy & Abuse Hardening Suite', () => {
         expect(ep.chainOfCustodySigHex).toBeDefined();
 
         const payload = new TextEncoder().encode(
-          `RESCUENET-EPHEMERAL-CHAIN:${i}:${ep.publicKeyHex}:${ep.expiresAt}`
+          `RESCUENET-EPHEMERAL-CHAIN:${i}:${ep.publicKeyHex}:${ep.expiresAt}`,
         );
         const sigBytes = new Uint8Array(Buffer.from(ep.chainOfCustodySigHex!, 'hex'));
 
@@ -324,7 +326,9 @@ describe('Phase 14: Security, Privacy & Abuse Hardening Suite', () => {
 
       expect(sanitized).not.toContain('18.5204303');
       expect(sanitized).not.toContain('+919876543210');
-      expect(sanitized).not.toContain('4a656c78763879617364666a68617364666a68617364666a68617364666a6861');
+      expect(sanitized).not.toContain(
+        '4a656c78763879617364666a68617364666a68617364666a68617364666a6861',
+      );
       expect(sanitized).toContain('[REDACTED_PRECISE_GPS]');
       expect(sanitized).toContain('[REDACTED_PHONE]');
       expect(sanitized).toContain('[REDACTED_CRYPTO_KEY]');

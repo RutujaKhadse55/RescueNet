@@ -73,4 +73,3 @@ export * from './strategies';
 export * from './simulator';
 export * from './exporters/csv';
 export * from './exporters/charts';
-

@@ -1,5 +1,10 @@
 import { Linking, Platform } from 'react-native';
-import { ANDROID_PERMISSIONS, AndroidPermissionDef, PermissionCategory, PermissionStatus } from './types';
+import {
+  ANDROID_PERMISSIONS,
+  AndroidPermissionDef,
+  PermissionCategory,
+  PermissionStatus,
+} from './types';
 
 export class PermissionService {
   private permissionStates: Map<string, PermissionStatus> = new Map();
@@ -15,7 +20,7 @@ export class PermissionService {
   }
 
   public getPermissionsByCategory(category: PermissionCategory): AndroidPermissionDef[] {
-    return ANDROID_PERMISSIONS.filter((p) => p.category === category);
+    return ANDROID_PERMISSIONS.filter(p => p.category === category);
   }
 
   public getAllStatuses(): Record<string, PermissionStatus> {
@@ -35,7 +40,7 @@ export class PermissionService {
       try {
         // eslint-disable-next-line @typescript-eslint/no-var-requires
         const { PermissionsAndroid } = require('react-native');
-        const def = ANDROID_PERMISSIONS.find((p) => p.key === key);
+        const def = ANDROID_PERMISSIONS.find(p => p.key === key);
         if (def && PermissionsAndroid.PERMISSIONS[key]) {
           const granted = await PermissionsAndroid.request(PermissionsAndroid.PERMISSIONS[key]);
           const status: PermissionStatus =
@@ -57,7 +62,9 @@ export class PermissionService {
     return 'granted';
   }
 
-  public async requestCategory(category: PermissionCategory): Promise<Record<string, PermissionStatus>> {
+  public async requestCategory(
+    category: PermissionCategory,
+  ): Promise<Record<string, PermissionStatus>> {
     const perms = this.getPermissionsByCategory(category);
     const results: Record<string, PermissionStatus> = {};
     for (const p of perms) {
@@ -75,8 +82,8 @@ export class PermissionService {
   }
 
   public areCriticalPermissionsGranted(): boolean {
-    const critical = ANDROID_PERMISSIONS.filter((p) => p.critical);
-    return critical.every((p) => this.getStatus(p.key) === 'granted');
+    const critical = ANDROID_PERMISSIONS.filter(p => p.critical);
+    return critical.every(p => this.getStatus(p.key) === 'granted');
   }
 
   public getGrantedPercentage(): number {

@@ -14,22 +14,14 @@ export interface ChatMessageDto {
 }
 
 // In-memory shared message store for disaster simulation & cross-device communication
-export const messagesStore: ChatMessageDto[] = [
-  {
-    id: 'msg_init_001',
-    conversationId: 'cl_pune_ghats_01',
-    senderFp: '4a9b2c8f1e7d3a01',
-    senderName: 'Survivor B (Priya Patil)',
-    senderRole: 'nearby',
-    recipientFp: 'broadcast',
-    content: 'Is anyone nearby? We are at the relief shelter entrance.',
-    timestamp: new Date(Date.now() - 1000 * 60 * 8).toISOString(),
-    ttl: 5,
-  },
-];
+export let messagesStore: ChatMessageDto[] = [];
 
 export function addSystemChatMessage(msg: ChatMessageDto) {
   messagesStore.push(msg);
+}
+
+export function clearMessagesStore() {
+  messagesStore = [];
 }
 
 export async function chatRoutes(server: FastifyInstance) {
@@ -40,21 +32,21 @@ export async function chatRoutes(server: FastifyInstance) {
       req: FastifyRequest<{
         Querystring: { conversationId?: string; clusterId?: string };
       }>,
-      reply: FastifyReply
+      reply: FastifyReply,
     ) => {
       const { conversationId } = req.query;
-      if (conversationId) {
+      if (conversationId && conversationId !== 'all') {
         const filtered = messagesStore.filter(
-          (m) =>
+          m =>
             m.conversationId === conversationId ||
-            conversationId === 'all' ||
+            m.recipientFp === 'broadcast' ||
             m.conversationId === 'cl_pune_ghats_01' ||
-            m.conversationId === 'conv_local_mesh'
+            m.conversationId === 'conv_local_mesh',
         );
         return reply.send({ messages: filtered });
       }
       return reply.send({ messages: messagesStore });
-    }
+    },
   );
 
   // POST /v1/chat/messages
@@ -71,7 +63,7 @@ export async function chatRoutes(server: FastifyInstance) {
           content: string;
         };
       }>,
-      reply: FastifyReply
+      reply: FastifyReply,
     ) => {
       const body = req.body;
       if (!body || !body.content) {
@@ -82,7 +74,8 @@ export async function chatRoutes(server: FastifyInstance) {
         id: `msg_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
         conversationId: body.conversationId || 'cl_pune_ghats_01',
         senderFp: body.senderFp || 'survivor_node',
-        senderName: body.senderName || (body.senderRole === 'rescuer' ? 'Rescue Team Alpha' : 'Survivor'),
+        senderName:
+          body.senderName || (body.senderRole === 'rescuer' ? 'Rescue Team Alpha' : 'Survivor'),
         senderRole: body.senderRole || 'survivor',
         recipientFp: body.recipientFp || 'broadcast',
         content: body.content,
@@ -101,6 +94,6 @@ export async function chatRoutes(server: FastifyInstance) {
       });
 
       return reply.status(201).send(newMsg);
-    }
+    },
   );
 }

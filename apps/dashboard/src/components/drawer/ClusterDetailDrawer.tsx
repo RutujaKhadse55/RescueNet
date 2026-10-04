@@ -33,7 +33,9 @@ export const ClusterDetailDrawer: React.FC = () => {
   const { user } = useAuthStore();
   const { t } = useTranslation();
 
-  const [activeTab, setActiveTab] = useState<'overview' | 'score' | 'trust' | 'timeline' | 'packets' | 'chat'>('overview');
+  const [activeTab, setActiveTab] = useState<
+    'overview' | 'score' | 'trust' | 'timeline' | 'packets' | 'chat'
+  >('overview');
 
   // Modals state
   const [assignOpen, setAssignOpen] = useState(false);
@@ -42,11 +44,12 @@ export const ClusterDetailDrawer: React.FC = () => {
   const [mergeSplitOpen, setMergeSplitOpen] = useState(false);
   const [addNoteOpen, setAddNoteOpen] = useState(false);
 
-  const cluster = clusters.find((c) => c.id === selectedClusterId);
+  const cluster = clusters.find(c => c.id === selectedClusterId);
   if (!cluster) return null;
 
   const isViewer = user?.role === 'viewer';
-  const canDispatch = user?.role === 'admin' || user?.role === 'dispatcher' || user?.role === 'rescuer';
+  const canDispatch =
+    user?.role === 'admin' || user?.role === 'dispatcher' || user?.role === 'rescuer';
 
   const formatCoords = (lat: number, lon: number) => {
     if (isViewer) {
@@ -76,15 +79,30 @@ export const ClusterDetailDrawer: React.FC = () => {
               </h2>
             </div>
             <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.2rem' }}>
-              State: <strong style={{ color: 'var(--text-primary)', textTransform: 'uppercase' }} id="drawer-cluster-state">{cluster.state.toUpperCase()}</strong>
+              State:{' '}
+              <strong
+                style={{ color: 'var(--text-primary)', textTransform: 'uppercase' }}
+                id="drawer-cluster-state"
+              >
+                {cluster.state.toUpperCase()}
+              </strong>
               {cluster.assigned_team_name && (
-                <span> • Assigned: <strong style={{ color: '#60a5fa' }}>{cluster.assigned_team_name}</strong></span>
+                <span>
+                  {' '}
+                  • Assigned:{' '}
+                  <strong style={{ color: '#60a5fa' }}>{cluster.assigned_team_name}</strong>
+                </span>
               )}
             </div>
           </div>
           <button
             onClick={() => selectCluster(null)}
-            style={{ background: 'transparent', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer' }}
+            style={{
+              background: 'transparent',
+              border: 'none',
+              color: 'var(--text-secondary)',
+              cursor: 'pointer',
+            }}
             aria-label="Close cluster drawer"
             id="btn-close-drawer"
           >
@@ -156,7 +174,9 @@ export const ClusterDetailDrawer: React.FC = () => {
           {activeTab === 'overview' && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
               {/* Stat tiles */}
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.6rem' }}>
+              <div
+                style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.6rem' }}
+              >
                 <div className="stat-card">
                   <div className="stat-card-title">{t.peopleCount}</div>
                   <div className="stat-card-value" style={{ color: '#ef4444' }}>
@@ -169,7 +189,10 @@ export const ClusterDetailDrawer: React.FC = () => {
 
                 <div className="stat-card">
                   <div className="stat-card-title">Best Battery</div>
-                  <div className="stat-card-value" style={{ color: cluster.best_battery < 30 ? '#ef4444' : '#10b981' }}>
+                  <div
+                    className="stat-card-value"
+                    style={{ color: cluster.best_battery < 30 ? '#ef4444' : '#10b981' }}
+                  >
                     {cluster.best_battery}%
                   </div>
                   <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>
@@ -197,14 +220,30 @@ export const ClusterDetailDrawer: React.FC = () => {
                   padding: '0.85rem',
                 }}
               >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.4rem' }}>
+                <div
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.4rem',
+                    marginBottom: '0.4rem',
+                  }}
+                >
                   <MapPin size={16} color="var(--accent-blue)" />
                   <strong style={{ fontSize: '0.85rem' }}>Geospatial Location & Floor Hint</strong>
                 </div>
-                <div style={{ fontSize: '0.85rem', fontFamily: isViewer ? 'inherit' : 'var(--font-mono)', color: isViewer ? '#f59e0b' : '#f8fafc' }} id="display-cluster-coords">
+                <div
+                  style={{
+                    fontSize: '0.85rem',
+                    fontFamily: isViewer ? 'inherit' : 'var(--font-mono)',
+                    color: isViewer ? '#f59e0b' : '#f8fafc',
+                  }}
+                  id="display-cluster-coords"
+                >
                   {formatCoords(cluster.lat, cluster.lon)}
                 </div>
-                <div style={{ fontSize: '0.8rem', marginTop: '0.3rem', color: 'var(--text-primary)' }}>
+                <div
+                  style={{ fontSize: '0.8rem', marginTop: '0.3rem', color: 'var(--text-primary)' }}
+                >
                   <strong>Floor/Structure:</strong> {cluster.floor_hint || 'Ground level'}
                 </div>
                 {isViewer && (
@@ -216,7 +255,14 @@ export const ClusterDetailDrawer: React.FC = () => {
 
               {/* Mini Map showing beacon dispersion */}
               <div>
-                <div style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '0.4rem' }}>
+                <div
+                  style={{
+                    fontSize: '0.8rem',
+                    fontWeight: 600,
+                    color: 'var(--text-secondary)',
+                    marginBottom: '0.4rem',
+                  }}
+                >
                   {t.memberLocations}
                 </div>
                 <MiniMap
@@ -252,71 +298,124 @@ export const ClusterDetailDrawer: React.FC = () => {
           {activeTab === 'score' && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
               <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
-                Composite priority formula incorporates survivor group scale, physical injury triage, signal staleness, emergency supply needs, and geographic uncertainty:
+                Composite priority formula incorporates survivor group scale, physical injury
+                triage, signal staleness, emergency supply needs, and geographic uncertainty:
               </div>
 
               {/* 1. Severity Term */}
               <div className="stat-card">
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div
+                  style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
+                >
                   <strong>1. Triage Severity (35% weight)</strong>
                   <span className="card-score-badge critical">
                     +{(cluster.components?.severityWeighted ?? 0.35).toFixed(2)}
                   </span>
                 </div>
-                <p style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', marginTop: '0.3rem' }}>
-                  Max status triage rating ({cluster.max_status === 3 ? 'Critical' : cluster.max_status === 2 ? 'Trapped' : cluster.max_status === 1 ? 'Injured' : 'Safe'}). Directly weights immediate life threat.
+                <p
+                  style={{
+                    fontSize: '0.78rem',
+                    color: 'var(--text-secondary)',
+                    marginTop: '0.3rem',
+                  }}
+                >
+                  Max status triage rating (
+                  {cluster.max_status === 3
+                    ? 'Critical'
+                    : cluster.max_status === 2
+                      ? 'Trapped'
+                      : cluster.max_status === 1
+                        ? 'Injured'
+                        : 'Safe'}
+                  ). Directly weights immediate life threat.
                 </p>
               </div>
 
               {/* 2. Survivor Count Term */}
               <div className="stat-card">
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div
+                  style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
+                >
                   <strong>2. Survivor Group Scale (25% weight)</strong>
                   <span className="card-score-badge high">
                     +{(cluster.components?.survivorCountWeighted ?? 0.18).toFixed(2)}
                   </span>
                 </div>
-                <p style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', marginTop: '0.3rem' }}>
-                  {cluster.declared_people} declared individuals. Logarithmic scaling prioritizes multi-victim clusters over isolated beacons.
+                <p
+                  style={{
+                    fontSize: '0.78rem',
+                    color: 'var(--text-secondary)',
+                    marginTop: '0.3rem',
+                  }}
+                >
+                  {cluster.declared_people} declared individuals. Logarithmic scaling prioritizes
+                  multi-victim clusters over isolated beacons.
                 </p>
               </div>
 
               {/* 3. Time Elapsed Staleness Term */}
               <div className="stat-card">
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div
+                  style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
+                >
                   <strong>3. Time Elapsed / Battery Staleness (15% weight)</strong>
                   <span className="card-score-badge medium">
                     +{(cluster.components?.timeSinceLastSeenWeighted ?? 0.14).toFixed(2)}
                   </span>
                 </div>
-                <p style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', marginTop: '0.3rem' }}>
-                  Time elapsed since last beacon sync. Rising staleness elevates urgency before phone batteries deplete completely.
+                <p
+                  style={{
+                    fontSize: '0.78rem',
+                    color: 'var(--text-secondary)',
+                    marginTop: '0.3rem',
+                  }}
+                >
+                  Time elapsed since last beacon sync. Rising staleness elevates urgency before
+                  phone batteries deplete completely.
                 </p>
               </div>
 
               {/* 4. Declared Needs Term */}
               <div className="stat-card">
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div
+                  style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
+                >
                   <strong>4. Declared Emergency Needs (15% weight)</strong>
                   <span className="card-score-badge medium">
                     +{(cluster.components?.declaredNeedsWeighted ?? 0.12).toFixed(2)}
                   </span>
                 </div>
-                <p style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', marginTop: '0.3rem' }}>
-                  Aggregated needs bitmask (Medical trauma, Potable drinking water, Evacuation gear, Mobility impairments).
+                <p
+                  style={{
+                    fontSize: '0.78rem',
+                    color: 'var(--text-secondary)',
+                    marginTop: '0.3rem',
+                  }}
+                >
+                  Aggregated needs bitmask (Medical trauma, Potable drinking water, Evacuation gear,
+                  Mobility impairments).
                 </p>
               </div>
 
               {/* 5. Location Uncertainty Penalty */}
               <div className="stat-card">
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div
+                  style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
+                >
                   <strong>5. Location Uncertainty Penalty (-10% weight)</strong>
                   <span className="card-score-badge low">
                     {(cluster.components?.locationUncertaintyDeduction ?? -0.02).toFixed(2)}
                   </span>
                 </div>
-                <p style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', marginTop: '0.3rem' }}>
-                  Accuracy radius penalty ({cluster.radius_m}m). Tightly clustered GPS pings gain priority confidence over broad fuzzy estimates.
+                <p
+                  style={{
+                    fontSize: '0.78rem',
+                    color: 'var(--text-secondary)',
+                    marginTop: '0.3rem',
+                  }}
+                >
+                  Accuracy radius penalty ({cluster.radius_m}m). Tightly clustered GPS pings gain
+                  priority confidence over broad fuzzy estimates.
                 </p>
               </div>
             </div>
@@ -335,14 +434,36 @@ export const ClusterDetailDrawer: React.FC = () => {
                     padding: '0.85rem',
                   }}
                 >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.3rem' }}>
-                    {signal.passed ? <ShieldCheck size={18} color="#10b981" /> : <ShieldAlert size={18} color="#ef4444" />}
-                    <strong style={{ fontSize: '0.85rem' }}>{signal.signal_type.replace(/_/g, ' ').toUpperCase()}</strong>
-                    <span style={{ marginLeft: 'auto', fontSize: '0.75rem', fontWeight: 700, color: signal.passed ? '#10b981' : '#ef4444' }}>
+                  <div
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.5rem',
+                      marginBottom: '0.3rem',
+                    }}
+                  >
+                    {signal.passed ? (
+                      <ShieldCheck size={18} color="#10b981" />
+                    ) : (
+                      <ShieldAlert size={18} color="#ef4444" />
+                    )}
+                    <strong style={{ fontSize: '0.85rem' }}>
+                      {signal.signal_type.replace(/_/g, ' ').toUpperCase()}
+                    </strong>
+                    <span
+                      style={{
+                        marginLeft: 'auto',
+                        fontSize: '0.75rem',
+                        fontWeight: 700,
+                        color: signal.passed ? '#10b981' : '#ef4444',
+                      }}
+                    >
                       {Math.round(signal.score * 100)}%
                     </span>
                   </div>
-                  <p style={{ fontSize: '0.78rem', color: 'var(--text-secondary)' }}>{signal.details}</p>
+                  <p style={{ fontSize: '0.78rem', color: 'var(--text-secondary)' }}>
+                    {signal.details}
+                  </p>
                 </div>
               ))}
             </div>
@@ -361,12 +482,22 @@ export const ClusterDetailDrawer: React.FC = () => {
                   }}
                 >
                   <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
-                    {new Date(evt.created_at).toLocaleTimeString()} • {evt.actor_name || 'System Ingest'}
+                    {new Date(evt.created_at).toLocaleTimeString()} •{' '}
+                    {evt.actor_name || 'System Ingest'}
                   </div>
-                  <div style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-primary)', marginTop: '0.1rem' }}>
+                  <div
+                    style={{
+                      fontSize: '0.82rem',
+                      fontWeight: 600,
+                      color: 'var(--text-primary)',
+                      marginTop: '0.1rem',
+                    }}
+                  >
                     {evt.event_type.replace(/_/g, ' ').toUpperCase()}
                   </div>
-                  <div style={{ fontSize: '0.78rem', color: 'var(--text-secondary)' }}>{evt.notes}</div>
+                  <div style={{ fontSize: '0.78rem', color: 'var(--text-secondary)' }}>
+                    {evt.notes}
+                  </div>
                 </div>
               ))}
             </div>
@@ -387,7 +518,9 @@ export const ClusterDetailDrawer: React.FC = () => {
                     fontSize: '0.75rem',
                   }}
                 >
-                  <div style={{ display: 'flex', justifyContent: 'space-between', color: '#60a5fa' }}>
+                  <div
+                    style={{ display: 'flex', justifyContent: 'space-between', color: '#60a5fa' }}
+                  >
                     <span>PKT: {pkt.packetId}</span>
                     <span>Hops: {pkt.hopCount}</span>
                   </div>
@@ -403,23 +536,43 @@ export const ClusterDetailDrawer: React.FC = () => {
           {activeTab === 'chat' && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
               {(cluster.chatMessages || []).length === 0 ? (
-                <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>No encrypted mesh chat messages for this cluster.</p>
+                <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+                  No encrypted mesh chat messages for this cluster.
+                </p>
               ) : (
                 cluster.chatMessages!.map((msg, idx) => (
                   <div
                     key={idx}
                     style={{
-                      background: msg.sender_type === 'victim' ? 'rgba(59, 130, 246, 0.15)' : 'rgba(16, 185, 129, 0.15)',
+                      background:
+                        msg.sender_type === 'victim'
+                          ? 'rgba(59, 130, 246, 0.15)'
+                          : 'rgba(16, 185, 129, 0.15)',
                       border: `1px solid ${msg.sender_type === 'victim' ? 'rgba(59, 130, 246, 0.4)' : 'rgba(16, 185, 129, 0.4)'}`,
                       borderRadius: '8px',
                       padding: '0.6rem',
                     }}
                   >
-                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.72rem', color: 'var(--text-muted)' }}>
-                      <strong>{msg.sender_name} ({msg.sender_type})</strong>
+                    <div
+                      style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        fontSize: '0.72rem',
+                        color: 'var(--text-muted)',
+                      }}
+                    >
+                      <strong>
+                        {msg.sender_name} ({msg.sender_type})
+                      </strong>
                       <span>{new Date(msg.timestamp).toLocaleTimeString()}</span>
                     </div>
-                    <div style={{ fontSize: '0.82rem', marginTop: '0.25rem', color: 'var(--text-primary)' }}>
+                    <div
+                      style={{
+                        fontSize: '0.82rem',
+                        marginTop: '0.25rem',
+                        color: 'var(--text-primary)',
+                      }}
+                    >
                       {msg.message}
                     </div>
                   </div>
@@ -500,11 +653,27 @@ export const ClusterDetailDrawer: React.FC = () => {
       </aside>
 
       {/* Action Modals */}
-      <AssignTeamModal clusterId={cluster.id} isOpen={assignOpen} onClose={() => setAssignOpen(false)} />
+      <AssignTeamModal
+        clusterId={cluster.id}
+        isOpen={assignOpen}
+        onClose={() => setAssignOpen(false)}
+      />
       <SendAckModal clusterId={cluster.id} isOpen={ackOpen} onClose={() => setAckOpen(false)} />
-      <FalseAlarmModal clusterId={cluster.id} isOpen={falseAlarmOpen} onClose={() => setFalseAlarmOpen(false)} />
-      <MergeSplitModal clusterId={cluster.id} isOpen={mergeSplitOpen} onClose={() => setMergeSplitOpen(false)} />
-      <AddNoteModal clusterId={cluster.id} isOpen={addNoteOpen} onClose={() => setAddNoteOpen(false)} />
+      <FalseAlarmModal
+        clusterId={cluster.id}
+        isOpen={falseAlarmOpen}
+        onClose={() => setFalseAlarmOpen(false)}
+      />
+      <MergeSplitModal
+        clusterId={cluster.id}
+        isOpen={mergeSplitOpen}
+        onClose={() => setMergeSplitOpen(false)}
+      />
+      <AddNoteModal
+        clusterId={cluster.id}
+        isOpen={addNoteOpen}
+        onClose={() => setAddNoteOpen(false)}
+      />
     </>
   );
 };

@@ -1,29 +1,9 @@
 import React from 'react';
-import {
-  View,
-  Text,
-  ScrollView,
-  StyleSheet,
-  TouchableOpacity,
-} from 'react-native';
+import { View, Text, ScrollView, StyleSheet, TouchableOpacity } from 'react-native';
 import { colors, layout, spacing, typography } from '../theme';
 import { useTranslation } from '../i18n/LanguageContext';
 import { NeighborRecord } from '../db/repositories/NeighborRepository';
 import { ClusterRecord } from '../db/repositories/ClusterRepository';
-
-export interface SurvivorNodeDetail {
-  fp: string;
-  name: string;
-  clusterId: string;
-  clusterName: string;
-  triage: 'RED' | 'YELLOW' | 'GREEN';
-  condition: string;
-  distanceMeters: number;
-  battery: number;
-  rssi: number;
-  needs: string[];
-  convId: string;
-}
 
 interface NearbyScreenProps {
   neighbors?: NeighborRecord[];
@@ -31,7 +11,12 @@ interface NearbyScreenProps {
   yourClusterId?: string | null;
   onSelectPeer?: (fp: string) => void;
   onSelectCluster?: (clusterId: string) => void;
-  onStartChatWithSurvivor?: (survivor: { fp: string; name: string; clusterId: string; convId: string }) => void;
+  onStartChatWithSurvivor?: (survivor: {
+    fp: string;
+    name: string;
+    clusterId: string;
+    convId: string;
+  }) => void;
 }
 
 export const NearbyScreen: React.FC<NearbyScreenProps> = ({
@@ -39,55 +24,11 @@ export const NearbyScreen: React.FC<NearbyScreenProps> = ({
   clusters = [],
   yourClusterId,
   onSelectPeer,
-  onSelectCluster,
-  onStartChatWithSurvivor,
 }) => {
   const { t } = useTranslation();
 
-  // Synthetic / known nearby survivor nodes linked to common clusters
-  const defaultClusterId = yourClusterId || (clusters[0]?.cluster_id) || 'cl_pune_ghats_01';
-
-  const survivorDetails: SurvivorNodeDetail[] = [
-    {
-      fp: '4a9b2c8f1e7d3a01',
-      name: 'Survivor B (Priya Patil)',
-      clusterId: defaultClusterId,
-      clusterName: 'Pune Ghats Sector 4',
-      triage: 'YELLOW',
-      condition: 'Injured right arm, conscious near relief entrance',
-      distanceMeters: 25,
-      battery: 82,
-      rssi: -62,
-      needs: ['First Aid', 'Water'],
-      convId: 'conv_local_mesh',
-    },
-    {
-      fp: '8f2e1a3b5c7d9e02',
-      name: 'Survivor C (Amit Deshmukh)',
-      clusterId: defaultClusterId,
-      clusterName: 'Pune Ghats Sector 4',
-      triage: 'RED',
-      condition: 'Trapped under concrete beam, respiratory distress',
-      distanceMeters: 38,
-      battery: 45,
-      rssi: -74,
-      needs: ['Heavy Lifting', 'Oxygen'],
-      convId: 'conv_survivor_c',
-    },
-    {
-      fp: 'c3d4e5f6a7b8c901',
-      name: 'Survivor D (Sunil Kulkarni)',
-      clusterId: defaultClusterId,
-      clusterName: 'Pune Ghats Sector 4',
-      triage: 'GREEN',
-      condition: 'Mobility impaired elderly, safe on elevated platform',
-      distanceMeters: 42,
-      battery: 31,
-      rssi: -79,
-      needs: ['Evacuation Assist'],
-      convId: 'conv_survivor_d',
-    },
-  ];
+  const activeCluster = clusters[0];
+  const clusterIdText = yourClusterId || activeCluster?.cluster_id || 'LOCAL-MESH-01';
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
@@ -95,109 +36,114 @@ export const NearbyScreen: React.FC<NearbyScreenProps> = ({
       <View style={styles.header}>
         <View>
           <Text style={styles.title}>Nearby Survivors</Text>
-          <Text style={styles.subtitle}>
-            Detecting local mesh peers & disaster cluster assignments
-          </Text>
+          <Text style={styles.subtitle}>Zero-Internet Bluetooth mesh radio discovery</Text>
         </View>
         <View style={styles.meshStatBadge}>
-          <Text style={styles.meshStatText}>📡 4 Nodes Online</Text>
+          <Text style={styles.meshStatText}>
+            📡 {neighbors.length} {neighbors.length === 1 ? 'Peer' : 'Peers'} in Range
+          </Text>
         </View>
       </View>
 
       {/* Cluster Overview Banner */}
       <View style={styles.clusterBanner}>
         <View style={styles.clusterBannerLeft}>
-          <Text style={styles.clusterBannerTag}>YOUR PRIMARY CLUSTER</Text>
-          <Text style={styles.clusterBannerTitle}>Cluster #{defaultClusterId}</Text>
+          <Text style={styles.clusterBannerTag}>DISASTER MESH CELL</Text>
+          <Text style={styles.clusterBannerTitle}>Sector #{clusterIdText}</Text>
           <Text style={styles.clusterBannerLocation}>
-            Pune Ghats Sector 4 • 18.5204° N, 73.8567° E (45m Radius)
+            {activeCluster?.centroid_lat
+              ? `${activeCluster.centroid_lat.toFixed(4)}° N, ${activeCluster.centroid_lon.toFixed(4)}° E • Radius ${activeCluster.radius_meters}m`
+              : 'Direct peer-to-peer radio frequency scanning active'}
           </Text>
         </View>
         <View style={styles.clusterBannerBadge}>
-          <Text style={styles.clusterBannerBadgeNum}>5</Text>
-          <Text style={styles.clusterBannerBadgeLbl}>Survivors</Text>
+          <Text style={styles.clusterBannerBadgeNum}>{neighbors.length + 1}</Text>
+          <Text style={styles.clusterBannerBadgeLbl}>Nodes</Text>
         </View>
       </View>
 
       {/* Section Title */}
       <View style={styles.sectionHeaderRow}>
-        <Text style={styles.sectionHeader}>SURVIVORS IN YOUR VICINITY</Text>
-        <Text style={styles.sectionHint}>Tap Chat to message over offline mesh</Text>
+        <Text style={styles.sectionHeader}>DISCOVERED MESH PEERS</Text>
+        <Text style={styles.sectionHint}>Live BLE Signal</Text>
       </View>
 
-      {/* List of Nearby Survivors with Cluster Tag and Direct Chat */}
-      <View style={styles.survivorList}>
-        {survivorDetails.map((survivor) => {
-          const isRed = survivor.triage === 'RED';
-          const isYellow = survivor.triage === 'YELLOW';
+      {/* List of Nearby Survivors or Empty State */}
+      {neighbors.length === 0 ? (
+        <View style={styles.emptyStateCard}>
+          <View style={styles.emptyIconCircle}>
+            <Text style={styles.emptyIconText}>📡</Text>
+          </View>
+          <Text style={styles.emptyTitle}>Scanning for Nearby Survivors</Text>
+          <Text style={styles.emptyDesc}>
+            Your phone is actively broadcasting an emergency distress beacon. Any nearby survivor or
+            rescue relay device within Bluetooth range (~80 meters) will be automatically discovered
+            here.
+          </Text>
+          <View style={styles.scanningPulseBox}>
+            <View style={styles.pulseDot} />
+            <Text style={styles.pulseText}>
+              Continuous 2.4 GHz radio scan active • 0 peers in range
+            </Text>
+          </View>
+        </View>
+      ) : (
+        <View style={styles.survivorList}>
+          {neighbors.map((neighbor, idx) => {
+            const shortFp = neighbor.fp.slice(0, 8);
+            const distM = Math.max(
+              8,
+              Math.min(80, Math.round(Math.abs(neighbor.last_rssi || -70) * 0.55)),
+            );
+            const isRed = idx % 2 === 1;
 
-          return (
-            <View key={survivor.fp} style={styles.survivorCard}>
-              {/* Top Row: Name, Triage, and Cluster Tag */}
-              <View style={styles.cardTopRow}>
-                <View style={styles.nameCol}>
-                  <Text style={styles.survivorName}>{survivor.name}</Text>
-                  <Text style={styles.nodeFp}>Node #{survivor.fp.substring(0, 8)}</Text>
-                </View>
-
-                <View
-                  style={[
-                    styles.triageBadge,
-                    isRed ? styles.triageRed : isYellow ? styles.triageYellow : styles.triageGreen,
-                  ]}
-                >
-                  <Text style={styles.triageBadgeText}>
-                    {isRed ? '🚨 CODE RED' : isYellow ? '⚠️ YELLOW' : '✓ MINOR'}
-                  </Text>
-                </View>
-              </View>
-
-              {/* CLUSTER MEMBERSHIP BADGE - Clear and prominent as requested */}
-              <View style={styles.clusterMembershipBox}>
-                <Text style={styles.clusterMembershipLabel}>📍 ASSIGNED CLUSTER:</Text>
-                <Text style={styles.clusterMembershipValue}>
-                  #{survivor.clusterId} ({survivor.clusterName})
-                </Text>
-              </View>
-
-              {/* Condition / Status */}
-              <Text style={styles.conditionText}>“{survivor.condition}”</Text>
-
-              {/* Needs Pills */}
-              <View style={styles.needsRow}>
-                {survivor.needs.map((n, i) => (
-                  <View key={i} style={styles.needChip}>
-                    <Text style={styles.needChipText}>{n}</Text>
+            return (
+              <View key={neighbor.fp} style={styles.survivorCard}>
+                {/* Top Row: Name and Triage */}
+                <View style={styles.cardTopRow}>
+                  <View style={styles.nameCol}>
+                    <Text style={styles.survivorName}>Survivor #{shortFp}</Text>
+                    <Text style={styles.nodeFp}>
+                      Role: {neighbor.role.toUpperCase()} • Direct BLE Hop
+                    </Text>
                   </View>
-                ))}
-              </View>
 
-              {/* Telemetry Footer & Direct Chat Button */}
-              <View style={styles.cardFooter}>
-                <View style={styles.telemetryGroup}>
-                  <Text style={styles.telemetryItem}>📶 {survivor.distanceMeters}m away</Text>
-                  <Text style={styles.telemetryItem}>🔋 {survivor.battery}%</Text>
-                  <Text style={styles.telemetryItem}>{survivor.rssi} dBm</Text>
+                  <View
+                    style={[styles.triageBadge, isRed ? styles.triageRed : styles.triageYellow]}
+                  >
+                    <Text style={styles.triageBadgeText}>
+                      {isRed ? '🚨 CODE RED' : '⚠️ URGENT'}
+                    </Text>
+                  </View>
                 </View>
 
-                <TouchableOpacity
-                  style={styles.chatButton}
-                  onPress={() => {
-                    if (onStartChatWithSurvivor) {
-                      onStartChatWithSurvivor(survivor);
-                    } else if (onSelectPeer) {
-                      onSelectPeer(survivor.fp);
-                    }
-                  }}
-                  activeOpacity={0.8}
-                >
-                  <Text style={styles.chatButtonText}>💬 Chat</Text>
-                </TouchableOpacity>
+                {/* Mesh Tag */}
+                <View style={styles.clusterMembershipBox}>
+                  <Text style={styles.clusterMembershipLabel}>📍 MESH NODE FINGERPRINT:</Text>
+                  <Text style={styles.clusterMembershipValue}>{neighbor.fp}</Text>
+                </View>
+
+                {/* Telemetry Footer */}
+                <View style={styles.cardFooter}>
+                  <View style={styles.telemetryGroup}>
+                    <Text style={styles.telemetryItem}>📶 ~{distM}m away</Text>
+                    <Text style={styles.telemetryItem}>🔋 {neighbor.battery ?? 80}%</Text>
+                    <Text style={styles.telemetryItem}>{neighbor.last_rssi ?? -68} dBm</Text>
+                  </View>
+
+                  <TouchableOpacity
+                    style={styles.actionBtn}
+                    onPress={() => onSelectPeer && onSelectPeer(neighbor.fp)}
+                    activeOpacity={0.8}
+                  >
+                    <Text style={styles.actionBtnText}>💬 Chat</Text>
+                  </TouchableOpacity>
+                </View>
               </View>
-            </View>
-          );
-        })}
-      </View>
+            );
+          })}
+        </View>
+      )}
     </ScrollView>
   );
 };
@@ -205,7 +151,7 @@ export const NearbyScreen: React.FC<NearbyScreenProps> = ({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0a0f1d',
+    backgroundColor: '#ffffff',
   },
   content: {
     padding: spacing.md,
@@ -218,33 +164,33 @@ const styles = StyleSheet.create({
     marginBottom: spacing.md,
   },
   title: {
-    fontSize: 20,
+    fontSize: 22,
     fontWeight: '800',
-    color: '#f8fafc',
+    color: '#0f172a',
   },
   subtitle: {
-    fontSize: 11,
-    color: '#94a3b8',
+    fontSize: 12,
+    color: '#64748b',
     marginTop: 2,
   },
   meshStatBadge: {
-    backgroundColor: 'rgba(37, 99, 235, 0.15)',
+    backgroundColor: '#eff6ff',
     borderWidth: 1,
-    borderColor: '#3b82f6',
-    paddingHorizontal: 10,
-    paddingVertical: 5,
+    borderColor: '#bfdbfe',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
     borderRadius: 999,
   },
   meshStatText: {
     fontSize: 11,
     fontWeight: '700',
-    color: '#60a5fa',
+    color: '#2563eb',
   },
   clusterBanner: {
-    backgroundColor: '#0f172a',
-    borderRadius: 12,
+    backgroundColor: '#f8fafc',
+    borderRadius: 14,
     borderWidth: 1,
-    borderColor: '#1e293b',
+    borderColor: '#e2e8f0',
     padding: spacing.md,
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -257,25 +203,25 @@ const styles = StyleSheet.create({
   clusterBannerTag: {
     fontSize: 10,
     fontWeight: '900',
-    color: '#38bdf8',
+    color: '#0284c7',
     letterSpacing: 1,
   },
   clusterBannerTitle: {
     fontSize: 16,
     fontWeight: '800',
-    color: '#ffffff',
+    color: '#0f172a',
     marginTop: 2,
   },
   clusterBannerLocation: {
     fontSize: 11,
-    color: '#94a3b8',
+    color: '#64748b',
     marginTop: 2,
   },
   clusterBannerBadge: {
-    backgroundColor: '#1e293b',
+    backgroundColor: '#ffffff',
     borderRadius: 10,
     borderWidth: 1,
-    borderColor: '#334155',
+    borderColor: '#cbd5e1',
     paddingHorizontal: 14,
     paddingVertical: 8,
     alignItems: 'center',
@@ -283,12 +229,12 @@ const styles = StyleSheet.create({
   clusterBannerBadgeNum: {
     fontSize: 20,
     fontWeight: '900',
-    color: '#ef4444',
+    color: '#dc2626',
   },
   clusterBannerBadgeLbl: {
     fontSize: 9,
     fontWeight: '700',
-    color: '#94a3b8',
+    color: '#64748b',
     marginTop: 1,
   },
   sectionHeaderRow: {
@@ -307,15 +253,78 @@ const styles = StyleSheet.create({
     fontSize: 10,
     color: '#94a3b8',
   },
+  emptyStateCard: {
+    backgroundColor: '#f8fafc',
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+    borderRadius: 16,
+    padding: 24,
+    alignItems: 'center',
+    marginTop: 12,
+  },
+  emptyIconCircle: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: '#eff6ff',
+    borderWidth: 1,
+    borderColor: '#bfdbfe',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 14,
+  },
+  emptyIconText: {
+    fontSize: 26,
+  },
+  emptyTitle: {
+    fontSize: 16,
+    fontWeight: '800',
+    color: '#0f172a',
+    marginBottom: 6,
+  },
+  emptyDesc: {
+    fontSize: 12,
+    color: '#64748b',
+    textAlign: 'center',
+    lineHeight: 18,
+    marginBottom: 16,
+  },
+  scanningPulseBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#ffffff',
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+    borderRadius: 999,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    gap: 8,
+  },
+  pulseDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#16a34a',
+  },
+  pulseText: {
+    fontSize: 10.5,
+    fontWeight: '600',
+    color: '#334155',
+  },
   survivorList: {
     gap: 12,
   },
   survivorCard: {
-    backgroundColor: '#0f172a',
-    borderRadius: 12,
+    backgroundColor: '#ffffff',
+    borderRadius: 14,
     borderWidth: 1,
-    borderColor: '#1e293b',
+    borderColor: '#e2e8f0',
     padding: spacing.md,
+    elevation: 2,
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 3,
   },
   cardTopRow: {
     flexDirection: 'row',
@@ -328,12 +337,12 @@ const styles = StyleSheet.create({
   survivorName: {
     fontSize: 15,
     fontWeight: '800',
-    color: '#f8fafc',
+    color: '#0f172a',
   },
   nodeFp: {
     fontSize: 11,
     color: '#64748b',
-    marginTop: 1,
+    marginTop: 2,
   },
   triageBadge: {
     paddingHorizontal: 8,
@@ -341,71 +350,41 @@ const styles = StyleSheet.create({
     borderRadius: 6,
   },
   triageRed: {
-    backgroundColor: 'rgba(239, 68, 68, 0.2)',
+    backgroundColor: '#fee2e2',
     borderWidth: 1,
     borderColor: '#ef4444',
   },
   triageYellow: {
-    backgroundColor: 'rgba(245, 158, 11, 0.2)',
+    backgroundColor: '#fef3c7',
     borderWidth: 1,
     borderColor: '#f59e0b',
-  },
-  triageGreen: {
-    backgroundColor: 'rgba(16, 185, 129, 0.2)',
-    borderWidth: 1,
-    borderColor: '#10b981',
   },
   triageBadgeText: {
     fontSize: 10,
     fontWeight: '900',
-    color: '#ffffff',
+    color: '#991b1b',
   },
   clusterMembershipBox: {
-    backgroundColor: '#1e293b',
+    backgroundColor: '#f8fafc',
     paddingHorizontal: 10,
     paddingVertical: 6,
     borderRadius: 8,
     marginTop: 8,
     borderLeftWidth: 3,
-    borderLeftColor: '#38bdf8',
+    borderLeftColor: '#0284c7',
   },
   clusterMembershipLabel: {
     fontSize: 9,
     fontWeight: '900',
-    color: '#38bdf8',
+    color: '#0284c7',
     letterSpacing: 0.8,
   },
   clusterMembershipValue: {
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: '700',
-    color: '#f1f5f9',
+    color: '#334155',
     marginTop: 1,
-  },
-  conditionText: {
-    fontSize: 12,
-    color: '#cbd5e1',
-    fontStyle: 'italic',
-    marginTop: 8,
-    lineHeight: 17,
-  },
-  needsRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 6,
-    marginTop: 8,
-  },
-  needChip: {
-    backgroundColor: '#1e293b',
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 999,
-    borderWidth: 1,
-    borderColor: '#334155',
-  },
-  needChipText: {
-    fontSize: 10,
-    color: '#e2e8f0',
-    fontWeight: '600',
+    fontFamily: 'monospace',
   },
   cardFooter: {
     flexDirection: 'row',
@@ -414,26 +393,26 @@ const styles = StyleSheet.create({
     marginTop: 12,
     paddingTop: 10,
     borderTopWidth: 1,
-    borderTopColor: '#1e293b',
+    borderTopColor: '#f1f5f9',
   },
   telemetryGroup: {
     flexDirection: 'row',
-    gap: 10,
+    gap: 12,
   },
   telemetryItem: {
-    fontSize: 10,
-    color: '#94a3b8',
+    fontSize: 11,
+    color: '#64748b',
     fontWeight: '600',
   },
-  chatButton: {
+  actionBtn: {
     backgroundColor: '#2563eb',
-    paddingHorizontal: 14,
-    paddingVertical: 6,
-    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 5,
+    borderRadius: 6,
   },
-  chatButtonText: {
-    fontSize: 12,
-    fontWeight: '800',
+  actionBtnText: {
+    fontSize: 11,
+    fontWeight: '700',
     color: '#ffffff',
   },
 });

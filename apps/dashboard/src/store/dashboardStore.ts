@@ -67,7 +67,12 @@ export interface DashboardState {
 
   // Mutating Actions
   assignTeam: (clusterId: string, teamId: string, etaMinutes: number, userId?: string) => void;
-  changeClusterState: (clusterId: string, state: ClusterState, reason?: string, userId?: string) => void;
+  changeClusterState: (
+    clusterId: string,
+    state: ClusterState,
+    reason?: string,
+    userId?: string,
+  ) => void;
   dispatchAck: (clusterId: string, ackType: string, etaMinutes: number, userId?: string) => void;
   addNote: (clusterId: string, noteText: string, userId?: string) => void;
   mergeClusters: (sourceId: string, targetId: string, userId?: string) => void;
@@ -100,7 +105,8 @@ function safeSetStorage(key: string, val: string) {
 
 function loadStoredClusters(): Cluster[] {
   try {
-    const raw = typeof localStorage !== "undefined" ? localStorage.getItem(STORAGE_KEY_CLUSTERS) : null;
+    const raw =
+      typeof localStorage !== 'undefined' ? localStorage.getItem(STORAGE_KEY_CLUSTERS) : null;
     if (raw) {
       const parsed = JSON.parse(raw);
       if (Array.isArray(parsed) && parsed.length > 0) {
@@ -110,7 +116,7 @@ function loadStoredClusters(): Cluster[] {
   } catch {
     // fallback
   }
-  return SEED_CLUSTERS;
+  return [];
 }
 
 export const useDashboardStore = create<DashboardState>((set, get) => ({
@@ -140,20 +146,20 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
   criticalAlertFlash: false,
   undoAction: null,
 
-  setActiveNav: (nav) => set({ activeNav: nav }),
+  setActiveNav: nav => set({ activeNav: nav }),
 
-  setActiveIncident: (incidentId) => {
-    const inc = get().incidents.find((i) => i.id === incidentId);
+  setActiveIncident: incidentId => {
+    const inc = get().incidents.find(i => i.id === incidentId);
     if (inc) {
       set({ activeIncident: inc, selectedClusterId: null });
     }
   },
 
-  selectCluster: (id) => {
+  selectCluster: id => {
     set({ selectedClusterId: id });
     if (id) {
       // Audit log coordinate inspection
-      const cl = get().clusters.find((c) => c.id === id);
+      const cl = get().clusters.find(c => c.id === id);
       if (cl) {
         const entry: AuditLogEntry = {
           id: `aud_${Date.now()}`,
@@ -167,49 +173,49 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
           metadata: { lat: cl.lat, lon: cl.lon, floor: cl.floor_hint },
           at: new Date().toISOString(),
         };
-        set((state) => ({ auditLogs: [entry, ...state.auditLogs] }));
+        set(state => ({ auditLogs: [entry, ...state.auditLogs] }));
       }
     }
   },
 
-  setSearchQuery: (q) => set({ searchQuery: q }),
-  setFilterState: (st) => set({ filterState: st }),
+  setSearchQuery: q => set({ searchQuery: q }),
+  setFilterState: st => set({ filterState: st }),
 
-  setFilterFlagToggle: (flag) => {
+  setFilterFlagToggle: flag => {
     const current = get().filterFlags;
-    const next = current.includes(flag) ? current.filter((f) => f !== flag) : [...current, flag];
+    const next = current.includes(flag) ? current.filter(f => f !== flag) : [...current, flag];
     set({ filterFlags: next });
   },
 
-  setFilterNeedsToggle: (mask) => {
+  setFilterNeedsToggle: mask => {
     const current = get().filterNeeds;
     const next = (current & mask) !== 0 ? current & ~mask : current | mask;
     set({ filterNeeds: next });
   },
 
   setLayerToggle: (layer, enabled) => {
-    set((state) => ({
+    set(state => ({
       layerToggles: { ...state.layerToggles, [layer]: enabled },
     }));
   },
 
-  setTimeSliderMinutes: (mins) => set({ timeSliderMinutes: mins }),
+  setTimeSliderMinutes: mins => set({ timeSliderMinutes: mins }),
 
   toggleReplayPlaying: () => {
-    set((state) => ({ isReplayPlaying: !state.isReplayPlaying }));
+    set(state => ({ isReplayPlaying: !state.isReplayPlaying }));
   },
 
   clearCriticalFlash: () => set({ criticalAlertFlash: false }),
 
   assignTeam: (clusterId, teamId, etaMinutes, userId) => {
-    const team = get().teams.find((t) => t.id === teamId);
-    const cluster = get().clusters.find((c) => c.id === clusterId);
+    const team = get().teams.find(t => t.id === teamId);
+    const cluster = get().clusters.find(c => c.id === clusterId);
     if (!cluster) return;
 
     const previousState = cluster.state;
     const previousTeamId = cluster.assigned_team_id;
 
-    const updatedClusters = get().clusters.map((c) => {
+    const updatedClusters = get().clusters.map(c => {
       if (c.id === clusterId) {
         return {
           ...c,
@@ -233,7 +239,7 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
       return c;
     });
 
-    const updatedTeams = get().teams.map((t) => {
+    const updatedTeams = get().teams.map(t => {
       if (t.id === teamId) {
         return {
           ...t,
@@ -281,12 +287,12 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
   },
 
   changeClusterState: (clusterId, newState, reason, userId) => {
-    const cluster = get().clusters.find((c) => c.id === clusterId);
+    const cluster = get().clusters.find(c => c.id === clusterId);
     if (!cluster) return;
 
     const previousState = cluster.state;
 
-    const updatedClusters = get().clusters.map((c) => {
+    const updatedClusters = get().clusters.map(c => {
       if (c.id === clusterId) {
         return {
           ...c,
@@ -297,7 +303,8 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
             {
               id: `evt_${Date.now()}`,
               cluster_id: clusterId,
-              event_type: newState === 'false_alarm' ? ('false_alarm' as const) : ('state_changed' as const),
+              event_type:
+                newState === 'false_alarm' ? ('false_alarm' as const) : ('state_changed' as const),
               actor_name: 'Duty Officer',
               notes:
                 newState === 'false_alarm'
@@ -346,12 +353,12 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
   },
 
   dispatchAck: (clusterId, ackType, etaMinutes, userId) => {
-    const cluster = get().clusters.find((c) => c.id === clusterId);
+    const cluster = get().clusters.find(c => c.id === clusterId);
     if (!cluster) return;
 
     const previousState = cluster.state;
 
-    const updatedClusters = get().clusters.map((c) => {
+    const updatedClusters = get().clusters.map(c => {
       if (c.id === clusterId) {
         return {
           ...c,
@@ -406,7 +413,7 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
   },
 
   addNote: (clusterId, noteText, userId) => {
-    const updatedClusters = get().clusters.map((c) => {
+    const updatedClusters = get().clusters.map(c => {
       if (c.id === clusterId) {
         return {
           ...c,
@@ -446,7 +453,7 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
   },
 
   mergeClusters: (sourceId, targetId, userId) => {
-    const updatedClusters = get().clusters.map((c) => {
+    const updatedClusters = get().clusters.map(c => {
       if (c.id === sourceId) {
         return {
           ...c,
@@ -487,7 +494,7 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
   },
 
   splitCluster: (clusterId, userId) => {
-    const cluster = get().clusters.find((c) => c.id === clusterId);
+    const cluster = get().clusters.find(c => c.id === clusterId);
     if (!cluster) return;
 
     const newSubCluster: Cluster = {
@@ -511,14 +518,14 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
     };
 
     const updatedClusters = [
-      ...get().clusters.map((c) =>
+      ...get().clusters.map(c =>
         c.id === clusterId
           ? {
               ...c,
               declared_people: Math.floor(c.declared_people / 2),
               member_count: Math.floor(c.member_count / 2),
             }
-          : c
+          : c,
       ),
       newSubCluster,
     ];
@@ -542,12 +549,15 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
   },
 
   requestSecondTeam: (clusterId, userId) => {
-    const updatedClusters = get().clusters.map((c) => {
+    const updatedClusters = get().clusters.map(c => {
       if (c.id === clusterId) {
         return {
           ...c,
           flags: Array.from(new Set([...c.flags, 'second_team_requested'])),
-          notes: [...(c.notes || []), 'Second tactical team requested due to group scale (>10 survivors).'],
+          notes: [
+            ...(c.notes || []),
+            'Second tactical team requested due to group scale (>10 survivors).',
+          ],
           timeline: [
             ...(c.timeline || []),
             {
@@ -583,7 +593,7 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
   },
 
   updateTeamPosition: (teamId, lat, lon) => {
-    const updatedTeams = get().teams.map((t) => {
+    const updatedTeams = get().teams.map(t => {
       if (t.id === teamId) {
         return {
           ...t,
@@ -597,15 +607,15 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
     set({ teams: updatedTeams });
   },
 
-  receiveWebSocketEvent: (event) => {
+  receiveWebSocketEvent: event => {
     if (!event || !event.type) return;
 
     if (event.type === 'new_cluster' || event.type === 'cluster_created') {
       const newCluster: Cluster = {
         id: event.clusterId || `cl_ws_${Date.now()}`,
         incident_id: get().activeIncident.id,
-        lat: event.data?.lat || 18.528,
-        lon: event.data?.lon || 73.851,
+        lat: Number(event.data?.lat ?? event.data?.center_lat ?? event.lat ?? 18.528),
+        lon: Number(event.data?.lon ?? event.data?.center_lon ?? event.lon ?? 73.851),
         radius_m: event.data?.radius_m || 30.0,
         member_count: event.data?.member_count || 4,
         declared_people: event.data?.declared_people || 9,
@@ -643,7 +653,7 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
         playCriticalClusterAlert();
       }
     } else if (event.type === 'state_changed') {
-      const updated = get().clusters.map((c) => {
+      const updated = get().clusters.map(c => {
         if (c.id === event.clusterId) {
           return {
             ...c,
@@ -668,7 +678,7 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
       return;
     }
 
-    const updatedClusters = clusters.map((c) => {
+    const updatedClusters = clusters.map(c => {
       if (c.id === undoAction.clusterId) {
         return {
           ...c,
@@ -691,13 +701,13 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
       return c;
     });
 
-    const updatedTeams = teams.map((t) => {
+    const updatedTeams = teams.map(t => {
       if (undoAction.previousTeamId && t.id === undoAction.previousTeamId) {
         return t;
       }
       return {
         ...t,
-        assigned_clusters: t.assigned_clusters.filter((id) => id !== undoAction.clusterId),
+        assigned_clusters: t.assigned_clusters.filter(id => id !== undoAction.clusterId),
       };
     });
 
@@ -711,7 +721,7 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
 
   clearUndo: () => set({ undoAction: null }),
 
-  updatePriorityWeights: (weights) => {
+  updatePriorityWeights: weights => {
     set({ priorityWeights: weights });
   },
 
@@ -719,7 +729,7 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
     const now = Date.now();
     const thresholdMs = 14 * 24 * 3600 * 1000; // 14 days
     const beforeCount = get().clusters.length;
-    const filtered = get().clusters.filter((c) => {
+    const filtered = get().clusters.filter(c => {
       const age = now - new Date(c.last_seen).getTime();
       return age < thresholdMs || c.state !== 'closed';
     });
@@ -738,7 +748,7 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
       metadata: { purgedRecords: purgedCount, retentionPolicy: '14_days' },
       at: new Date().toISOString(),
     };
-    set((state) => ({ auditLogs: [auditEntry, ...state.auditLogs] }));
+    set(state => ({ auditLogs: [auditEntry, ...state.auditLogs] }));
 
     return { purgedCount };
   },
@@ -751,12 +761,12 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
       active: true,
       created_at: new Date().toISOString(),
     };
-    set((state) => ({ smsNumbers: [...state.smsNumbers, newNumber] }));
+    set(state => ({ smsNumbers: [...state.smsNumbers, newNumber] }));
   },
 
-  removeSmsNumber: (id) => {
-    set((state) => ({
-      smsNumbers: state.smsNumbers.filter((n) => n.id !== id),
+  removeSmsNumber: id => {
+    set(state => ({
+      smsNumbers: state.smsNumbers.filter(n => n.id !== id),
     }));
   },
 
@@ -772,7 +782,7 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
       metadata: { newCaKeyFingerprint: newKey.slice(0, 16) },
       at: new Date().toISOString(),
     };
-    set((state) => ({ auditLogs: [auditEntry, ...state.auditLogs] }));
+    set(state => ({ auditLogs: [auditEntry, ...state.auditLogs] }));
     return newKey;
   },
 }));

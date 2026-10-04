@@ -45,15 +45,15 @@ export async function runMigrations(driver: IDatabaseDriver): Promise<void> {
   const appliedRes = await driver.execute<{ version: number }>(`
     SELECT version FROM schema_migrations ORDER BY version ASC;
   `);
-  const appliedVersions = new Set(appliedRes.rows.map((r) => r.version));
+  const appliedVersions = new Set(appliedRes.rows.map(r => r.version));
 
   for (const m of migrations) {
     if (!appliedVersions.has(m.version)) {
       await m.up(driver);
-      await driver.execute(
-        `INSERT INTO schema_migrations (version, applied_at) VALUES (?, ?);`,
-        [m.version, new Date().toISOString()]
-      );
+      await driver.execute(`INSERT INTO schema_migrations (version, applied_at) VALUES (?, ?);`, [
+        m.version,
+        new Date().toISOString(),
+      ]);
     }
   }
 }

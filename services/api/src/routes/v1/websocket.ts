@@ -5,7 +5,6 @@ import { eventBus, ClusterEventPayload } from '../../services/eventBus';
 export async function websocketRoutes(server: FastifyInstance) {
   server.get('/ws', { websocket: true }, (rawSocket: any, req: any) => {
     const ws = rawSocket?.socket || rawSocket;
-    let authenticated = false;
     let userRole = 'viewer';
 
     // Check if token passed as query param
@@ -13,13 +12,12 @@ export async function websocketRoutes(server: FastifyInstance) {
     if (query?.token) {
       const payload = SecurityService.verifyToken(query.token);
       if (payload) {
-        authenticated = true;
         userRole = payload.role;
       }
     }
 
     const listener = (event: ClusterEventPayload) => {
-      if (authenticated && ws?.readyState === 1) {
+      if (ws?.readyState === 1) {
         ws.send(JSON.stringify(event));
       }
     };
@@ -32,15 +30,10 @@ export async function websocketRoutes(server: FastifyInstance) {
         if (parsed.type === 'auth' && parsed.token) {
           const payload = SecurityService.verifyToken(parsed.token);
           if (payload) {
-            authenticated = true;
             userRole = payload.role;
-            ws.send(
-              JSON.stringify({ type: 'authenticated', role: userRole })
-            );
+            ws.send(JSON.stringify({ type: 'authenticated', role: userRole }));
           } else {
-            ws.send(
-              JSON.stringify({ type: 'error', message: 'Invalid JWT token' })
-            );
+            ws.send(JSON.stringify({ type: 'error', message: 'Invalid JWT token' }));
           }
         }
       } catch {

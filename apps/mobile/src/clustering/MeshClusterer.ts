@@ -37,7 +37,7 @@ export const DEFAULT_CLUSTER_CONFIG: ClusterConfig = {
   splitDistanceMeters: 2 * DEFAULT_CLUSTER_EPS_METERS,
   splitAltitudeMeters: 3.0,
   reclusterIntervalMs: 120_000,
-  congestionQueueRatio: 0.70,
+  congestionQueueRatio: 0.7,
 };
 
 export class MeshClusterer {
@@ -91,7 +91,7 @@ export class MeshClusterer {
   public async onPacketAccepted(
     packetBytes: Uint8Array,
     packetType: PacketType,
-    originFpHex: string
+    originFpHex: string,
   ): Promise<void> {
     let member: ClusterMember | null = null;
     const now = Math.floor(Date.now() / 1000);
@@ -194,7 +194,7 @@ export class MeshClusterer {
         c,
         this.config.epsMeters,
         300, // 5 min drift
-        now
+        now,
       );
       validatedClusters.push(...splits);
     }
@@ -222,13 +222,13 @@ export class MeshClusterer {
   public async createClusterSummaryPacket(
     clusterId: string,
     keyPair: { publicKey: Uint8Array; privateKey: Uint8Array },
-    seq: number
+    seq: number,
   ): Promise<Uint8Array | null> {
     const clusters = this.incrementalClusterer.getClusters();
-    const target = clusters.find((c) => c.clusterId === clusterId);
+    const target = clusters.find(c => c.clusterId === clusterId);
     if (!target) return null;
 
-    const memberHashes = target.memberFingerprints.map((fpHex) => {
+    const memberHashes = target.memberFingerprints.map(fpHex => {
       const bytes = new Uint8Array(4);
       for (let i = 0; i < 4; i++) {
         bytes[i] = parseInt(fpHex.substring(i * 2, i * 2 + 2), 16) || 0;
@@ -252,7 +252,7 @@ export class MeshClusterer {
         sequenceNumber: seq,
         keyPair,
       },
-      this.crypto
+      this.crypto,
     );
   }
 

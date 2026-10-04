@@ -81,7 +81,7 @@ export class MovingAverageRssiFilter {
     this.samples.push({ rssi, time: timeMs });
     // Remove expired samples
     const cutoff = timeMs - this.windowSize;
-    this.samples = this.samples.filter((s) => s.time >= cutoff);
+    this.samples = this.samples.filter(s => s.time >= cutoff);
 
     const sum = this.samples.reduce((acc, s) => acc + s.rssi, 0);
     return sum / (this.samples.length || 1);
@@ -169,7 +169,7 @@ export class HomingEngine {
     // 5. Compute audio/haptic pulse interval
     // Interval scales smoothly from 1200ms (at -96 dBm) down to 100ms (at -45 dBm)
     const clampedRssi = Math.min(-45, Math.max(-96, smoothed));
-    const normalized = (clampedRssi - (-96)) / (-45 - (-96)); // 0.0 (weak) to 1.0 (strong)
+    const normalized = (clampedRssi - -96) / (-45 - -96); // 0.0 (weak) to 1.0 (strong)
     const pulseIntervalMs = Math.round(1200 - normalized * 1100); // 1200ms -> 100ms
 
     this.lastState = {

@@ -28,7 +28,10 @@ async function fetchWithAuth(url: string, options: RequestInit = {}): Promise<an
     return await res.json();
   } catch (err: any) {
     // If backend server is not running or offline, return fallback data gracefully
-    console.warn(`[ApiClient] Network request failed for ${url}, fallback to local state:`, err.message);
+    console.warn(
+      `[ApiClient] Network request failed for ${url}, fallback to local state:`,
+      err.message,
+    );
     throw err;
   }
 }
@@ -79,11 +82,15 @@ export const apiClient = {
     try {
       return await fetchWithAuth(`/clusters/${clusterId}`);
     } catch {
-      return useDashboardStore.getState().clusters.find((c) => c.id === clusterId) || null;
+      return useDashboardStore.getState().clusters.find(c => c.id === clusterId) || null;
     }
   },
 
-  async updateClusterState(clusterId: string, state: string, falseAlarmReason?: string): Promise<any> {
+  async updateClusterState(
+    clusterId: string,
+    state: string,
+    falseAlarmReason?: string,
+  ): Promise<any> {
     try {
       return await fetchWithAuth(`/clusters/${clusterId}`, {
         method: 'PATCH',

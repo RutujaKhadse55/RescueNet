@@ -23,11 +23,13 @@ export async function authRoutes(server: FastifyInstance) {
       req: FastifyRequest<{
         Body: { email: string; password: string };
       }>,
-      reply: FastifyReply
+      reply: FastifyReply,
     ) => {
       const { email, password } = req.body;
 
-      const userRes = await db.query(`SELECT * FROM users WHERE email = $1;`, [email.toLowerCase()]);
+      const userRes = await db.query(`SELECT * FROM users WHERE email = $1;`, [
+        email.toLowerCase(),
+      ]);
       if (userRes.rows.length === 0) {
         return reply.status(401).send({ error: 'Invalid email or password' });
       }
@@ -63,7 +65,7 @@ export async function authRoutes(server: FastifyInstance) {
           agencyId: user.agency_id,
         },
       });
-    }
+    },
   );
 
   server.post(
@@ -85,7 +87,7 @@ export async function authRoutes(server: FastifyInstance) {
       req: FastifyRequest<{
         Body: { refreshToken: string };
       }>,
-      reply: FastifyReply
+      reply: FastifyReply,
     ) => {
       const { refreshToken } = req.body;
 
@@ -104,6 +106,6 @@ export async function authRoutes(server: FastifyInstance) {
       return reply.send({
         accessToken: newAccessToken,
       });
-    }
+    },
   );
 }

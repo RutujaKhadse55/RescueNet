@@ -40,7 +40,7 @@ describe('Offline Map Pack Manager', () => {
     const region = INDIAN_DISASTER_MAP_REGIONS[0]!;
 
     let lastProgress = 0;
-    const finalState = await mapManager.startDownload(region.id, (state) => {
+    const finalState = await mapManager.startDownload(region.id, state => {
       lastProgress = state.progressPercent;
     });
 

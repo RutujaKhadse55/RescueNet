@@ -56,7 +56,7 @@ export const useSettingsStore = create<SettingsState>((set, get) => {
     largeType: initial.largeType,
     soundEnabled: initial.soundEnabled,
 
-    setLanguage: (lang) => {
+    setLanguage: lang => {
       set({ language: lang });
       persist({ language: lang });
     },

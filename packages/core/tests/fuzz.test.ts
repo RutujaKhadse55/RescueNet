@@ -46,7 +46,7 @@ describe('Phase 14: Packet Decoder Fuzzing & Strict Parsing (fast-check)', () =>
         sequenceNumber: 1,
         keyPair: kp,
       },
-      crypto
+      crypto,
     );
 
     sampleValidAck = await createAndSignAck(
@@ -58,14 +58,14 @@ describe('Phase 14: Packet Decoder Fuzzing & Strict Parsing (fast-check)', () =>
         agencyId: 1,
         keyPair: kp,
       },
-      crypto
+      crypto,
     );
   });
 
   describe('1. Binary Header Fuzzing', () => {
     it('safely parses or rejects arbitrary byte arrays without unhandled crashes', () => {
       fc.assert(
-        fc.property(fc.uint8Array({ minLength: 0, maxLength: 512 }), (bytes) => {
+        fc.property(fc.uint8Array({ minLength: 0, maxLength: 512 }), bytes => {
           try {
             const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
             const header = decodeHeader(view);
@@ -80,7 +80,7 @@ describe('Phase 14: Packet Decoder Fuzzing & Strict Parsing (fast-check)', () =>
             }
           }
         }),
-        { numRuns: 500 }
+        { numRuns: 500 },
       );
     });
   });
@@ -88,7 +88,7 @@ describe('Phase 14: Packet Decoder Fuzzing & Strict Parsing (fast-check)', () =>
   describe('2. All Binary Packet Decoders Fuzzing', () => {
     it('decodeSos safely rejects arbitrary random byte buffers', () => {
       fc.assert(
-        fc.property(fc.uint8Array({ minLength: 0, maxLength: 512 }), (bytes) => {
+        fc.property(fc.uint8Array({ minLength: 0, maxLength: 512 }), bytes => {
           try {
             const sos = decodeSos(bytes);
             expect(sos).toBeDefined();
@@ -96,13 +96,13 @@ describe('Phase 14: Packet Decoder Fuzzing & Strict Parsing (fast-check)', () =>
             expect(err).toBeInstanceOf(Error);
           }
         }),
-        { numRuns: 300 }
+        { numRuns: 300 },
       );
     });
 
     it('decodeAck safely rejects arbitrary random byte buffers', () => {
       fc.assert(
-        fc.property(fc.uint8Array({ minLength: 0, maxLength: 512 }), (bytes) => {
+        fc.property(fc.uint8Array({ minLength: 0, maxLength: 512 }), bytes => {
           try {
             const ack = decodeAck(bytes);
             expect(ack).toBeDefined();
@@ -110,13 +110,13 @@ describe('Phase 14: Packet Decoder Fuzzing & Strict Parsing (fast-check)', () =>
             expect(err).toBeInstanceOf(Error);
           }
         }),
-        { numRuns: 300 }
+        { numRuns: 300 },
       );
     });
 
     it('decodeDeadman safely rejects arbitrary random byte buffers', () => {
       fc.assert(
-        fc.property(fc.uint8Array({ minLength: 0, maxLength: 512 }), (bytes) => {
+        fc.property(fc.uint8Array({ minLength: 0, maxLength: 512 }), bytes => {
           try {
             const deadman = decodeDeadman(bytes);
             expect(deadman).toBeDefined();
@@ -124,13 +124,13 @@ describe('Phase 14: Packet Decoder Fuzzing & Strict Parsing (fast-check)', () =>
             expect(err).toBeInstanceOf(Error);
           }
         }),
-        { numRuns: 300 }
+        { numRuns: 300 },
       );
     });
 
     it('decodeLocation safely rejects arbitrary random byte buffers', () => {
       fc.assert(
-        fc.property(fc.uint8Array({ minLength: 0, maxLength: 512 }), (bytes) => {
+        fc.property(fc.uint8Array({ minLength: 0, maxLength: 512 }), bytes => {
           try {
             const loc = decodeLocation(bytes);
             expect(loc).toBeDefined();
@@ -138,13 +138,13 @@ describe('Phase 14: Packet Decoder Fuzzing & Strict Parsing (fast-check)', () =>
             expect(err).toBeInstanceOf(Error);
           }
         }),
-        { numRuns: 300 }
+        { numRuns: 300 },
       );
     });
 
     it('decodeChat safely rejects arbitrary random byte buffers', () => {
       fc.assert(
-        fc.property(fc.uint8Array({ minLength: 0, maxLength: 512 }), (bytes) => {
+        fc.property(fc.uint8Array({ minLength: 0, maxLength: 512 }), bytes => {
           try {
             const chat = decodeChat(bytes);
             expect(chat).toBeDefined();
@@ -152,13 +152,13 @@ describe('Phase 14: Packet Decoder Fuzzing & Strict Parsing (fast-check)', () =>
             expect(err).toBeInstanceOf(Error);
           }
         }),
-        { numRuns: 300 }
+        { numRuns: 300 },
       );
     });
 
     it('decodeHello safely rejects arbitrary random byte buffers', () => {
       fc.assert(
-        fc.property(fc.uint8Array({ minLength: 0, maxLength: 512 }), (bytes) => {
+        fc.property(fc.uint8Array({ minLength: 0, maxLength: 512 }), bytes => {
           try {
             const hello = decodeHello(bytes);
             expect(hello).toBeDefined();
@@ -166,13 +166,13 @@ describe('Phase 14: Packet Decoder Fuzzing & Strict Parsing (fast-check)', () =>
             expect(err).toBeInstanceOf(Error);
           }
         }),
-        { numRuns: 300 }
+        { numRuns: 300 },
       );
     });
 
     it('decodeChatReceipt safely rejects arbitrary random byte buffers', () => {
       fc.assert(
-        fc.property(fc.uint8Array({ minLength: 0, maxLength: 512 }), (bytes) => {
+        fc.property(fc.uint8Array({ minLength: 0, maxLength: 512 }), bytes => {
           try {
             const receipt = decodeChatReceipt(bytes);
             expect(receipt).toBeDefined();
@@ -180,13 +180,13 @@ describe('Phase 14: Packet Decoder Fuzzing & Strict Parsing (fast-check)', () =>
             expect(err).toBeInstanceOf(Error);
           }
         }),
-        { numRuns: 300 }
+        { numRuns: 300 },
       );
     });
 
     it('decodeClusterSummary safely rejects arbitrary random byte buffers', () => {
       fc.assert(
-        fc.property(fc.uint8Array({ minLength: 0, maxLength: 512 }), (bytes) => {
+        fc.property(fc.uint8Array({ minLength: 0, maxLength: 512 }), bytes => {
           try {
             const summary = decodeClusterSummary(bytes);
             expect(summary).toBeDefined();
@@ -194,7 +194,7 @@ describe('Phase 14: Packet Decoder Fuzzing & Strict Parsing (fast-check)', () =>
             expect(err).toBeInstanceOf(Error);
           }
         }),
-        { numRuns: 300 }
+        { numRuns: 300 },
       );
     });
   });
@@ -202,7 +202,7 @@ describe('Phase 14: Packet Decoder Fuzzing & Strict Parsing (fast-check)', () =>
   describe('3. SMS Payload Fuzzing', () => {
     it('parseHumanSms safely rejects arbitrary text input', () => {
       fc.assert(
-        fc.property(fc.fullUnicodeString({ maxLength: 500 }), (text) => {
+        fc.property(fc.fullUnicodeString({ maxLength: 500 }), text => {
           try {
             const parsed = parseHumanSms(text);
             expect(parsed).toBeDefined();
@@ -210,13 +210,13 @@ describe('Phase 14: Packet Decoder Fuzzing & Strict Parsing (fast-check)', () =>
             expect(err).toBeInstanceOf(Error);
           }
         }),
-        { numRuns: 400 }
+        { numRuns: 400 },
       );
     });
 
     it('decodeSms safely rejects malformed or truncated base64 SMS data', async () => {
       await fc.assert(
-        fc.asyncProperty(fc.base64String({ minLength: 0, maxLength: 300 }), async (b64) => {
+        fc.asyncProperty(fc.base64String({ minLength: 0, maxLength: 300 }), async b64 => {
           try {
             const sos = await decodeSms(`RN1 ${b64}`);
             expect(sos).toBeDefined();
@@ -224,7 +224,7 @@ describe('Phase 14: Packet Decoder Fuzzing & Strict Parsing (fast-check)', () =>
             expect(err).toBeInstanceOf(Error);
           }
         }),
-        { numRuns: 400 }
+        { numRuns: 400 },
       );
     });
   });
@@ -255,9 +255,9 @@ describe('Phase 14: Packet Decoder Fuzzing & Strict Parsing (fast-check)', () =>
             } catch (err: any) {
               expect(err).toBeInstanceOf(Error);
             }
-          }
+          },
         ),
-        { numRuns: 300 }
+        { numRuns: 300 },
       );
     });
 
@@ -276,9 +276,9 @@ describe('Phase 14: Packet Decoder Fuzzing & Strict Parsing (fast-check)', () =>
             } catch (err: any) {
               expect(err).toBeInstanceOf(Error);
             }
-          }
+          },
         ),
-        { numRuns: 300 }
+        { numRuns: 300 },
       );
     });
   });

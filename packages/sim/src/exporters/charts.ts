@@ -97,7 +97,7 @@ export class ChartGenerator {
    */
   public static generateDensityChart(
     filePath: string,
-    data: { density: number; rate30m: number; rate50m: number }[]
+    data: { density: number; rate30m: number; rate50m: number }[],
   ): void {
     const dir = path.dirname(filePath);
     if (!fs.existsSync(dir)) {

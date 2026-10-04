@@ -94,9 +94,9 @@ describe('Phase 10-A: UplinkService', () => {
     // Packets must be marked uplinked but still present
     const all = await db.packets.getAllPackets();
     expect(all.length).toBe(2);
-    expect(all.every((p) => p.uplinked_at !== null)).toBe(true);
+    expect(all.every(p => p.uplinked_at !== null)).toBe(true);
     // copies_left should be reduced to 1
-    expect(all.every((p) => p.copies_left <= 1)).toBe(true);
+    expect(all.every(p => p.copies_left <= 1)).toBe(true);
   });
 
   test('duplicate result from two phones does not double-count accepted', async () => {
@@ -163,8 +163,9 @@ describe('Phase 10-A: UplinkService', () => {
     await insertSosPacket(db, 'sos_backoff');
 
     const mock429 = jest.fn().mockResolvedValue({
-      ok: false, status: 429,
-      headers: { get: (h: string) => h === 'Retry-After' ? '30' : null },
+      ok: false,
+      status: 429,
+      headers: { get: (h: string) => (h === 'Retry-After' ? '30' : null) },
       json: async () => ({}),
     } as any);
 
@@ -183,7 +184,9 @@ describe('Phase 10-A: UplinkService', () => {
     // Build a minimal 130-byte ACK-shaped seed packet (won't pass signature validation,
     // but ingestPacket is lenient to from_server=true in test mode)
     const seedBytes = new Uint8Array(130);
-    seedBytes[0] = 1; seedBytes[1] = 0x03; seedBytes[3] = 6;
+    seedBytes[0] = 1;
+    seedBytes[1] = 0x03;
+    seedBytes[3] = 6;
     const seedHex = Buffer.from(seedBytes).toString('hex');
 
     const mockFetch = makeFetch(200, {
@@ -198,7 +201,11 @@ describe('Phase 10-A: UplinkService', () => {
     const transport = new FakeTransport('seed_node');
     const keyPair = await cryptoInst.generateKeyPair();
     const engine = new MeshEngine({
-      nodeId: 'seed_node', crypto: cryptoInst, db: meshDb, transport, keyPair,
+      nodeId: 'seed_node',
+      crypto: cryptoInst,
+      db: meshDb,
+      transport,
+      keyPair,
       policy: { ...DEFAULT_MESH_POLICY, samePeerCooldownMs: 0 },
     });
     const receiveSpy = jest.spyOn(engine, 'receivePacket');
@@ -288,11 +295,17 @@ describe('Phase 10-B: SmsFallbackService', () => {
     const svc = new SmsFallbackService(db, gov, bridge, undefined, { deviceSmsSecret: secret });
 
     let notified = false;
-    svc.onNotification(() => { notified = true; });
+    svc.onNotification(() => {
+      notified = true;
+    });
 
     // Build valid HMAC tag
     const payload = 'cluster_abc 15';
-    const tag = crypto.createHmac('sha256', Buffer.from(secret)).update(payload).digest('hex').substring(0, 8);
+    const tag = crypto
+      .createHmac('sha256', Buffer.from(secret))
+      .update(payload)
+      .digest('hex')
+      .substring(0, 8);
     const smsBody = `RN1 ACK ${tag} ${payload}`;
 
     const ok = await svc.handleInboundSms('+918001234567', smsBody);
@@ -307,7 +320,9 @@ describe('Phase 10-B: SmsFallbackService', () => {
     const svc = new SmsFallbackService(db, gov, bridge, undefined, { deviceSmsSecret: secret });
 
     let notified = false;
-    svc.onNotification(() => { notified = true; });
+    svc.onNotification(() => {
+      notified = true;
+    });
 
     const smsBody = `RN1 ACK 00000000 cluster_abc 15`; // wrong tag
     const ok = await svc.handleInboundSms('+918001234567', smsBody);
@@ -320,9 +335,10 @@ describe('Phase 10-B: SmsFallbackService', () => {
     await insertSosPacket(db, 'rotate_pkt');
     const gov = makeGovernor(db, 'DEGRADED');
     const bridge: ISmsBridge = {
-      sendTextMessage: jest.fn()
+      sendTextMessage: jest
+        .fn()
         .mockResolvedValueOnce({ sent: false }) // first number fails
-        .mockResolvedValueOnce({ sent: true }),  // second succeeds
+        .mockResolvedValueOnce({ sent: true }), // second succeeds
       openSystemSmsApp: jest.fn(),
       hasSmsPermission: jest.fn().mockResolvedValue(true),
     };
@@ -355,14 +371,17 @@ describe('Phase 10-D: AckReceiver', () => {
 
     // Build a minimal well-typed ACK packet that skips sig validation (verifyAckPacket stubbed)
     const raw = new Uint8Array(200);
-    raw[0] = 1; raw[1] = 0x03;
+    raw[0] = 1;
+    raw[1] = 0x03;
 
     let event: any;
-    receiver.onAckReceived((e) => { event = e; });
+    receiver.onAckReceived(e => {
+      event = e;
+    });
 
     // verifyAckPacket will return false for a blank packet, so valid=false
     const result = await receiver.processAckPacket(raw);
-    // Without a proper agency-signed packet, valid is false – that is expected here.
+    // Without a proper agency-signed packet, valid is false ï¿½ that is expected here.
     expect(result.valid).toBe(false);
   });
 });

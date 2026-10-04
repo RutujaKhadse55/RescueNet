@@ -25,6 +25,7 @@ import { websocketRoutes } from './routes/v1/websocket';
 import { privacyAndAbuseRoutes } from './routes/v1/privacyAndAbuse';
 
 import { chatRoutes } from './routes/v1/chat';
+import { simulationRoutes } from './routes/v1/simulation';
 
 export function buildServer(): FastifyInstance {
   const server = fastify({
@@ -119,6 +120,7 @@ export function buildServer(): FastifyInstance {
   server.register(websocketRoutes, { prefix: '/v1' });
   server.register(privacyAndAbuseRoutes, { prefix: '/v1' });
   server.register(chatRoutes, { prefix: '/v1' });
+  server.register(simulationRoutes, { prefix: '/v1' });
 
   // 7. Background scheduler initialization & graceful shutdown
   server.addHook('onReady', async () => {

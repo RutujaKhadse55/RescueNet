@@ -60,7 +60,7 @@ describe('Phase 13: Rescuer Mode, Homing, and Credentials Test Suite', () => {
       agencyCaKeyPair.publicKey,
       meshEngine,
       'en',
-      rescuerService
+      rescuerService,
     );
   });
 
@@ -82,7 +82,7 @@ describe('Phase 13: Rescuer Mode, Homing, and Credentials Test Suite', () => {
           validitySeconds: 3600 * 24 * 7,
           permissions: ['ack_cluster', 'mark_reached', 'mark_closed', 'gateway_relay'],
         },
-        agencyCaKeyPair.privateKey
+        agencyCaKeyPair.privateKey,
       );
 
       const token = exportCredentialToken(cred);
@@ -90,7 +90,7 @@ describe('Phase 13: Rescuer Mode, Homing, and Credentials Test Suite', () => {
 
       // 2. Import into mobile RescuerCredentialService
       let roleChanged = false;
-      rescuerService.onRoleChange((isRescuer) => {
+      rescuerService.onRoleChange(isRescuer => {
         roleChanged = isRescuer;
       });
 
@@ -115,7 +115,7 @@ describe('Phase 13: Rescuer Mode, Homing, and Credentials Test Suite', () => {
           agencyId: 'UNKNOWN',
           rescuerPublicKey: unverifiedKeyPair.publicKey,
         },
-        fakeCaKeyPair.privateKey // Signed with wrong CA
+        fakeCaKeyPair.privateKey, // Signed with wrong CA
       );
 
       const token = exportCredentialToken(forgedCred);
@@ -136,7 +136,7 @@ describe('Phase 13: Rescuer Mode, Homing, and Credentials Test Suite', () => {
           rescuerPublicKey: rescuerKeyPair.publicKey,
           validitySeconds: -3600, // Expired 1 hour ago
         },
-        agencyCaKeyPair.privateKey
+        agencyCaKeyPair.privateKey,
       );
 
       const token = exportCredentialToken(expiredCred);
@@ -160,7 +160,7 @@ describe('Phase 13: Rescuer Mode, Homing, and Credentials Test Suite', () => {
           agencyId: 1,
           keyPair: unverifiedKeyPair,
         },
-        crypto
+        crypto,
       );
 
       // AckReceiver must reject it
@@ -186,7 +186,7 @@ describe('Phase 13: Rescuer Mode, Homing, and Credentials Test Suite', () => {
           agencyId: 1,
           keyPair: unverifiedKeyPair,
         },
-        crypto
+        crypto,
       );
 
       const ackResult = await ackReceiver.processAckPacket(ackBytes);
@@ -211,7 +211,7 @@ describe('Phase 13: Rescuer Mode, Homing, and Credentials Test Suite', () => {
           agencyId: 'SDRF',
           rescuerPublicKey: rescuerKeyPair.publicKey,
         },
-        agencyCaKeyPair.privateKey
+        agencyCaKeyPair.privateKey,
       );
       await rescuerService.importCredential(exportCredentialToken(cred));
       expect(rescuerService.isRescuer()).toBe(true);
@@ -227,7 +227,7 @@ describe('Phase 13: Rescuer Mode, Homing, and Credentials Test Suite', () => {
           agencyId: 1,
           keyPair: rescuerKeyPair,
         },
-        crypto
+        crypto,
       );
 
       const initialResult = await ackReceiver.processAckPacket(ackBytes);
@@ -239,7 +239,7 @@ describe('Phase 13: Rescuer Mode, Homing, and Credentials Test Suite', () => {
         'SDRF',
         ['cred_rescuer_to_revoke'],
         [rescuerPubkeyHex],
-        agencyCaKeyPair.privateKey
+        agencyCaKeyPair.privateKey,
       );
 
       const crlUpdate = await rescuerService.updateRevocationList(crl);
@@ -259,7 +259,7 @@ describe('Phase 13: Rescuer Mode, Homing, and Credentials Test Suite', () => {
           agencyId: 1,
           keyPair: rescuerKeyPair,
         },
-        crypto
+        crypto,
       );
 
       const revokedResult = await ackReceiver.processAckPacket(ackBytesAfterRevoke);
@@ -305,7 +305,7 @@ describe('Phase 13: Rescuer Mode, Homing, and Credentials Test Suite', () => {
           agencyId: '1',
           rescuerPublicKey: rescuerKeyPair.publicKey,
         },
-        agencyCaKeyPair.privateKey
+        agencyCaKeyPair.privateKey,
       );
       await rescuerService.importCredential(exportCredentialToken(cred));
 
@@ -323,7 +323,7 @@ describe('Phase 13: Rescuer Mode, Homing, and Credentials Test Suite', () => {
 
       const homingService = new HomingService(transport, db, meshEngine, rescuerService);
       let lastReportedState: any = null;
-      homingService.onStateChange((st) => {
+      homingService.onStateChange(st => {
         lastReportedState = st;
       });
 
@@ -367,12 +367,12 @@ describe('Phase 13: Rescuer Mode, Homing, and Credentials Test Suite', () => {
           agencyId: '1',
           rescuerPublicKey: rescuerKeyPair.publicKey,
         },
-        agencyCaKeyPair.privateKey
+        agencyCaKeyPair.privateKey,
       );
       await rescuerService.importCredential(exportCredentialToken(cred));
 
       let currentAdvMode: string = 'BALANCED';
-      transport.setAdvertisingMode = jest.fn(async (mode) => {
+      transport.setAdvertisingMode = jest.fn(async mode => {
         currentAdvMode = mode;
       });
 
@@ -387,7 +387,7 @@ describe('Phase 13: Rescuer Mode, Homing, and Credentials Test Suite', () => {
           agencyId: 1,
           keyPair: rescuerKeyPair,
         },
-        crypto
+        crypto,
       );
 
       // Ingest packet into survivor mesh engine

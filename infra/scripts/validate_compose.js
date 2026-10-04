@@ -5,7 +5,16 @@ const composePath = path.join(__dirname, '../docker-compose.prod.yml');
 const content = fs.readFileSync(composePath, 'utf8');
 
 console.log('Validating docker-compose.prod.yml structure...');
-const requiredServices = ['db', 'pgbouncer', 'api', 'dashboard', 'proxy', 'prometheus', 'grafana', 'backup'];
+const requiredServices = [
+  'db',
+  'pgbouncer',
+  'api',
+  'dashboard',
+  'proxy',
+  'prometheus',
+  'grafana',
+  'backup',
+];
 
 let missing = [];
 for (const s of requiredServices) {

@@ -32,7 +32,7 @@ import crypto from 'crypto';
 export interface ISmsBridge {
   sendTextMessage(
     destination: string,
-    body: string
+    body: string,
   ): Promise<{ sent: boolean; delivered?: boolean; error?: string }>;
   openSystemSmsApp(destination: string, body: string): Promise<void>;
   hasSmsPermission(): Promise<boolean>;
@@ -82,7 +82,7 @@ export class SmsFallbackService {
     governor: ConnectivityGovernor,
     bridge: ISmsBridge,
     meshEngine?: MeshEngine,
-    config?: Partial<SmsFallbackConfig>
+    config?: Partial<SmsFallbackConfig>,
   ) {
     this.db = db;
     this.governor = governor;
@@ -296,12 +296,12 @@ export class SmsFallbackService {
     // survivors also learn the ACK was received.
     if (this.meshEngine) {
       const syntheticAck = new Uint8Array(130);
-      syntheticAck[0] = 1;    // protocol version
+      syntheticAck[0] = 1; // protocol version
       syntheticAck[1] = 0x03; // ACK type
       syntheticAck[2] = 0x04; // flags: from_rescuer
-      syntheticAck[3] = 6;    // TTL
-      syntheticAck[4] = 0;    // Hop
-      crypto.randomFillSync(syntheticAck.subarray(5, 13));  // random packetId
+      syntheticAck[3] = 6; // TTL
+      syntheticAck[4] = 0; // Hop
+      crypto.randomFillSync(syntheticAck.subarray(5, 13)); // random packetId
       crypto.randomFillSync(syntheticAck.subarray(13, 21)); // random originFp
       await this.meshEngine.receivePacket(syntheticAck, undefined, true);
     }
@@ -346,5 +346,3 @@ export class SmsFallbackService {
     return `RN1 ${b64}`;
   }
 }
-
-

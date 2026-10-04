@@ -64,7 +64,7 @@ export const RescueMap: React.FC = () => {
       subdomains: 'abcd',
       maxZoom: 19,
     });
-    
+
     // Auto-fallback to OpenStreetMap if Carto tile fails or network blocks dark tiles
     tileLayer.on('tileerror', () => {
       tileLayer.setUrl('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png');
@@ -115,7 +115,7 @@ export const RescueMap: React.FC = () => {
     if (!layerToggles.boundary || !activeIncident.region) return;
 
     const coords = activeIncident.region.coordinates[0];
-    const latLngs: [number, number][] = coords.map((pt) => [pt[1], pt[0]]);
+    const latLngs: [number, number][] = coords.map(pt => [pt[1], pt[0]]);
 
     L.polygon(latLngs, {
       color: activeIncident.is_drill ? '#f59e0b' : '#3b82f6',
@@ -135,7 +135,7 @@ export const RescueMap: React.FC = () => {
 
     const now = Date.now();
 
-    clusters.forEach((cluster) => {
+    clusters.forEach(cluster => {
       // Filter by replay time slider if active
       if (timeSliderMinutes > 0) {
         const elapsedMin = (now - new Date(cluster.last_seen).getTime()) / 60000;
@@ -147,8 +147,8 @@ export const RescueMap: React.FC = () => {
         elapsedMinutes < 15
           ? 'freshness-solid'
           : elapsedMinutes < 60
-          ? 'freshness-dashed'
-          : 'freshness-fading';
+            ? 'freshness-dashed'
+            : 'freshness-fading';
 
       // Size marker proportional to survivor count (24px to 44px)
       const size = Math.min(44, Math.max(26, 24 + cluster.declared_people * 1.5));
@@ -169,11 +169,7 @@ export const RescueMap: React.FC = () => {
             id="map-marker-${cluster.id}"
           >
             <span>${cluster.declared_people}</span>
-            ${
-              flagsHtml.length > 0
-                ? `<span class="marker-flag-badge">${flagsHtml[0]}</span>`
-                : ''
-            }
+            ${flagsHtml.length > 0 ? `<span class="marker-flag-badge">${flagsHtml[0]}</span>` : ''}
           </div>
         `,
         iconSize: [size, size],
@@ -194,10 +190,10 @@ export const RescueMap: React.FC = () => {
           cluster.priority_band === 'critical'
             ? '#ef4444'
             : cluster.priority_band === 'high'
-            ? '#f97316'
-            : cluster.priority_band === 'medium'
-            ? '#eab308'
-            : '#10b981',
+              ? '#f97316'
+              : cluster.priority_band === 'medium'
+                ? '#eab308'
+                : '#10b981',
         weight: 1,
         fillOpacity: 0.12,
       }).addTo(group);
@@ -212,7 +208,7 @@ export const RescueMap: React.FC = () => {
 
     if (!layerToggles.heatmap) return;
 
-    clusters.forEach((c) => {
+    clusters.forEach(c => {
       L.circle([c.lat, c.lon], {
         radius: c.radius_m * 3.5,
         color: 'transparent',
@@ -230,7 +226,7 @@ export const RescueMap: React.FC = () => {
 
     if (!layerToggles.teams) return;
 
-    teams.forEach((t) => {
+    teams.forEach(t => {
       const teamIcon = L.divIcon({
         className: 'custom-team-icon',
         html: `
@@ -256,7 +252,7 @@ export const RescueMap: React.FC = () => {
 
     if (!layerToggles.gateways) return;
 
-    gateways.forEach((gw) => {
+    gateways.forEach(gw => {
       const gwIcon = L.divIcon({
         className: 'custom-gateway-icon',
         html: `
@@ -269,7 +265,9 @@ export const RescueMap: React.FC = () => {
       });
 
       L.marker([gw.lat, gw.lon], { icon: gwIcon })
-        .bindTooltip(`<strong>${gw.name}</strong><br/>Type: ${gw.type}<br/>Relayed: ${gw.packetsRelayed}`)
+        .bindTooltip(
+          `<strong>${gw.name}</strong><br/>Type: ${gw.type}<br/>Relayed: ${gw.packetsRelayed}`,
+        )
         .addTo(group);
     });
   }, [gateways, layerToggles.gateways]);
@@ -277,7 +275,7 @@ export const RescueMap: React.FC = () => {
   // Pan to selected cluster
   useEffect(() => {
     if (!selectedClusterId || !mapInstanceRef.current) return;
-    const cl = clusters.find((c) => c.id === selectedClusterId);
+    const cl = clusters.find(c => c.id === selectedClusterId);
     if (cl) {
       mapInstanceRef.current.flyTo([cl.lat, cl.lon], 15, { duration: 1 });
     }
@@ -287,18 +285,30 @@ export const RescueMap: React.FC = () => {
   useEffect(() => {
     if (!isReplayPlaying) return;
     const interval = setInterval(() => {
-      setTimeSliderMinutes((prev) => (prev >= 120 ? 0 : prev + 5));
+      setTimeSliderMinutes(prev => (prev >= 120 ? 0 : prev + 5));
     }, 1000);
     return () => clearInterval(interval);
   }, [isReplayPlaying, setTimeSliderMinutes]);
 
   return (
     <main className="map-viewport" aria-label="Incident Geospatial Map View">
-      <div ref={mapContainerRef} style={{ width: '100%', height: '100%' }} id="leaflet-map-container" />
+      <div
+        ref={mapContainerRef}
+        style={{ width: '100%', height: '100%' }}
+        id="leaflet-map-container"
+      />
 
       {/* Floating GIS Layer Toggles */}
       <div className="map-floating-overlay" role="region" aria-label="GIS Layer Controls">
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.35rem' }}>
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.4rem',
+            borderBottom: '1px solid var(--border-color)',
+            paddingBottom: '0.35rem',
+          }}
+        >
           <Layers size={14} color="var(--accent-blue)" />
           <strong style={{ fontSize: '0.8rem' }}>{t.layersTitle}</strong>
         </div>
@@ -307,17 +317,19 @@ export const RescueMap: React.FC = () => {
           <input
             type="checkbox"
             checked={layerToggles.teams}
-            onChange={(e) => setLayerToggle('teams', e.target.checked)}
+            onChange={e => setLayerToggle('teams', e.target.checked)}
             id="toggle-layer-teams"
           />
-          <span>{t.layerTeams} ({teams.length})</span>
+          <span>
+            {t.layerTeams} ({teams.length})
+          </span>
         </label>
 
         <label className="map-layer-item">
           <input
             type="checkbox"
             checked={layerToggles.heatmap}
-            onChange={(e) => setLayerToggle('heatmap', e.target.checked)}
+            onChange={e => setLayerToggle('heatmap', e.target.checked)}
             id="toggle-layer-heatmap"
           />
           <span>{t.layerHeatmap}</span>
@@ -327,7 +339,7 @@ export const RescueMap: React.FC = () => {
           <input
             type="checkbox"
             checked={layerToggles.boundary}
-            onChange={(e) => setLayerToggle('boundary', e.target.checked)}
+            onChange={e => setLayerToggle('boundary', e.target.checked)}
             id="toggle-layer-boundary"
           />
           <span>{t.layerBoundary}</span>
@@ -337,10 +349,12 @@ export const RescueMap: React.FC = () => {
           <input
             type="checkbox"
             checked={layerToggles.gateways}
-            onChange={(e) => setLayerToggle('gateways', e.target.checked)}
+            onChange={e => setLayerToggle('gateways', e.target.checked)}
             id="toggle-layer-gateways"
           />
-          <span>{t.layerGateways} ({gateways.length})</span>
+          <span>
+            {t.layerGateways} ({gateways.length})
+          </span>
         </label>
       </div>
 
@@ -366,7 +380,7 @@ export const RescueMap: React.FC = () => {
           max="120"
           step="5"
           value={timeSliderMinutes}
-          onChange={(e) => setTimeSliderMinutes(Number(e.target.value))}
+          onChange={e => setTimeSliderMinutes(Number(e.target.value))}
           className="slider-input"
           aria-label="Filter incident telemetry by minutes elapsed"
           id="input-time-slider"
