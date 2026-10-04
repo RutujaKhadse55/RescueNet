@@ -1,0 +1,130 @@
+name: RescueNet CI
+
+on:
+  push:
+    branches: [main, master, 'feature/**']
+  pull_request:
+    branches: [main, master]
+
+jobs:
+  lint-and-typecheck:
+    name: Lint & Typecheck
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v3
+        with:
+          version: 9
+
+      - name: Get pnpm store directory
+        shell: bash
+        run: |
+          echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+
+      - name: Setup pnpm cache
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Prettier check
+        run: pnpm format:check
+
+      - name: ESLint check
+        run: pnpm lint
+
+      - name: Typecheck packages & services
+        run: pnpm typecheck
+
+  test-and-integration:
+    name: Unit & Integration Tests (PostGIS)
+    runs-on: ubuntu-latest
+    services:
+      postgis:
+        image: postgis/postgis:16-3.4
+        env:
+          POSTGRES_USER: rescuenet
+          POSTGRES_PASSWORD: rescuenet_secret
+          POSTGRES_DB: rescuenet_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      DATABASE_URL: postgresql://rescuenet:rescuenet_secret@localhost:5432/rescuenet_test
+      JWT_SECRET: super_secret_rescuenet_jwt_signing_key_32_bytes_min_length_value
+      AGENCY_CA_PUBLIC_KEY: MCowBQYDK2VwAyEAx5d3v90oP9zP+6U6r3N6LhHh5k2f1W9r5Q3j8K9d2A4=
+      SMS_PROVIDER: mock
+      SMS_WEBHOOK_SECRET: rescuenet_inbound_sms_hmac_secret_key_998877
+      SMS_INBOUND_NUMBER: +911123456789
+      RETENTION_DAYS: 30
+      API_PUBLIC_URL: http://localhost:3000
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v3
+        with:
+          version: 9
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run unit & integration tests
+        run: pnpm test
+
+  security-audit-and-sast:
+    name: Dependency Audit & SAST (Phase 14)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v3
+        with:
+          version: 9
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Production Dependency Audit
+        run: pnpm audit --prod --audit-level=high
+
+      - name: Initialize CodeQL SAST
+        uses: github/codeql-action/init@v3
+        with:
+          languages: javascript-typescript
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v3
+

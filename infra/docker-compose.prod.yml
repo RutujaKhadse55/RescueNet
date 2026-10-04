@@ -1,0 +1,182 @@
+version: '3.8'
+
+services:
+  # 1. Primary PostGIS Database Engine
+  db:
+    image: postgis/postgis:16-3.4
+    container_name: rescuenet-prod-db
+    restart: always
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-rescuenet}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-rescuenet_secret}
+      POSTGRES_DB: ${POSTGRES_DB:-rescuenet}
+      PGDATA: /var/lib/postgresql/data/pgdata
+    command: >
+      postgres
+      -c max_connections=200
+      -c shared_buffers=512MB
+      -c effective_cache_size=1536MB
+      -c work_mem=16MB
+      -c maintenance_work_mem=128MB
+      -c wal_level=replica
+      -c checkpoint_completion_target=0.9
+      -c wal_buffers=16MB
+      -c default_statistics_target=100
+    volumes:
+      - rescuenet_prod_db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U rescuenet -d rescuenet']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+    networks:
+      - rescuenet_internal
+
+  # 2. Connection Pooler (PgBouncer)
+  pgbouncer:
+    image: edoburu/pgbouncer:v1.22.1
+    container_name: rescuenet-prod-pgbouncer
+    restart: always
+    environment:
+      DB_USER: ${POSTGRES_USER:-rescuenet}
+      DB_PASSWORD: ${POSTGRES_PASSWORD:-rescuenet_secret}
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_NAME: ${POSTGRES_DB:-rescuenet}
+      POOL_MODE: transaction
+      MAX_CLIENT_CONN: 1000
+      DEFAULT_POOL_SIZE: 50
+    volumes:
+      - ./pgbouncer/pgbouncer.ini:/etc/pgbouncer/pgbouncer.ini:ro
+      - ./pgbouncer/userlist.txt:/etc/pgbouncer/userlist.txt:ro
+    ports:
+      - '6432:6432'
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - rescuenet_internal
+
+  # 3. Fastify REST & WebSocket API
+  api:
+    build:
+      context: ..
+      dockerfile: services/api/Dockerfile
+    container_name: rescuenet-prod-api
+    restart: always
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgresql://${POSTGRES_USER:-rescuenet}:${POSTGRES_PASSWORD:-rescuenet_secret}@pgbouncer:6432/${POSTGRES_DB:-rescuenet}
+      JWT_SECRET: ${JWT_SECRET:-super_secret_rescuenet_jwt_signing_key_32_bytes_min_length_value}
+      AGENCY_CA_PUBLIC_KEY: ${AGENCY_CA_PUBLIC_KEY:-MCowBQYDK2VwAyEAx5d3v90oP9zP+6U6r3N6LhHh5k2f1W9r5Q3j8K9d2A4=}
+      SMS_PROVIDER: ${SMS_PROVIDER:-mock}
+      SMS_WEBHOOK_SECRET: ${SMS_WEBHOOK_SECRET:-rescuenet_inbound_sms_hmac_secret_key_998877}
+      SMS_INBOUND_NUMBER: ${SMS_INBOUND_NUMBER:-+911123456789}
+      RETENTION_DAYS: ${RETENTION_DAYS:-30}
+      PORT: 3000
+      HOST: 0.0.0.0
+    depends_on:
+      - pgbouncer
+    networks:
+      - rescuenet_internal
+
+  # 4. Rescuer Tactical Web Dashboard
+  dashboard:
+    build:
+      context: ..
+      dockerfile: apps/dashboard/Dockerfile
+    container_name: rescuenet-prod-dashboard
+    restart: always
+    networks:
+      - rescuenet_internal
+
+  # 5. Production Nginx TLS Reverse Proxy
+  proxy:
+    image: nginx:alpine
+    container_name: rescuenet-prod-proxy
+    restart: always
+    ports:
+      - '80:80'
+      - '443:443'
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/certs:/etc/nginx/certs:ro
+    depends_on:
+      - api
+      - dashboard
+    networks:
+      - rescuenet_internal
+      - rescuenet_external
+
+  # 6. Prometheus Telemetry & Ingestion Monitoring
+  prometheus:
+    image: prom/prometheus:v2.53.0
+    container_name: rescuenet-prod-prometheus
+    restart: always
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./monitoring/alerts.yml:/etc/prometheus/alerts.yml:ro
+      - rescuenet_prod_prom_data:/prometheus
+    ports:
+      - '9090:9090'
+    networks:
+      - rescuenet_internal
+
+  # 7. Grafana Metrics Dashboard
+  grafana:
+    image: grafana/grafana:11.0.0
+    container_name: rescuenet-prod-grafana
+    restart: always
+    environment:
+      GF_SECURITY_ADMIN_USER: ${GRAFANA_USER:-admin}
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_PASSWORD:-rescuenet_admin_secret}
+      GF_USERS_ALLOW_SIGN_UP: "false"
+    volumes:
+      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning:ro
+      - rescuenet_prod_grafana_data:/var/lib/grafana
+    ports:
+      - '3001:3000'
+    depends_on:
+      - prometheus
+    networks:
+      - rescuenet_internal
+
+  # 8. Automated Database Backup Runner
+  backup:
+    image: postgis/postgis:16-3.4
+    container_name: rescuenet-prod-backup
+    restart: always
+    environment:
+      POSTGRES_HOST: db
+      POSTGRES_PORT: 5432
+      POSTGRES_DB: ${POSTGRES_DB:-rescuenet}
+      POSTGRES_USER: ${POSTGRES_USER:-rescuenet}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-rescuenet_secret}
+      RETENTION_DAYS: ${RETENTION_DAYS:-30}
+    volumes:
+      - ./scripts/backup_postgres.sh:/backup_postgres.sh:ro
+      - rescuenet_prod_backups:/backups
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        chmod +x /backup_postgres.sh
+        echo "0 2 * * * /backup_postgres.sh" > /etc/crontabs/root
+        crond -f -l 2
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - rescuenet_internal
+
+networks:
+  rescuenet_internal:
+    internal: true
+  rescuenet_external:
+    driver: bridge
+
+volumes:
+  rescuenet_prod_db_data:
+  rescuenet_prod_prom_data:
+  rescuenet_prod_grafana_data:
+  rescuenet_prod_backups:

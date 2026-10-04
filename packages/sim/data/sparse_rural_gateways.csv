@@ -1,0 +1,3 @@
+scenario,strategy,delivery_rate_mean,delivery_rate_ci95,latency_median_mean,transmissions_mean
+sparse_rural_isolated,spray_and_wait,17.17,2.32,2086.5,2376.3
+sparse_rural_bridged,rescuenet_full,89.29,7.43,1106.9,7094.9

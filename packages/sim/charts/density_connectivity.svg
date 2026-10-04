@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="800" height="450" viewBox="0 0 800 450" xmlns="http://www.w3.org/2000/svg">
+  <rect width="100%" height="100%" fill="#0F172A" />
+  
+  <text x="40" y="45" fill="#F8FAFC" font-family="system-ui, sans-serif" font-size="18" font-weight="bold">
+    Connectivity vs Device Density (Phones / km²) Phase Transition
+  </text>
+  <text x="40" y="70" fill="#94A3B8" font-family="system-ui, sans-serif" font-size="12">
+    Compares 30 m nominal range (concrete/indoor) vs 50 m BLE range (suburban open ground).
+  </text>
+
+  <!-- Axes -->
+  <line x1="100" y1="380" x2="720" y2="380" stroke="#334155" stroke-width="1.5" />
+  <line x1="100" y1="100" x2="100" y2="380" stroke="#334155" stroke-width="1.5" />
+
+  <!-- Curves -->
+  <path d="M 100 100 L 224 100 L 348 100 L 472 100 L 596 100 L 720 100" fill="none" stroke="#F59E0B" stroke-width="3" />
+  <path d="M 100 100 L 224 100 L 348 100 L 472 100 L 596 100 L 720 100" fill="none" stroke="#10B981" stroke-width="3" />
+
+  <!-- Legend -->
+  <circle cx="560" cy="40" r="5" fill="#F59E0B" />
+  <text x="575" y="44" fill="#E2E8F0" font-family="system-ui, sans-serif" font-size="12">30 m Nominal Range</text>
+
+  <circle cx="560" cy="65" r="5" fill="#10B981" />
+  <text x="575" y="69" fill="#E2E8F0" font-family="system-ui, sans-serif" font-size="12">50 m Coded PHY Range</text>
+</svg>

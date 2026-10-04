@@ -1,0 +1,47 @@
+replicaCount: 3
+
+image:
+  api:
+    repository: rescuenet/api
+    pullPolicy: IfNotPresent
+    tag: "latest"
+  dashboard:
+    repository: rescuenet/dashboard
+    pullPolicy: IfNotPresent
+    tag: "latest"
+
+service:
+  type: ClusterIP
+  port: 80
+
+ingress:
+  enabled: true
+  className: "nginx"
+  annotations:
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
+  hosts:
+    - host: controlroom.rescuenet.gov.in
+      paths:
+        - path: /
+          pathType: Prefix
+  tls:
+    - secretName: rescuenet-tls
+      hosts:
+        - controlroom.rescuenet.gov.in
+
+resources:
+  api:
+    limits:
+      cpu: 2000m
+      memory: 2048Mi
+    requests:
+      cpu: 500m
+      memory: 512Mi
+
+autoscaling:
+  enabled: true
+  minReplicas: 3
+  maxReplicas: 10
+  targetCPUUtilizationPercentage: 75

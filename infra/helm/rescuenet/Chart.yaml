@@ -1,0 +1,11 @@
+apiVersion: v2
+name: rescuenet
+description: Production Helm Chart for RescueNet Disaster Response Control Room Stack
+type: application
+version: 1.0.0
+appVersion: "1.0.0"
+keywords:
+  - disaster-relief
+  - emergency-mesh
+  - postgis
+  - fastify

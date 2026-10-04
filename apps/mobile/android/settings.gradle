@@ -1,0 +1,40 @@
+pluginManagement {
+    repositories {
+        google()
+        mavenCentral()
+        gradlePluginPortal()
+    }
+}
+
+rootProject.name = 'RescueNet'
+
+def monorepoRoot = rootDir.parentFile.parentFile.parentFile
+def mobileDir = rootDir.parentFile
+
+def nativeModulesGradleFile = file("${mobileDir}/node_modules/@react-native-community/cli-platform-android/native_modules.gradle")
+if (!nativeModulesGradleFile.exists()) {
+    nativeModulesGradleFile = file("${monorepoRoot}/node_modules/@react-native-community/cli-platform-android/native_modules.gradle")
+}
+if (!nativeModulesGradleFile.exists()) {
+    def pnpmMatch = fileTree(dir: "${monorepoRoot}/node_modules/.pnpm", include: "**/@react-native-community/cli-platform-android/native_modules.gradle").files
+    if (!pnpmMatch.isEmpty()) {
+        nativeModulesGradleFile = pnpmMatch.iterator().next()
+    }
+}
+
+apply from: nativeModulesGradleFile; applyNativeModulesSettingsGradle(settings)
+
+include ':app'
+
+def gradlePluginDir = file("${mobileDir}/node_modules/@react-native/gradle-plugin")
+if (!gradlePluginDir.exists()) {
+    gradlePluginDir = file("${monorepoRoot}/node_modules/@react-native/gradle-plugin")
+}
+if (!gradlePluginDir.exists()) {
+    def pnpmPluginMatch = fileTree(dir: "${monorepoRoot}/node_modules/.pnpm", include: "**/@react-native/gradle-plugin/build.gradle.kts").files
+    if (!pnpmPluginMatch.isEmpty()) {
+        gradlePluginDir = pnpmPluginMatch.iterator().next().parentFile
+    }
+}
+
+includeBuild(gradlePluginDir)

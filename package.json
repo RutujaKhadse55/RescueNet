@@ -1,0 +1,39 @@
+{
+  "name": "rescuenet-monorepo",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Offline peer-to-peer emergency communication and rescuer triage mesh system",
+  "author": "RescueNet Staff Engineering Team",
+  "license": "Apache-2.0",
+  "engines": {
+    "node": ">=20.0.0",
+    "pnpm": ">=9.0.0"
+  },
+  "scripts": {
+    "build": "pnpm -r build",
+    "typecheck": "pnpm --filter @rescuenet/core build && pnpm -r typecheck",
+    "test": "pnpm --filter @rescuenet/core build && pnpm -r test",
+    "sim:run": "pnpm --filter @rescuenet/sim sim:run",
+    "sms:load-test": "pnpm --filter @rescuenet/api exec tsx ../../scripts/load_test_sms.ts",
+    "lint": "eslint \"**/*.{ts,tsx,js,jsx}\"",
+    "lint:fix": "eslint \"**/*.{ts,tsx,js,jsx}\" --fix",
+    "format": "prettier --write \"**/*.{ts,tsx,js,json,md,yml,yaml}\"",
+    "format:check": "prettier --check \"**/*.{ts,tsx,js,json,md,yml,yaml}\"",
+    "db:up": "docker compose -f infra/docker-compose.yml up -d db",
+    "db:migrate": "pnpm --filter @rescuenet/api migrate:up",
+    "db:migrate:down": "pnpm --filter @rescuenet/api migrate:down",
+    "db:seed": "pnpm --filter @rescuenet/api seed",
+    "prepare": "husky"
+  },
+  "devDependencies": {
+    "@types/node": "^20.14.9",
+    "@typescript-eslint/eslint-plugin": "^7.15.0",
+    "@typescript-eslint/parser": "^7.15.0",
+    "eslint": "^8.57.0",
+    "eslint-config-prettier": "^9.1.0",
+    "eslint-plugin-prettier": "^5.1.3",
+    "husky": "^9.0.11",
+    "prettier": "^3.3.2",
+    "typescript": "^5.5.3"
+  }
+}

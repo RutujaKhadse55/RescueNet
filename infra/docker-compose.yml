@@ -1,0 +1,62 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgis/postgis:16-3.4
+    container_name: rescuenet-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: rescuenet
+      POSTGRES_PASSWORD: rescuenet_secret
+      POSTGRES_DB: rescuenet
+    ports:
+      - '5432:5432'
+    volumes:
+      - rescuenet_db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U rescuenet -d rescuenet']
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  api:
+    build:
+      context: ..
+      dockerfile: services/api/Dockerfile
+    container_name: rescuenet-api
+    restart: unless-stopped
+    environment:
+      NODE_ENV: development
+      DATABASE_URL: postgresql://rescuenet:rescuenet_secret@db:5432/rescuenet
+      JWT_SECRET: ${JWT_SECRET:-super_secret_rescuenet_jwt_signing_key_32_bytes_min_length_value}
+      AGENCY_CA_PUBLIC_KEY: ${AGENCY_CA_PUBLIC_KEY:-MCowBQYDK2VwAyEAx5d3v90oP9zP+6U6r3N6LhHh5k2f1W9r5Q3j8K9d2A4=}
+      SMS_PROVIDER: ${SMS_PROVIDER:-mock}
+      SMS_WEBHOOK_SECRET: ${SMS_WEBHOOK_SECRET:-rescuenet_inbound_sms_hmac_secret_key_998877}
+      SMS_INBOUND_NUMBER: ${SMS_INBOUND_NUMBER:-+911123456789}
+      RETENTION_DAYS: ${RETENTION_DAYS:-30}
+      API_PUBLIC_URL: ${API_PUBLIC_URL:-http://localhost:3000}
+      PORT: 3000
+      HOST: 0.0.0.0
+    ports:
+      - '3000:3000'
+    depends_on:
+      db:
+        condition: service_healthy
+
+  dashboard:
+    build:
+      context: ..
+      dockerfile: apps/dashboard/Dockerfile
+    container_name: rescuenet-dashboard
+    restart: unless-stopped
+    environment:
+      VITE_API_URL: http://localhost:3000
+    ports:
+      - '5173:5173'
+    depends_on:
+      - api
+
+volumes:
+  rescuenet_db_data:
+    name: rescuenet_db_data

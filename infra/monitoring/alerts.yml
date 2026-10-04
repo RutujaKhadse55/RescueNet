@@ -1,0 +1,38 @@
+groups:
+  - name: rescuenet_alerts
+    rules:
+      - alert: ApiServiceDown
+        expr: up{job="rescuenet-api"} == 0
+        for: 30s
+        labels:
+          severity: critical
+        annotations:
+          summary: "RescueNet API instance is down"
+          description: "API instance {{ $labels.instance }} has been unreachable for > 30 seconds."
+
+      - alert: HighPacketIngestionLatency
+        expr: http_request_duration_seconds{path="/v1/uplink", quantile="0.95"} > 0.5
+        for: 1m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High Uplink Ingestion Latency"
+          description: "p95 uplink ingestion latency is above 500ms on {{ $labels.instance }}."
+
+      - alert: DatabaseConnectionExhaustion
+        expr: pgbouncer_used_clients / pgbouncer_max_clients > 0.85
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "PgBouncer Connection Pool Nearing Limit"
+          description: "PgBouncer client pool is at {{ $value | humanizePercentage }} capacity."
+
+      - alert: AbusiveTrafficSurge
+        expr: rate(http_requests_total{status="429"}[2m]) > 20
+        for: 1m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Abusive Traffic Detected (Rate Limits Active)"
+          description: "Rate limiter is rejecting > 20 requests/sec. Circuit breaker may engage."

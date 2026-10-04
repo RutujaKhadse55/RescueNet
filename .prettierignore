@@ -1,0 +1,12 @@
+node_modules
+dist
+build
+.husky
+android
+ios
+coverage
+*.min.js
+*.map
+.turbo
+.next
+pnpm-lock.yaml

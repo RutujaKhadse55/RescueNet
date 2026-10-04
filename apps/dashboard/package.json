@@ -1,0 +1,38 @@
+{
+  "name": "@rescuenet/dashboard",
+  "version": "0.1.0",
+  "private": true,
+  "description": "RescueNet Rescuer Tactical Web Dashboard with Leaflet GIS maps and triage prioritisation",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc --noEmit",
+    "test": "jest",
+    "clean": "rimraf dist"
+  },
+  "dependencies": {
+    "@rescuenet/core": "workspace:*",
+    "@tanstack/react-query": "^5.50.1",
+    "leaflet": "^1.9.4",
+    "lucide-react": "^0.399.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "zustand": "^5.0.15"
+  },
+  "devDependencies": {
+    "@axe-core/playwright": "^4.13.0",
+    "@playwright/test": "^1.63.0",
+    "@types/jest": "^29.5.12",
+    "@types/leaflet": "^1.9.12",
+    "@types/node": "^20.14.9",
+    "@types/react": "^18.3.3",
+    "@types/react-dom": "^18.3.0",
+    "@vitejs/plugin-react": "^4.3.1",
+    "jest": "^29.7.0",
+    "rimraf": "^5.0.7",
+    "ts-jest": "^29.1.5",
+    "typescript": "^5.5.3",
+    "vite": "^5.3.3"
+  }
+}

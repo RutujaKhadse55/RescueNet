@@ -1,0 +1,11 @@
+apiVersion: 1
+
+providers:
+  - name: 'RescueNet Dashboards'
+    orgId: 1
+    folder: 'RescueNet'
+    type: file
+    disableDeletion: false
+    editable: true
+    options:
+      path: /etc/grafana/provisioning/dashboards

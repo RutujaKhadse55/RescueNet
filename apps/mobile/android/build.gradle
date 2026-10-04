@@ -1,0 +1,61 @@
+buildscript {
+    ext {
+        buildToolsVersion = "35.0.0"
+        minSdkVersion = 26
+        compileSdkVersion = 35
+        targetSdkVersion = 35
+        ndkVersion = "26.1.10909125"
+        kotlinVersion = "1.9.24"
+    }
+    repositories {
+        google()
+        mavenCentral()
+    }
+    dependencies {
+        classpath("com.android.tools.build:gradle:8.4.1")
+        classpath("com.facebook.react:react-native-gradle-plugin")
+        classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlinVersion")
+    }
+}
+
+allprojects {
+    repositories {
+        maven {
+            def monorepoRoot = rootDir.parentFile.parentFile.parentFile
+            def mobileDir = rootDir.parentFile
+
+            // All of React Native (JS, Obj-C sources, Android binaries) is installed from npm
+            def rnAndroidDir = file("${mobileDir}/node_modules/react-native/android")
+            if (!rnAndroidDir.exists()) {
+                rnAndroidDir = file("${monorepoRoot}/node_modules/react-native/android")
+            }
+            if (!rnAndroidDir.exists()) {
+                def pnpmMatch = fileTree(dir: "${monorepoRoot}/node_modules/.pnpm", include: "**/react-native/android").files
+                if (!pnpmMatch.isEmpty()) {
+                    rnAndroidDir = pnpmMatch.iterator().next()
+                }
+            }
+            url(rnAndroidDir)
+        }
+        maven {
+            def monorepoRoot = rootDir.parentFile.parentFile.parentFile
+            def mobileDir = rootDir.parentFile
+
+            // Android JSC is installed from npm
+            def jscDir = file("${mobileDir}/node_modules/jsc-android/dist")
+            if (!jscDir.exists()) {
+                jscDir = file("${monorepoRoot}/node_modules/jsc-android/dist")
+            }
+            if (!jscDir.exists()) {
+                def pnpmMatch = fileTree(dir: "${monorepoRoot}/node_modules/.pnpm", include: "**/jsc-android/dist").files
+                if (!pnpmMatch.isEmpty()) {
+                    jscDir = pnpmMatch.iterator().next()
+                }
+            }
+            url(jscDir)
+        }
+        google()
+        mavenCentral()
+        maven { url 'https://www.jitpack.io' }
+    }
+}
