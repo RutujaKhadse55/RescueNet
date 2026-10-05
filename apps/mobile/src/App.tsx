@@ -55,9 +55,8 @@ import { SurvivalModeManager } from './sos/SurvivalModeManager';
 import { UplinkService } from './uplink/UplinkService';
 
 export function App(): React.JSX.Element {
-  // App initialization state
   const [loading, setLoading] = useState(true);
-  const [isPrepared, setIsPrepared] = useState(false);
+  const [isPrepared, setIsPrepared] = useState(false); // Launches 2-step Preparedness Mode first
   const [demoMode, setDemoMode] = useState(true); // Demo / simulation mode enabled by default for emulator testing
 
   const [dbManager, setDbManager] = useState<DatabaseManager | null>(null);
@@ -103,6 +102,7 @@ export function App(): React.JSX.Element {
 
   // Sample or DB backed records
   const [neighbors, setNeighbors] = useState<NeighborRecord[]>([]);
+  const [clusterPeers, setClusterPeers] = useState<any[]>([]);
   const [clusters, setClusters] = useState<ClusterRecord[]>([]);
   const [messages, setMessages] = useState<ChatMessageRecord[]>([]);
   const [conversations, setConversations] = useState<ConversationRecord[]>([]);
@@ -197,7 +197,7 @@ export function App(): React.JSX.Element {
         }
       } catch {}
 
-      // Check preparedness completion state
+      // 2-Step Preparedness Mode: Check if completed, otherwise launch PreparednessScreen first
       const prepFlag = await db.settings.get('preparedness_completed');
       const savedRegion = await db.settings.get('map_region_downloaded');
       if (prepFlag === '1') {
@@ -216,13 +216,18 @@ export function App(): React.JSX.Element {
         activeReg.centerLon,
       );
 
-      // Check consent record
+      // Auto-save consent in background: completely eliminates the 4-step Privacy Consent modal
       const hasConsent = await db.consent.hasValidConsent();
       if (!hasConsent) {
-        setShowConsentModal(true);
-      } else {
-        setShowConsentModal(false);
+        await db.consent.saveConsent(1, {
+          shareGpsLocation: true,
+          shareTriageStatus: true,
+          shareBatteryLevel: true,
+          enableOptionalChat: true,
+          enableLiveLocationSharing: true,
+        });
       }
+      setShowConsentModal(false);
 
       const savedLang = await db.settings.get('app_language');
       if (savedLang) {
@@ -497,14 +502,6 @@ export function App(): React.JSX.Element {
 
               // Extract assigned team directly from cluster record
               if (myCluster.assigned_team) {
-                setAssignedTeam(myCluster.assigned_team);
-              } else if (
-                myCluster.state === 'assigned' ||
-                myCluster.state === 'en_route' ||
-                myCluster.state === 'reached'
-              ) {
-                // State says assigned but no team name yet — keep what we have
-                if (!assignedTeam) setAssignedTeam('Rescue Team Alpha');
               }
             }
           }
@@ -518,6 +515,7 @@ export function App(): React.JSX.Element {
         if (simRes && simRes.ok) {
           const simData = await simRes.json();
           if (simData.active && Array.isArray(simData.peers) && simData.peers.length > 0) {
+            setClusterPeers(simData.peers);
             const simFps = new Set(simData.peers.map((p: any) => p.fp));
             setNeighbors(prev => {
               const nonSim = prev.filter(n => !simFps.has(n.fp));
@@ -531,10 +529,9 @@ export function App(): React.JSX.Element {
               }));
               return [...nonSim, ...simNeighbors];
             });
-          } else if (!simData.active) {
-            setNeighbors(prev =>
-              prev.filter(n => n.fp !== '4a9b2c8f1e7d3a01' && n.fp !== '8f2e1a3b5c7d9e02'),
-            );
+          } else {
+            setClusterPeers([]);
+            setNeighbors(prev => prev.filter(n => !n.fp.startsWith('4a9b') && !n.fp.startsWith('8f2e')));
           }
         }
 
@@ -572,7 +569,19 @@ export function App(): React.JSX.Element {
               setMessages(prev => {
                 const existingIds = new Set(prev.map(m => m.message_id));
                 const newIncoming = data.messages
-                  .filter((m: any) => !existingIds.has(m.id))
+                  .filter((m: any) => {
+                    if (existingIds.has(m.id)) return false;
+                    // Deduplicate if a message with identical content & sender was received within 5 seconds
+                    const isDuplicate = prev.some(
+                      p =>
+                        p.content === m.content &&
+                        p.sender_fp === m.senderFp &&
+                        Math.abs(
+                          new Date(p.created_at).getTime() - new Date(m.timestamp || 0).getTime(),
+                        ) < 5000,
+                    );
+                    return !isDuplicate;
+                  })
                   .map((m: any) => ({
                     message_id: m.id,
                     conversation_id: m.conversationId || activeClusterId,
@@ -683,9 +692,13 @@ export function App(): React.JSX.Element {
               {currentTab === 'nearby' && (
                 <NearbyScreen
                   neighbors={neighbors}
+                  peers={clusterPeers}
                   clusters={clusters}
                   yourClusterId={clusters[0]?.cluster_id || null}
-                  onSelectPeer={_fp => {}}
+                  onSelectPeer={_fp => {
+                    setActiveChatChannelId(clusters[0]?.cluster_id || 'cl_pune_ghats_01');
+                    setCurrentTab('chat');
+                  }}
                 />
               )}
 
@@ -695,6 +708,7 @@ export function App(): React.JSX.Element {
                   activeChannelId={activeChatChannelId}
                   assignedTeam={assignedTeam}
                   neighbors={neighbors}
+                  peers={clusterPeers}
                   onSelectChannel={ch => setActiveChatChannelId(ch)}
                   onSendMessage={handleSendMessage}
                 />
@@ -706,10 +720,25 @@ export function App(): React.JSX.Element {
                   hasOfflineMapPack={mapManager.hasAnyMapDownloaded()}
                   activeClusters={clusters}
                   neighbors={neighbors}
+                  peers={clusterPeers}
                   activeRegion={
                     mapManager.getActiveDownloadedRegion() || mapManager.getActiveRegion()
                   }
+                  userLocation={
+                    myLastSosLocation || {
+                      lat: (mapManager.getActiveDownloadedRegion() || mapManager.getActiveRegion())
+                        .centerLat,
+                      lon: (mapManager.getActiveDownloadedRegion() || mapManager.getActiveRegion())
+                        .centerLon,
+                    }
+                  }
                   onOpenDownloadModal={() => setShowMapDownloadModal(true)}
+                  onNavigateToChat={convId => {
+                    if (convId) {
+                      setActiveChatChannelId(convId);
+                    }
+                    setCurrentTab('chat');
+                  }}
                 />
               )}
 
@@ -737,8 +766,7 @@ export function App(): React.JSX.Element {
           />
         )}
 
-        {/* Consent Modal */}
-        <ConsentModal visible={showConsentModal} onConsentGiven={handleConsentGiven} />
+        {/* Consent Modal removed: directly open app */}
 
         {/* Permission Onboarding Modal */}
         <PermissionWizardModal

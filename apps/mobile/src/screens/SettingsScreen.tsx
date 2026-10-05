@@ -167,7 +167,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({
       <View style={styles.sectionCard}>
         <Text style={styles.sectionLabel}>DEVICE IDENTITY & KEYPAIR</Text>
         <Text style={styles.identityFingerprint}>
-          {identity ? `Root Origin FP: ${identity.originFp}` : 'Root Origin FP: 4a9b2c8f1e7d3a01'}
+          {identity ? `Root Origin FP: ${identity.originFp}` : 'Root Origin FP: Generating...'}
         </Text>
         <Text style={styles.identityAlgorithm}>
           Ed25519 Signatures • X25519 Key Exchange • Rotating Ephemeral BLE MACs

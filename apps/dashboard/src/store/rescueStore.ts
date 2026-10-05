@@ -163,9 +163,15 @@ export const useRescueStore = create<RescueState>((set, get) => ({
 
   assignTeam: (sosId, teamName) => {
     set(state => {
-      const updatedSos = state.sosList.map(s =>
-        s.id === sosId ? { ...s, assignedTeam: teamName, status: 'Assigned' as const } : s,
-      );
+      const updatedSos = state.sosList.map(s => {
+        if (s.id === sosId) {
+          return { ...s, assignedTeam: teamName, status: 'Assigned' as const };
+        }
+        if (s.assignedTeam === teamName && s.status !== 'Resolved') {
+          return { ...s, assignedTeam: null, status: 'Pending' as const };
+        }
+        return s;
+      });
 
       const updatedTeams = state.teams.map(t =>
         t.name === teamName ? { ...t, status: 'Deployed' as const, currentSosId: sosId } : t,
@@ -215,19 +221,9 @@ export const useRescueStore = create<RescueState>((set, get) => ({
         }
       }
 
-      const dispatchChat: ChatMessage = {
-        id: `msg_disp_${Date.now()}`,
-        sender: 'rescuer',
-        senderName: teamName,
-        text: `🚨 ${teamName} assigned & deployed to incident ${sosId}. Rescuers en route.`,
-        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-        target: 'rescuer',
-      };
-
       return {
         sosList: updatedSos,
         teams: updatedTeams,
-        rescuerMessages: [...state.rescuerMessages, dispatchChat],
       };
     });
   },
@@ -301,9 +297,9 @@ export const useRescueStore = create<RescueState>((set, get) => ({
 
   sendRescuerMessage: (text, senderRole) => {
     const role = senderRole || (get().currentRole === 'rescuer' ? 'rescuer' : 'dispatcher');
-    const activeSos = get().sosList.find(s => s.id === get().selectedSosId) || get().sosList[0];
+    const msgId = `msg_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`;
     const newMsg: ChatMessage = {
-      id: `msg_${Date.now()}`,
+      id: msgId,
       sender: role,
       senderName:
         role === 'rescuer'
@@ -318,45 +314,25 @@ export const useRescueStore = create<RescueState>((set, get) => ({
     set(state => ({ rescuerMessages: [...state.rescuerMessages, newMsg] }));
 
     if (typeof window !== 'undefined') {
-      // Send to fallback + dynamically discovered cluster IDs so APK receives it regardless of cluster
-      const postChat = (conversationId: string) =>
-        fetch('/v1/chat/messages', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            conversationId,
-            senderFp:
-              role === 'rescuer'
-                ? 'team_alpha'
-                : role === 'dispatcher'
-                  ? 'dispatcher_hq'
-                  : 'survivor_node',
-            senderName: newMsg.senderName,
-            senderRole: role === 'dispatcher' ? 'rescuer' : role,
-            recipientFp: 'broadcast',
-            content: text,
-          }),
-        }).catch(() => {});
-
-      // Always post to the fallback conversation and active cluster
-      postChat('cl_pune_ghats_01');
-      if (activeSos) {
-        // Also look up real backend cluster ID via the sosList notes
-        fetch('/v1/clusters')
-          .then(r => r.json())
-          .then((clusters: any[]) => {
-            clusters.forEach((c: any) => {
-              const clat = Number(c.centroid_lat ?? c.lat ?? 0);
-              const clon = Number(c.centroid_lon ?? c.lon ?? 0);
-              const dlat = Math.abs(clat - activeSos.lat);
-              const dlon = Math.abs(clon - activeSos.lon);
-              if (dlat < 0.002 && dlon < 0.002 && c.id !== 'cl_pune_ghats_01') {
-                postChat(c.id);
-              }
-            });
-          })
-          .catch(() => {});
-      }
+      // Send ONCE to chat endpoint with exact message ID (prevents duplication loops)
+      fetch('/v1/chat/messages', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id: msgId,
+          conversationId: 'cl_pune_ghats_01',
+          senderFp:
+            role === 'rescuer'
+              ? 'team_alpha'
+              : role === 'dispatcher'
+                ? 'dispatcher_hq'
+                : 'survivor_node',
+          senderName: newMsg.senderName,
+          senderRole: role === 'dispatcher' ? 'rescuer' : role,
+          recipientFp: 'broadcast',
+          content: text,
+        }),
+      }).catch(() => {});
     }
   },
 
@@ -374,14 +350,23 @@ export const useRescueStore = create<RescueState>((set, get) => ({
             const current = get().rescuerMessages;
             const currentIds = new Set(current.map(m => m.id));
             const newOnes = data.messages
-              .filter((m: any) => !currentIds.has(m.id))
+              .filter((m: any) => {
+                if (currentIds.has(m.id)) return false;
+                // Deduplicate if identical content from same sender was received within 5 seconds
+                const isDuplicateContent = current.some(
+                  c =>
+                    c.text === m.content &&
+                    (c.sender === m.senderRole || (c.sender === 'rescuer' && m.senderRole === 'rescuer')),
+                );
+                return !isDuplicateContent;
+              })
               .map((m: any) => ({
                 id: m.id,
                 sender: (m.senderRole === 'rescuer' ? 'rescuer' : 'survivor') as
                   'rescuer' | 'survivor',
                 senderName:
                   m.senderName ||
-                  (m.senderRole === 'rescuer' ? 'NDRF Rescue Team Alpha' : 'Survivor'),
+                  (m.senderRole === 'rescuer' ? 'NDRF Tactical Team Alpha' : 'Survivor'),
                 text: m.content,
                 timestamp: new Date(m.timestamp || Date.now()).toLocaleTimeString([], {
                   hour: '2-digit',
@@ -509,6 +494,16 @@ export const useRescueStore = create<RescueState>((set, get) => ({
                 }
               }
 
+              // Deduplicate cluster if a primary cluster already exists within 35 meters
+              const isDuplicateLocation = clusters.some(
+                other =>
+                  other.id === 'cl_pune_ghats_01' &&
+                  c.id !== 'cl_pune_ghats_01' &&
+                  Math.abs(Number(other.centroid_lat ?? other.lat) - lat) < 0.0006 &&
+                  Math.abs(Number(other.centroid_lon ?? other.lon) - lon) < 0.0006,
+              );
+              if (isDuplicateLocation) return;
+
               get().addSosIncident({
                 id,
                 survivorName: `${clusterName} (${c.survivor_count || members.length} survivors)`,
@@ -521,16 +516,9 @@ export const useRescueStore = create<RescueState>((set, get) => ({
                     : c.priority_score > 0.6
                       ? 'Urgent'
                       : 'Stable',
-                // If we already assigned locally and backend hasn't caught up yet, keep Assigned
-                status: isResolved
-                  ? 'Resolved'
-                  : isAssigned || preserveLocalAssignment
-                    ? 'Assigned'
-                    : 'Pending',
-                assignedTeam:
-                  assignedTeam ||
-                  (preserveLocalAssignment ? (existingLocal?.assignedTeam ?? null) : null),
-                acknowledged: isAssigned || isResolved || preserveLocalAssignment,
+                status: isResolved ? 'Resolved' : isAssigned ? 'Assigned' : 'Pending',
+                assignedTeam: isResolved ? null : assignedTeam,
+                acknowledged: isAssigned || isResolved,
                 notes: `${clusterName} • ${members.length} survivors mesh connected`,
                 clusterRadiusMeters: c.radius_m || 45,
                 clusterMembers: members,

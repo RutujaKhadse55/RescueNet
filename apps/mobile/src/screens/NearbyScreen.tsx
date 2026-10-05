@@ -5,9 +5,23 @@ import { useTranslation } from '../i18n/LanguageContext';
 import { NeighborRecord } from '../db/repositories/NeighborRepository';
 import { ClusterRecord } from '../db/repositories/ClusterRepository';
 
+export interface SurvivorPeer {
+  fp: string;
+  name: string;
+  role: 'survivor' | 'rescuer';
+  triage: 'RED' | 'YELLOW' | 'GREEN';
+  distanceMeters?: number;
+  battery: number;
+  rssi: number;
+  lat: number;
+  lon: number;
+  needs: string[];
+}
+
 interface NearbyScreenProps {
   neighbors?: NeighborRecord[];
   clusters?: ClusterRecord[];
+  peers?: SurvivorPeer[];
   yourClusterId?: string | null;
   onSelectPeer?: (fp: string) => void;
   onSelectCluster?: (clusterId: string) => void;
@@ -22,13 +36,14 @@ interface NearbyScreenProps {
 export const NearbyScreen: React.FC<NearbyScreenProps> = ({
   neighbors = [],
   clusters = [],
+  peers = [],
   yourClusterId,
   onSelectPeer,
 }) => {
   const { t } = useTranslation();
 
   const activeCluster = clusters[0];
-  const clusterIdText = yourClusterId || activeCluster?.cluster_id || 'LOCAL-MESH-01';
+  const clusterIdText = yourClusterId || activeCluster?.cluster_id;
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
@@ -49,7 +64,9 @@ export const NearbyScreen: React.FC<NearbyScreenProps> = ({
       <View style={styles.clusterBanner}>
         <View style={styles.clusterBannerLeft}>
           <Text style={styles.clusterBannerTag}>DISASTER MESH CELL</Text>
-          <Text style={styles.clusterBannerTitle}>Sector #{clusterIdText}</Text>
+          <Text style={styles.clusterBannerTitle}>
+            {clusterIdText ? `Sector #${clusterIdText}` : 'Local Emergency Mesh'}
+          </Text>
           <Text style={styles.clusterBannerLocation}>
             {activeCluster?.centroid_lat
               ? `${activeCluster.centroid_lat.toFixed(4)}° N, ${activeCluster.centroid_lon.toFixed(4)}° E • Radius ${activeCluster.radius_meters}m`
@@ -57,8 +74,8 @@ export const NearbyScreen: React.FC<NearbyScreenProps> = ({
           </Text>
         </View>
         <View style={styles.clusterBannerBadge}>
-          <Text style={styles.clusterBannerBadgeNum}>{neighbors.length + 1}</Text>
-          <Text style={styles.clusterBannerBadgeLbl}>Nodes</Text>
+          <Text style={styles.clusterBannerBadgeNum}>{neighbors.length > 0 ? neighbors.length + 1 : 1}</Text>
+          <Text style={styles.clusterBannerBadgeLbl}>{neighbors.length > 0 ? 'Nodes' : 'Host'}</Text>
         </View>
       </View>
 
@@ -69,7 +86,7 @@ export const NearbyScreen: React.FC<NearbyScreenProps> = ({
       </View>
 
       {/* List of Nearby Survivors or Empty State */}
-      {neighbors.length === 0 ? (
+      {peers.length === 0 && neighbors.length === 0 ? (
         <View style={styles.emptyStateCard}>
           <View style={styles.emptyIconCircle}>
             <Text style={styles.emptyIconText}>📡</Text>
@@ -89,22 +106,33 @@ export const NearbyScreen: React.FC<NearbyScreenProps> = ({
         </View>
       ) : (
         <View style={styles.survivorList}>
-          {neighbors.map((neighbor, idx) => {
-            const shortFp = neighbor.fp.slice(0, 8);
-            const distM = Math.max(
-              8,
-              Math.min(80, Math.round(Math.abs(neighbor.last_rssi || -70) * 0.55)),
-            );
-            const isRed = idx % 2 === 1;
-
+          {(peers.length > 0
+            ? peers
+            : neighbors.map((n, idx) => ({
+                fp: n.fp,
+                name: `Survivor Node #${n.fp.slice(0, 4)}`,
+                role: n.role,
+                triage: (idx % 2 === 1 ? 'RED' : 'YELLOW') as 'RED' | 'YELLOW',
+                distanceMeters: Math.max(
+                  8,
+                  Math.min(80, Math.round(Math.abs(n.last_rssi || -70) * 0.55)),
+                ),
+                battery: n.battery ?? 80,
+                rssi: n.last_rssi ?? -68,
+                lat: 18.5204,
+                lon: 73.8567,
+                needs: ['Emergency Assistance'],
+              }))
+          ).map(peer => {
+            const isRed = peer.triage === 'RED';
             return (
-              <View key={neighbor.fp} style={styles.survivorCard}>
+              <View key={peer.fp} style={styles.survivorCard}>
                 {/* Top Row: Name and Triage */}
                 <View style={styles.cardTopRow}>
                   <View style={styles.nameCol}>
-                    <Text style={styles.survivorName}>Survivor #{shortFp}</Text>
+                    <Text style={styles.survivorName}>{peer.name}</Text>
                     <Text style={styles.nodeFp}>
-                      Role: {neighbor.role.toUpperCase()} • Direct BLE Hop
+                      Role: {peer.role.toUpperCase()} • Same Cluster ({clusterIdText ? `#${clusterIdText}` : 'Active'})
                     </Text>
                   </View>
 
@@ -117,23 +145,36 @@ export const NearbyScreen: React.FC<NearbyScreenProps> = ({
                   </View>
                 </View>
 
-                {/* Mesh Tag */}
+                {/* Location & Needs */}
                 <View style={styles.clusterMembershipBox}>
-                  <Text style={styles.clusterMembershipLabel}>📍 MESH NODE FINGERPRINT:</Text>
-                  <Text style={styles.clusterMembershipValue}>{neighbor.fp}</Text>
+                  <Text style={styles.clusterMembershipLabel}>📍 COORDINATES & MESH FINGERPRINT:</Text>
+                  <Text style={styles.clusterMembershipValue}>
+                    {peer.lat ? `${peer.lat.toFixed(4)}° N, ${peer.lon.toFixed(4)}° E • ` : ''}
+                    {peer.fp}
+                  </Text>
+                  {peer.needs && peer.needs.length > 0 && (
+                    <Text
+                      style={[
+                        styles.clusterMembershipValue,
+                        { marginTop: 4, color: '#dc2626', fontWeight: '700' },
+                      ]}
+                    >
+                      🆘 Needs: {peer.needs.join(', ')}
+                    </Text>
+                  )}
                 </View>
 
                 {/* Telemetry Footer */}
                 <View style={styles.cardFooter}>
                   <View style={styles.telemetryGroup}>
-                    <Text style={styles.telemetryItem}>📶 ~{distM}m away</Text>
-                    <Text style={styles.telemetryItem}>🔋 {neighbor.battery ?? 80}%</Text>
-                    <Text style={styles.telemetryItem}>{neighbor.last_rssi ?? -68} dBm</Text>
+                    <Text style={styles.telemetryItem}>📶 ~{peer.distanceMeters || 30}m away</Text>
+                    <Text style={styles.telemetryItem}>🔋 {peer.battery}%</Text>
+                    <Text style={styles.telemetryItem}>{peer.rssi} dBm</Text>
                   </View>
 
                   <TouchableOpacity
                     style={styles.actionBtn}
-                    onPress={() => onSelectPeer && onSelectPeer(neighbor.fp)}
+                    onPress={() => onSelectPeer && onSelectPeer(peer.fp)}
                     activeOpacity={0.8}
                   >
                     <Text style={styles.actionBtnText}>💬 Chat</Text>

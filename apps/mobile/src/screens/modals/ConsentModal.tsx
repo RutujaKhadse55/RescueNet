@@ -4,7 +4,6 @@ import {
   View,
   Text,
   TouchableOpacity,
-  TextInput,
   ScrollView,
   StyleSheet,
   Switch,
@@ -26,10 +25,8 @@ export const ConsentModal: React.FC<ConsentModalProps> = ({ visible, onConsentGi
   const [shareGpsLocation, setShareGpsLocation] = useState(true);
   const [shareTriageStatus, setShareTriageStatus] = useState(true);
   const [shareBatteryLevel, setShareBatteryLevel] = useState(true);
-  const [enableOptionalChat, setEnableOptionalChat] = useState(false);
-  const [enableLiveLocationSharing, setEnableLiveLocationSharing] = useState(false);
-  const [optInName, setOptInName] = useState('');
-  const [optInPhone, setOptInPhone] = useState('');
+  const [enableOptionalChat] = useState(true);
+  const [enableLiveLocationSharing] = useState(true);
 
   const handleFinish = () => {
     onConsentGiven({
@@ -38,8 +35,6 @@ export const ConsentModal: React.FC<ConsentModalProps> = ({ visible, onConsentGi
       shareBatteryLevel,
       enableOptionalChat,
       enableLiveLocationSharing,
-      optInName: optInName.trim() || undefined,
-      optInPhone: optInPhone.trim() || undefined,
     });
   };
 
@@ -49,7 +44,7 @@ export const ConsentModal: React.FC<ConsentModalProps> = ({ visible, onConsentGi
         <View style={styles.header}>
           <Text style={styles.headerTitle}>{t('consent.title')}</Text>
           <View style={styles.headerRightRow}>
-            <Text style={styles.stepIndicator}>Step {currentStep} of 4</Text>
+            <Text style={styles.stepIndicator}>Step {currentStep} of 2</Text>
             <TouchableOpacity style={styles.skipHeaderBtn} onPress={handleFinish}>
               <Text style={styles.skipHeaderBtnText}>Skip ➔</Text>
             </TouchableOpacity>
@@ -81,7 +76,7 @@ export const ConsentModal: React.FC<ConsentModalProps> = ({ visible, onConsentGi
               <View style={styles.switchRow}>
                 <View style={styles.switchTextCol}>
                   <Text style={styles.switchLabel}>Share Triage Urgency</Text>
-                  <Text style={styles.switchSubtext}>Red, Yellow, Green status</Text>
+                  <Text style={styles.switchSubtext}>Red, Yellow, Green emergency status</Text>
                 </View>
                 <Switch
                   value={shareTriageStatus}
@@ -124,73 +119,6 @@ export const ConsentModal: React.FC<ConsentModalProps> = ({ visible, onConsentGi
                   X25519/ChaCha20-Poly1305.
                 </Text>
               </View>
-            </View>
-          )}
-
-          {currentStep === 3 && (
-            <View style={styles.stepCard}>
-              <View style={styles.iconCircle}>
-                <Text style={styles.stepIcon}>💬</Text>
-              </View>
-              <Text style={styles.stepTitle}>{t('consent.step3_title')}</Text>
-              <Text style={styles.stepDescription}>{t('consent.step3_body')}</Text>
-
-              <View style={styles.switchRow}>
-                <View style={styles.switchTextCol}>
-                  <Text style={styles.switchLabel}>Enable Peer-to-Peer Chat</Text>
-                  <Text style={styles.switchSubtext}>Optional messaging with nearby survivors</Text>
-                </View>
-                <Switch
-                  value={enableOptionalChat}
-                  onValueChange={setEnableOptionalChat}
-                  trackColor={{ false: colors.border, true: colors.info }}
-                  thumbColor={colors.textPrimary}
-                />
-              </View>
-
-              <View style={styles.switchRow}>
-                <View style={styles.switchTextCol}>
-                  <Text style={styles.switchLabel}>Enable Continuous Live Location</Text>
-                  <Text style={styles.switchSubtext}>Transmits location beacons periodically</Text>
-                </View>
-                <Switch
-                  value={enableLiveLocationSharing}
-                  onValueChange={setEnableLiveLocationSharing}
-                  trackColor={{ false: colors.border, true: colors.info }}
-                  thumbColor={colors.textPrimary}
-                />
-              </View>
-            </View>
-          )}
-
-          {currentStep === 4 && (
-            <View style={styles.stepCard}>
-              <View style={styles.iconCircle}>
-                <Text style={styles.stepIcon}>👤</Text>
-              </View>
-              <Text style={styles.stepTitle}>Opt-In Identity & Deletion</Text>
-              <Text style={styles.stepDescription}>{t('consent.step4_body')}</Text>
-
-              <Text style={styles.inputLabel}>{t('consent.opt_in_name')}</Text>
-              <TextInput
-                style={styles.textInput}
-                value={optInName}
-                onChangeText={setOptInName}
-                placeholder="e.g. Ramesh Patil"
-                placeholderTextColor={colors.textMuted}
-                accessibilityLabel="Optional Full Name input"
-              />
-
-              <Text style={styles.inputLabel}>{t('consent.opt_in_phone')}</Text>
-              <TextInput
-                style={styles.textInput}
-                value={optInPhone}
-                onChangeText={setOptInPhone}
-                placeholder="+91 98765 43210"
-                keyboardType="phone-pad"
-                placeholderTextColor={colors.textMuted}
-                accessibilityLabel="Optional Phone Number input"
-              />
 
               <Text style={styles.versionBadge}>{t('consent.version_label')}</Text>
             </View>
@@ -201,20 +129,20 @@ export const ConsentModal: React.FC<ConsentModalProps> = ({ visible, onConsentGi
           {currentStep > 1 && (
             <TouchableOpacity
               style={styles.secondaryButton}
-              onPress={() => setCurrentStep(s => s - 1)}
+              onPress={() => setCurrentStep(1)}
               accessibilityLabel="Previous consent step"
             >
               <Text style={styles.secondaryButtonText}>Back</Text>
             </TouchableOpacity>
           )}
 
-          {currentStep < 4 ? (
+          {currentStep === 1 ? (
             <TouchableOpacity
               style={styles.primaryButton}
-              onPress={() => setCurrentStep(s => s + 1)}
+              onPress={() => setCurrentStep(2)}
               accessibilityLabel="Continue to next consent step"
             >
-              <Text style={styles.primaryButtonText}>Continue</Text>
+              <Text style={styles.primaryButtonText}>Continue ➔</Text>
             </TouchableOpacity>
           ) : (
             <TouchableOpacity
@@ -248,28 +176,29 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     fontSize: typography.fontSizes.title,
-    fontWeight: typography.fontWeights.bold,
+    fontWeight: typography.fontWeights.heavy,
     color: colors.textPrimary,
-  },
-  stepIndicator: {
-    fontSize: typography.fontSizes.small,
-    color: colors.textSecondary,
   },
   headerRightRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
+    gap: spacing.md,
+  },
+  stepIndicator: {
+    fontSize: typography.fontSizes.caption,
+    color: colors.textSecondary,
+    fontWeight: typography.fontWeights.bold,
   },
   skipHeaderBtn: {
-    backgroundColor: '#059669',
-    paddingHorizontal: 12,
-    paddingVertical: 5,
-    borderRadius: 6,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 4,
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    borderRadius: layout.borderRadiusSm,
   },
   skipHeaderBtnText: {
-    color: '#ffffff',
-    fontSize: 12,
-    fontWeight: '800',
+    fontSize: typography.fontSizes.caption,
+    color: colors.textSecondary,
+    fontWeight: typography.fontWeights.bold,
   },
   content: {
     flex: 1,
@@ -279,42 +208,42 @@ const styles = StyleSheet.create({
   },
   stepCard: {
     backgroundColor: colors.surface,
-    borderRadius: layout.borderRadiusLg,
-    padding: spacing.xl,
     borderWidth: 1,
     borderColor: colors.border,
+    borderRadius: layout.borderRadiusLg,
+    padding: spacing.xl,
   },
   iconCircle: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    backgroundColor: colors.surfaceElevated,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: 'rgba(37, 99, 235, 0.12)',
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: spacing.lg,
+    marginBottom: spacing.md,
   },
   stepIcon: {
     fontSize: 28,
   },
   stepTitle: {
     fontSize: typography.fontSizes.headline,
-    fontWeight: typography.fontWeights.bold,
+    fontWeight: typography.fontWeights.heavy,
     color: colors.textPrimary,
-    marginBottom: spacing.sm,
+    marginBottom: spacing.xs,
   },
   stepDescription: {
     fontSize: typography.fontSizes.body,
     color: colors.textSecondary,
-    lineHeight: 22,
+    lineHeight: 20,
     marginBottom: spacing.xl,
   },
   switchRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
+    justifyContent: 'space-between',
     paddingVertical: spacing.md,
-    borderTopWidth: 1,
-    borderTopColor: colors.border,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
   },
   switchTextCol: {
     flex: 1,
@@ -322,26 +251,26 @@ const styles = StyleSheet.create({
   },
   switchLabel: {
     fontSize: typography.fontSizes.body,
-    fontWeight: typography.fontWeights.semibold,
+    fontWeight: typography.fontWeights.bold,
     color: colors.textPrimary,
+    marginBottom: 2,
   },
   switchSubtext: {
-    fontSize: typography.fontSizes.caption,
+    fontSize: typography.fontSizes.small,
     color: colors.textMuted,
-    marginTop: 2,
   },
   infoBox: {
-    backgroundColor: colors.surfaceElevated,
+    backgroundColor: 'rgba(37, 99, 235, 0.08)',
+    borderWidth: 1,
+    borderColor: colors.info,
     borderRadius: layout.borderRadiusMd,
-    padding: spacing.lg,
-    borderLeftWidth: 4,
-    borderLeftColor: colors.info,
-    marginTop: spacing.md,
+    padding: spacing.md,
+    marginBottom: spacing.md,
   },
   infoTitle: {
     fontSize: typography.fontSizes.body,
     fontWeight: typography.fontWeights.bold,
-    color: colors.textPrimary,
+    color: colors.info,
     marginBottom: 4,
   },
   infoText: {
@@ -349,69 +278,48 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
     lineHeight: 18,
   },
-  inputLabel: {
-    fontSize: typography.fontSizes.small,
-    fontWeight: typography.fontWeights.semibold,
-    color: colors.textSecondary,
-    marginBottom: spacing.xs,
-    marginTop: spacing.md,
-  },
-  textInput: {
-    backgroundColor: colors.surfaceElevated,
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: layout.borderRadiusMd,
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.md,
-    color: colors.textPrimary,
-    fontSize: typography.fontSizes.body,
-    minHeight: layout.minTouchSize,
-  },
   versionBadge: {
-    fontSize: typography.fontSizes.caption,
+    fontSize: 10,
     color: colors.textMuted,
-    textAlign: 'center',
-    marginTop: spacing.xxl,
+    marginTop: spacing.md,
+    fontStyle: 'italic',
   },
   footer: {
-    paddingHorizontal: spacing.xl,
-    paddingTop: spacing.md,
-    paddingBottom: 48,
+    padding: spacing.xl,
     borderTopWidth: 1,
     borderTopColor: colors.border,
     flexDirection: 'row',
-    justifyContent: 'space-between',
     gap: spacing.md,
-    backgroundColor: colors.surface,
   },
   secondaryButton: {
     flex: 1,
-    height: layout.minTouchSize,
+    paddingVertical: spacing.md,
+    alignItems: 'center',
+    justifyContent: 'center',
     borderRadius: layout.borderRadiusMd,
     borderWidth: 1,
     borderColor: colors.border,
-    alignItems: 'center',
-    justifyContent: 'center',
+    backgroundColor: 'transparent',
   },
   secondaryButtonText: {
-    color: colors.textPrimary,
-    fontWeight: typography.fontWeights.semibold,
     fontSize: typography.fontSizes.body,
+    color: colors.textSecondary,
+    fontWeight: typography.fontWeights.bold,
   },
   primaryButton: {
     flex: 2,
-    height: layout.minTouchSize,
-    borderRadius: layout.borderRadiusMd,
-    backgroundColor: colors.info,
+    paddingVertical: spacing.md,
     alignItems: 'center',
     justifyContent: 'center',
+    borderRadius: layout.borderRadiusMd,
+    backgroundColor: colors.info,
   },
   agreeButton: {
     backgroundColor: colors.success,
   },
   primaryButtonText: {
-    color: colors.textPrimary,
-    fontWeight: typography.fontWeights.bold,
     fontSize: typography.fontSizes.body,
+    color: '#ffffff',
+    fontWeight: typography.fontWeights.heavy,
   },
 });

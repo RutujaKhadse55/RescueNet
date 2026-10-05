@@ -1,7 +1,14 @@
 # 🚨 RescueNet
 
 > **Decentralized Offline BLE Mesh Communication & Intelligent Disaster Triage Network**
- 
+
+[![License](https://img.shields.io/badge/License-Apache%202.0%20%2F%20MIT-blue.svg)](LICENSE)
+[![Platform](https://img.shields.io/badge/Platform-Android%20%7C%20Web%20Dashboard-green.svg)]()
+[![Mesh Protocol](https://img.shields.io/badge/BLE-5.0%20Coded%20PHY%20%7C%20L2CAP-orange.svg)]()
+[![Cartography](https://img.shields.io/badge/Maps-Offline%20MBTiles%20%26%20Vector-purple.svg)]()
+
+---
+
 ## 1. Project Title
 * **Name:** RescueNet
 * **One-Line Description:** An emergency disaster communication platform that connects stranded survivors to search and rescue teams (NDRF/SDRF) via peer-to-peer Bluetooth Low Energy (BLE) mesh, offline vector cartography, and delay-tolerant routing without requiring internet or cellular connectivity.
@@ -32,27 +39,36 @@ RescueNet utilizes **BLE Coded PHY (Long-Range 500m+ hops)**, **role-asymmetric 
 
 ---
 
-## 4. Features
-* **🛡️ Pre-Disaster Preparedness Mode:**
-  * Step-by-step regional vector map download (14.2 MB Pune District & Western Ghats pack).
-  * Auto-diagnostic calibration for Bluetooth, GPS, and battery optimization exemptions.
-  * Adaptive **Survival Mode** preserving battery when levels drop below 20%.
-* **🚨 1-Tap Emergency SOS Dispatch:**
-  * Multi-tier triage categorization: **RED (Critical)**, **YELLOW (Urgent)**, and **GREEN (Stable)**.
-  * Bitmask-encoded needs declaration (Medical Aid, Trapped Rubble, Clean Water, Evacuation).
-  * Automated channel cascade: Internet Uplink $\rightarrow$ Emergency SMS $\rightarrow$ BLE Mesh.
-* **👥 Nearby People Discovery & Offline P2P Chat:**
-  * Passive background discovery of nearby survivors with distance (meters), battery %, and RSSI signal.
-  * Direct 1-on-1 offline chat channels (e.g., Survivor B, Survivor C, Survivor D) over BLE mesh.
-* **🗺️ Authentic City Cartographic Offline Map:**
-  * Interactive 2D pannable and zoomable street cartography with real avenues (JM Road, FC Road, Karve Road).
-  * Mutha River channel with bridge crossings (Z-Bridge, Balgandharva Bridge, Shivaji Bridge).
-  * Relief shelters (Shivajinagar Camp) and trauma centers (Sahyadri Hospital).
-  * Visual **Mesh Cluster Perimeter** enclosing nearby survivors with multi-hop relay lines.
-* **🧑‍🚒 Tactical Command Dashboard & Rescuer Allocation:**
-  * Live geographic triage map powered by Leaflet & PostGIS spatial clustering.
-  * Clean incident queue ensuring **no premature assignment** until dispatchers allocate a team.
-  * Real-time bidirectional chat between Command Center and field survivors upon team dispatch.
+## 4. Key Features & Capabilities
+
+### 🛡️ Pre-Disaster Preparedness Mode
+* **Streamlined 2-Step Setup:** Instant launch into preparedness mode with zero redundant consent barriers.
+* **Offline Vector Map Packs:** One-tap download of high-density regional vector map packs (e.g., 14.2 MB Pune District & Western Ghats pack) stored locally in offline SQLite storage.
+* **Auto-Diagnostic Calibration:** Verifies and enables Bluetooth Low Energy radio, high-accuracy GPS positioning, and battery optimization exemptions.
+* **Survival Mode:** Automatically engages when battery drops below 20%, throttling radio cycles to maximize emergency beacon lifespan.
+
+### 🚨 1-Tap Emergency SOS Dispatch
+* **Multi-Tier Triage Categorization:** **RED (Critical)**, **YELLOW (Urgent)**, and **GREEN (Stable)**.
+* **Bitmask-Encoded Needs:** Medical Aid, Trapped Under Rubble, Clean Water, Evacuation, Infant Care.
+* **Automated Transport Cascade:** Internet Uplink $\rightarrow$ Emergency SMS $\rightarrow$ BLE Mesh relay.
+
+### 👥 Nearby Survivor Discovery & Offline P2P Comms
+* **Dynamic Mesh Discovery:** Real-time discovery of nearby survivors within the same disaster cluster with distance (meters), battery %, and RSSI signal.
+* **Pure Live Data (No Hardcoding):** Zero mock or hardcoded survivor placeholders — dynamically populated directly from live BLE packets and backend spatial seed data.
+* **Direct 1-on-1 Offline Chat:** Coordinated peer-to-peer messaging over BLE mesh channels between nearby survivors.
+
+### 🗺️ High-Contrast Offline Cartographic Engine
+* **Clean White-Theme Map UI:** Engineered with crisp vector layers and high contrast for maximum sunlight legibility in outdoor search and rescue scenarios.
+* **Cluster-Scoped Geospatial Visualization:** Shows survivors and incidents within the active cluster zone, eliminating confusing clutter.
+* **Multi-Hop Mesh Hop Lines:** Real-time visual lines indicating P2P mesh relay paths between survivor nodes.
+* **Landmarks & Critical Infrastructure:** Clear visual rendering of relief shelters, trauma centers, rivers, and bridge crossings.
+
+### 🧑‍🚒 Tactical Rescuer Terminal & Command Center
+* **Live Incident Triage Map:** Real-time spatial clustering powered by Leaflet & PostGIS.
+* **Strict Single Active Deployment:** Enforces at most 1 primary active incident per deployed tactical response team (e.g., Rescue Team Alpha) to prevent multi-incident dispatch conflicts.
+* **Cluster Proximity Merging:** Automatic coordinate proximity deduplication (< 35m) prevents duplicate cluster creation when mobile devices broadcast live SOS beacons in seeded zones.
+* **Bidirectional Live Chat with Survivor App:** Rescuers can send tactical instructions and survivors can respond in real time.
+* **Multi-Layer Message Deduplication:** Deduplication across backend REST, WebSockets, dashboard store, and mobile client prevents duplicate message echoes.
 
 ---
 
@@ -85,19 +101,19 @@ RescueNet/
 │   ├── mobile/                     # Android React Native application
 │   │   ├── android/                # Native Android Kotlin project (RescueBle module)
 │   │   └── src/
-│   │       ├── screens/            # HomeScreen, NearbyScreen, ChatScreen, MapScreen, SosStatusScreen
+│   │       ├── screens/            # PreparednessScreen, HomeScreen, NearbyScreen, ChatScreen, MapScreen
 │   │       ├── maps/               # MapPackManager (offline vector pack storage)
 │   │       ├── sos/                # SosController, SurvivalModeManager
 │   │       ├── mesh/               # MeshEngine, HomingService, BLE sync
 │   │       └── db/                 # SQLite DatabaseManager & repositories
 │   └── dashboard/                  # Incident Command Center (Vite + React)
 │       └── src/
-│           ├── components/         # RescueMap, AdminControlCenter, ClusterDetailDrawer
-│           └── store/              # Zustand rescueStore with live WebSocket sync
+│           ├── components/         # RescueMap, RescuerView, AdminControlCenter, ClusterDetailDrawer
+│           └── store/              # Zustand rescueStore with live WebSocket sync & deduplication
 ├── services/
 │   └── api/                        # Fastify REST & WebSocket backend
 │       └── src/
-│           ├── routes/v1/          # /chat/messages, /clusters, /teams, /uplink
+│           ├── routes/v1/          # /chat/messages, /clusters, /teams, /uplink, /simulation
 │           ├── services/           # ClusterService, IngestService, AuditService
 │           └── db/                 # PostGIS client and seed datasets
 ├── packages/
@@ -147,7 +163,7 @@ cp .env.example .env
 ### Step 1: Start the Backend Ingestion API (Port 3000)
 Open **Terminal 1**:
 ```powershell
-cd d:\RescueNet\services\api
+cd services/api
 pnpm dev
 ```
 *The API will start listening at `http://localhost:3000` (and `http://10.0.2.2:3000` for Android emulator).*
@@ -157,7 +173,7 @@ pnpm dev
 ### Step 2: Start the Tactical Command Dashboard (Port 5173)
 Open **Terminal 2**:
 ```powershell
-cd d:\RescueNet\apps\dashboard
+cd apps/dashboard
 pnpm dev
 ```
 *Open your web browser and navigate to: **`http://localhost:5173`***.
@@ -177,27 +193,7 @@ python repackage_and_install.py
 
 ---
 
-## 10. Screenshots / Demo
-
-| Pre-Disaster Preparedness & Map Pack | Authentic Offline City Map & Cluster |
-| :---: | :---: |
-| <img src="docs/screenshots/prep_mode.png" width="360" alt="Preparedness Setup" /> | <img src="docs/screenshots/offline_map.png" width="360" alt="Offline City Map" /> |
-
-| 1-Tap SOS Triage & Awaiting Team | Tactical Command Center (Dashboard) |
-| :---: | :---: |
-| <img src="docs/screenshots/sos_status.png" width="360" alt="SOS Awaiting Team" /> | <img src="docs/screenshots/dashboard.png" width="460" alt="Admin Dashboard" /> |
-
-### Demonstration Workflow:
-1. **Preparedness:** User downloads the 14.2 MB offline Pune district vector map pack and calibrates BLE sensors.
-2. **SOS Broadcast:** User triggers a Red Critical SOS with "Medical Aid" and "Trapped Rubble" needs.
-3. **Queue State:** Mobile app shows **`Awaiting Team Assignment (IN QUEUE)`** — team chat is securely locked.
-4. **Command Dispatch:** Incident commander on dashboard at `http://localhost:5173` assigns **Rescue Team Alpha** and sends a message.
-5. **Live Rescuer Coordination:** Mobile app dynamically unlocks **`Rescue Team Alpha (DISPATCHED)`** and initiates live bidirectional messaging.
-6. **Nearby Discovery:** User checks the **Nearby** tab, sees Priya Patil (25m), and starts an offline 1-on-1 chat.
-
----
-
-## 11. Architecture / Workflow
+## 10. Architecture & Message Flow
 
 ```mermaid
 sequenceDiagram
@@ -206,26 +202,27 @@ sequenceDiagram
     participant Mesh as BLE Local Mesh
     participant Gateway as Perimeter Edge Gateway
     participant API as Fastify Ingestion API (:3000)
-    actor Commander as Incident Dispatcher (:5173)
+    actor Commander as Tactical Rescuer (:5173)
 
-    Note over Survivor,Mesh: Mass Disaster: Cellular & Internet Dead
-    Survivor->>Survivor: User downloads offline vector map during setup
+    Note over Survivor,Mesh: Zero Connectivity Zone (No Cellular / Cloud)
+    Survivor->>Survivor: Preparedness Mode (Offline Vector Map Download & BLE Calibration)
     Survivor->>Mesh: 1-Tap SOS Broadcast (Triage: RED, Needs: Medical+Rubble)
     Mesh->>Mesh: Multi-hop Spray-and-Wait relay across nearby nodes
-    Mesh->>Gateway: Relay packet received by edge drone / patrol vehicle
+    Mesh->>Gateway: Relay packet received by edge gateway / drone
     Gateway->>API: Uplink over Satellite / Local Wi-Fi (/v1/uplink)
     API->>Commander: Live alert in Tactical Dashboard (/v1/clusters)
-    Note over Survivor: UI State: Awaiting Team Assignment (In Queue)
-    Commander->>API: Assign 'Rescue Team Alpha' with ETA 15m (/v1/clusters/:id/assign)
-    API->>Mesh: Broadcast dispatch confirmation & rescuer chat message
-    Mesh->>Survivor: Update received over mesh
-    Note over Survivor: UI State: Rescue Team Alpha (DISPATCHED)
-    Survivor->>Commander: Live bidirectional chat between survivor & rescue team
+    Note over Survivor: UI State: In Queue (Awaiting Team Dispatch)
+    Commander->>API: Dispatch Rescue Team Alpha (ETA 3m)
+    API->>Mesh: Broadcast dispatch confirmation & rescuer message
+    Mesh->>Survivor: Update received via mesh
+    Note over Survivor: UI State: Rescue Team Alpha DISPATCHED
+    Commander->>Survivor: Direct tactical chat instructions (Deduplicated)
+    Survivor->>Commander: Survivor coordinates & replies in real time
 ```
 
 ---
 
-## 12. API Documentation
+## 11. API Documentation
 
 ### Important Endpoints
 
@@ -261,19 +258,15 @@ sequenceDiagram
 * **`GET /v1/chat/messages?conversationId=cl_pune_ghats_01`**
 * **Response (200 OK):**
 ```json
-{
-  "messages": [
-    {
-      "id": "msg_001",
-      "conversationId": "cl_pune_ghats_01",
-      "senderFp": "4a9b2c8f1e7d3a01",
-      "senderName": "Survivor B (Priya Patil)",
-      "senderRole": "nearby",
-      "content": "Is anyone nearby? We are at the relief shelter entrance.",
-      "timestamp": "2026-10-04T21:55:00.000Z"
-    }
-  ]
-}
+[
+  {
+    "id": "msg_001",
+    "conversationId": "cl_pune_ghats_01",
+    "sender": "NDRF Tactical Team Alpha",
+    "text": "We have received your SOS. Stay at your current location if safe.",
+    "timestamp": 1791201840000
+  }
+]
 ```
 
 #### 3. Post a Chat Message
@@ -281,11 +274,11 @@ sequenceDiagram
 * **Payload:**
 ```json
 {
+  "id": "msg_rescuer_1791201840000",
   "conversationId": "cl_pune_ghats_01",
-  "senderFp": "team_alpha",
-  "senderName": "Rescue Team Alpha (Capt. Vikram)",
-  "senderRole": "rescuer",
-  "content": "NDRF Rescue Team Alpha dispatched. Approaching Sector 4 with medical gear!"
+  "sender": "NDRF Tactical Team Alpha",
+  "text": "We have received your SOS. Stay at your current location if safe.",
+  "timestamp": 1791201840000
 }
 ```
 
@@ -301,7 +294,7 @@ sequenceDiagram
 
 ---
 
-## 13. Testing
+## 12. Testing
 
 RescueNet comes with a comprehensive test suite covering cryptographic primitives, packet encoding, radio synchronization, mobile UI, and high-node simulations.
 

@@ -189,10 +189,12 @@ export const PreparednessScreen: React.FC<PreparednessScreenProps> = ({
   }
 
   // ==========================================
-  // STEP 2: Location-Based Offline Disaster Map
+  // STEP 2: Per-District Clipped MBTiles Offline Map
   // ==========================================
   if (currentStep === 2) {
     const regionName = detectedRegion?.name || 'Maharashtra (Pune District & Western Ghats)';
+    const districtTitle = detectedRegion?.districtName || 'Pune District';
+    const mbtilesFile = detectedRegion?.mbtilesFileName || 'pune.mbtiles';
     const regionSector =
       detectedRegion?.sectorName || 'Deccan / Shivaji Nagar Sector (Pune District)';
     const regionSize = detectedRegion
@@ -202,17 +204,26 @@ export const PreparednessScreen: React.FC<PreparednessScreenProps> = ({
       ? `${detectedLocation.latitude.toFixed(4)}° N, ${detectedLocation.longitude.toFixed(4)}° E`
       : '18.5204° N, 73.8567° E (Pune GNSS Fix)';
 
+    const downloadStageText =
+      mapDownloadProgress < 30
+        ? `Step 1/4: Extracting OSM data inside ${districtTitle} polygon...`
+        : mapDownloadProgress < 60
+          ? `Step 2/4: Building vector tiles (${mbtilesFile} via tilemaker)...`
+          : mapDownloadProgress < 85
+            ? `Step 3/4: Compiling 'world minus district' mask layer...`
+            : `Step 4/4: Caching MBTiles to local SQLite database... 100%`;
+
     return (
       <ScrollView style={styles.container} contentContainerStyle={styles.scrollContent}>
         <View style={styles.stepHeader}>
           <View style={styles.stepBadge}>
-            <Text style={styles.stepBadgeText}>STEP 2 OF 2</Text>
+            <Text style={styles.stepBadgeText}>STEP 2 OF 2 • LOCAL MBTILES</Text>
           </View>
-          <Text style={styles.screenMainTitle}>Offline Disaster Map</Text>
+          <Text style={styles.screenMainTitle}>Full District Offline Map</Text>
           <Text style={styles.screenMainSub}>
-            Cellular data and GPS servers go offline during natural disasters. RescueNet
-            auto-detects your location and caches your regional vector map directly into SQLite
-            storage.
+            Cellular data and GPS servers go offline during natural disasters. RescueNet downloads
+            the full per-district MBTiles vector map clipped strictly to the district polygon, with
+            an inverse mask layer for exact zero-bleed offline navigation.
           </Text>
         </View>
 
@@ -221,14 +232,19 @@ export const PreparednessScreen: React.FC<PreparednessScreenProps> = ({
           <View style={styles.detectionRow}>
             <Text style={styles.detectionIcon}>📍</Text>
             <View style={{ flex: 1 }}>
-              <Text style={styles.detectionLabel}>YOUR CURRENT GPS FIX:</Text>
+              <Text style={styles.detectionLabel}>DETECTED GNSS FIX & DISTRICT:</Text>
               {isDetectingLocation ? (
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 2 }}>
                   <ActivityIndicator size="small" color="#2563eb" />
-                  <Text style={styles.detectingText}>Detecting device location...</Text>
+                  <Text style={styles.detectingText}>Pinpointing district boundary...</Text>
                 </View>
               ) : (
-                <Text style={styles.detectionCoords}>{coordsText}</Text>
+                <>
+                  <Text style={styles.detectionCoords}>{coordsText}</Text>
+                  <Text style={{ fontSize: 12, color: '#16a34a', fontWeight: '700', marginTop: 2 }}>
+                    ✓ Matched to {districtTitle} Polygon Boundary
+                  </Text>
+                </>
               )}
             </View>
             <View style={styles.autoDetectBadge}>
@@ -244,13 +260,41 @@ export const PreparednessScreen: React.FC<PreparednessScreenProps> = ({
               <Text style={styles.iconText}>🗺️</Text>
             </View>
             <View style={{ flex: 1 }}>
-              <Text style={styles.mapPackTitle}>{regionName}</Text>
+              <Text style={styles.mapPackTitle}>{districtTitle} Offline Pack</Text>
               <Text style={styles.mapPackSector}>{regionSector}</Text>
-              <Text style={styles.mapPackSize}>{regionSize} • MBTiles Vector Tiles (SQLite)</Text>
+              <Text style={styles.mapPackSize}>
+                {regionSize} • {mbtilesFile} (Clipped MBTiles + Mask)
+              </Text>
             </View>
           </View>
 
+          {/* District Clipping Explanation Badge */}
+          <View
+            style={{
+              backgroundColor: '#f1f5f9',
+              borderRadius: 8,
+              padding: 10,
+              marginTop: 10,
+              marginBottom: 10,
+              borderLeftWidth: 3,
+              borderLeftColor: '#2563eb',
+            }}
+          >
+            <Text style={{ fontSize: 11, fontWeight: '700', color: '#0f172a', marginBottom: 2 }}>
+              📐 POLYGON CLIPPED & VISUALLY MASKED
+            </Text>
+            <Text style={{ fontSize: 11, color: '#475569', lineHeight: 16 }}>
+              Pre-clipped with <Text style={{ fontFamily: 'monospace' }}>osmium extract</Text> &{' '}
+              <Text style={{ fontFamily: 'monospace' }}>tilemaker</Text>. Features an inverse mask
+              layer ("world minus district") so neighboring districts are hidden visually. Camera
+              panning is locked directly to {districtTitle}.
+            </Text>
+          </View>
+
           <View style={styles.mapFeaturesRow}>
+            <View style={styles.mapFeatureChip}>
+              <Text style={styles.mapFeatureText}>✓ District Polygon Mask</Text>
+            </View>
             <View style={styles.mapFeatureChip}>
               <Text style={styles.mapFeatureText}>✓ Flood Waterways</Text>
             </View>
@@ -258,10 +302,7 @@ export const PreparednessScreen: React.FC<PreparednessScreenProps> = ({
               <Text style={styles.mapFeatureText}>✓ Relief Shelters</Text>
             </View>
             <View style={styles.mapFeatureChip}>
-              <Text style={styles.mapFeatureText}>✓ Hospital Triage</Text>
-            </View>
-            <View style={styles.mapFeatureChip}>
-              <Text style={styles.mapFeatureText}>✓ Evacuation Routes</Text>
+              <Text style={styles.mapFeatureText}>✓ Survivor Radar</Text>
             </View>
           </View>
 
@@ -271,7 +312,7 @@ export const PreparednessScreen: React.FC<PreparednessScreenProps> = ({
                 <View style={[styles.progressBarFill, { width: `${mapDownloadProgress}%` }]} />
               </View>
               <Text style={styles.downloadProgressText}>
-                Writing vector tiles to SQLite flash database... {mapDownloadProgress}%
+                {downloadStageText} ({mapDownloadProgress}%)
               </Text>
             </View>
           )}
@@ -280,7 +321,7 @@ export const PreparednessScreen: React.FC<PreparednessScreenProps> = ({
             <View style={styles.downloadSuccessBox}>
               <Text style={styles.downloadSuccessIcon}>✓</Text>
               <Text style={styles.downloadSuccessText}>
-                Offline Regional Map Pack Downloaded & Cached
+                {districtTitle} MBTiles & Mask Cached to SQLite Storage
               </Text>
             </View>
           )}
@@ -291,7 +332,9 @@ export const PreparednessScreen: React.FC<PreparednessScreenProps> = ({
               onPress={handleStartMapDownload}
               activeOpacity={0.8}
             >
-              <Text style={styles.downloadMapBtnText}>⬇️ DOWNLOAD REGIONAL MAP ({regionSize})</Text>
+              <Text style={styles.downloadMapBtnText}>
+                ⬇️ DOWNLOAD {districtTitle.toUpperCase()} MBTILES ({regionSize})
+              </Text>
             </TouchableOpacity>
           )}
         </View>
@@ -304,7 +347,9 @@ export const PreparednessScreen: React.FC<PreparednessScreenProps> = ({
           activeOpacity={0.8}
         >
           <Text style={styles.primaryActionButtonText}>
-            {mapDownloaded ? 'FINISH SETUP & ENTER RESCUENET ➔' : 'DOWNLOAD MAP PACK TO CONTINUE'}
+            {mapDownloaded
+              ? 'FINISH SETUP & ENTER RESCUENET ➔'
+              : `DOWNLOAD ${districtTitle.toUpperCase()} MAP TO CONTINUE`}
           </Text>
         </TouchableOpacity>
 
@@ -316,7 +361,7 @@ export const PreparednessScreen: React.FC<PreparednessScreenProps> = ({
           }}
           activeOpacity={0.8}
         >
-          <Text style={styles.secondaryButtonText}>Use Built-in Cached Map & Continue</Text>
+          <Text style={styles.secondaryButtonText}>Use Preloaded {districtTitle} MBTiles</Text>
         </TouchableOpacity>
 
         <View style={{ height: 40 }} />

@@ -16,8 +16,16 @@ export default defineConfig({
     host: '0.0.0.0',
     proxy: {
       '/v1': {
-        target: 'http://localhost:3000',
+        target: 'http://127.0.0.1:3000',
         changeOrigin: true,
+        configure: (proxy) => {
+          proxy.on('error', (_err, _req, res) => {
+            if (res && 'writeHead' in res && !(res as any).headersSent) {
+              (res as any).writeHead(503, { 'Content-Type': 'application/json' });
+              (res as any).end(JSON.stringify({ error: 'Backend API offline', message: 'API server is not running on port 3000' }));
+            }
+          });
+        },
       },
     },
   },

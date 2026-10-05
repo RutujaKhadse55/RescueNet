@@ -47,27 +47,17 @@ export const RescueMap: React.FC = () => {
       zoomControl: false,
     });
 
-    // Dark-themed tile layer with configurable API key / tile server
-    const mapsApiKey = import.meta.env.VITE_MAPS_API_KEY;
+    // Standard OpenStreetMap tiles (100% free, zero API key required)
     const customTileUrl = import.meta.env.VITE_MAP_TILE_URL;
-    let tileUrl = customTileUrl || 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png';
-    if (mapsApiKey) {
-      if (tileUrl.includes('{apiKey}')) {
-        tileUrl = tileUrl.replace('{apiKey}', mapsApiKey);
-      } else if (!tileUrl.includes('api_key=') && !tileUrl.includes('key=')) {
-        tileUrl += (tileUrl.includes('?') ? '&' : '?') + `api_key=${mapsApiKey}`;
-      }
-    }
+    const tileUrl = customTileUrl || 'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
 
     const tileLayer = L.tileLayer(tileUrl, {
-      attribution: '&copy; OpenStreetMap contributors &copy; CARTO',
-      subdomains: 'abcd',
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
       maxZoom: 19,
     });
 
-    // Auto-fallback to OpenStreetMap if Carto tile fails or network blocks dark tiles
     tileLayer.on('tileerror', () => {
-      tileLayer.setUrl('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png');
+      tileLayer.setUrl('https://services.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}');
     });
     tileLayer.addTo(map);
 

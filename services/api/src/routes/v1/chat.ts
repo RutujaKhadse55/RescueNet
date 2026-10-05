@@ -34,6 +34,19 @@ export async function chatRoutes(server: FastifyInstance) {
       }>,
       reply: FastifyReply,
     ) => {
+      // Deduplicate messagesStore by content + sender within 5 seconds
+      const uniqueMessages: ChatMessageDto[] = [];
+      const seen = new Set<string>();
+      for (const m of messagesStore) {
+        const timeKey = Math.floor(new Date(m.timestamp).getTime() / 5000);
+        const key = `${m.senderRole}_${m.content}_${timeKey}`;
+        if (!seen.has(key)) {
+          seen.add(key);
+          uniqueMessages.push(m);
+        }
+      }
+      messagesStore = uniqueMessages;
+
       const { conversationId } = req.query;
       if (conversationId && conversationId !== 'all') {
         const filtered = messagesStore.filter(
@@ -55,6 +68,7 @@ export async function chatRoutes(server: FastifyInstance) {
     async (
       req: FastifyRequest<{
         Body: {
+          id?: string;
           conversationId?: string;
           senderFp?: string;
           senderName?: string;
@@ -70,8 +84,23 @@ export async function chatRoutes(server: FastifyInstance) {
         return reply.status(400).send({ error: 'content is required' });
       }
 
+      // Deduplication check: prevent identical messages from same sender within 4 seconds
+      const isDuplicate = messagesStore.some(
+        m =>
+          (body.id && m.id === body.id) ||
+          (m.content === body.content &&
+            m.senderRole === (body.senderRole || 'survivor') &&
+            Math.abs(Date.now() - new Date(m.timestamp).getTime()) < 4000),
+      );
+      if (isDuplicate) {
+        const existing = messagesStore.find(
+          m => m.content === body.content && m.senderRole === (body.senderRole || 'survivor'),
+        );
+        return reply.status(200).send(existing || { status: 'duplicate_ignored' });
+      }
+
       const newMsg: ChatMessageDto = {
-        id: `msg_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
+        id: body.id || `msg_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
         conversationId: body.conversationId || 'cl_pune_ghats_01',
         senderFp: body.senderFp || 'survivor_node',
         senderName:

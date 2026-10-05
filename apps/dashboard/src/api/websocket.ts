@@ -102,7 +102,13 @@ class WebSocketManager {
           if (data.type === 'chat_message' && data.data) {
             const chatPayload = data.data;
             const currentMessages = useRescueStore.getState().rescuerMessages;
-            const alreadyExists = currentMessages.some(m => m.id === chatPayload.id);
+            const alreadyExists = currentMessages.some(
+              (m: any) =>
+                m.id === chatPayload.id ||
+                (m.text === chatPayload.content &&
+                  (m.sender === chatPayload.senderRole ||
+                    (m.sender === 'rescuer' && chatPayload.senderRole === 'rescuer'))),
+            );
             if (!alreadyExists && chatPayload.content) {
               const newMsg = {
                 id: chatPayload.id || `msg_${Date.now()}`,

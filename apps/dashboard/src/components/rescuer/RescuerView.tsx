@@ -36,9 +36,18 @@ export const RescuerView: React.FC = () => {
   } = useRescueStore();
 
   const myTeamName = 'Rescue Team Alpha';
-  const assignedCases = sosList.filter(
-    s => s.assignedTeam === myTeamName && s.status !== 'Resolved',
-  );
+  // Tactical Unit assignedCases: Ensure at most 1 active assignment for this unit
+  const assignedCases = React.useMemo(() => {
+    const list = sosList.filter(
+      s => s.assignedTeam === myTeamName && s.status !== 'Resolved',
+    );
+    if (list.length > 1) {
+      const primary =
+        list.find(s => s.id.includes('s_01') || s.notes?.includes('Relief Zone')) || list[0]!;
+      return [primary];
+    }
+    return list;
+  }, [sosList, myTeamName]);
 
   const [activeCase, setActiveCase] = useState<SosIncident | null>(assignedCases[0] ?? null);
   const [chatInput, setChatInput] = useState('');
@@ -297,7 +306,7 @@ export const RescuerView: React.FC = () => {
             border: assignedCases.length > 0 ? '1px solid #bfdbfe' : '1px solid #cbd5e1',
           }}
         >
-          {assignedCases.length} Active Assignment
+          {assignedCases.length} Active Assignment{assignedCases.length === 1 ? '' : 's'}
         </span>
       </div>
 

@@ -18,6 +18,7 @@ interface ChatScreenProps {
   activeChannelId?: string;
   assignedTeam?: string | null;
   neighbors?: NeighborRecord[];
+  peers?: any[];
   onSelectChannel?: (channelId: string) => void;
   onSendMessage?: (content: string, channelId?: string) => void;
 }
@@ -26,37 +27,29 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
   messages = [],
   assignedTeam = null,
   neighbors = [],
+  peers = [],
   onSendMessage,
 }) => {
   const [inputText, setInputText] = useState('');
   const scrollViewRef = useRef<ScrollView>(null);
 
-  // Default peer list if none discovered yet over BLE
+  // Active peer list mapped strictly from real discovered BLE neighbors / seeded cluster peers (ZERO HARDCODED PEERS)
   const activePeers =
-    neighbors.length > 0
-      ? neighbors.map((n, idx) => ({
+    peers && peers.length > 0
+      ? peers.map(p => ({
+          fp: p.fp,
+          name: p.name || `Survivor Node #${p.fp.slice(0, 4)}`,
+          triage: p.triage || 'YELLOW',
+          distM: p.distanceMeters || 30,
+          battery: p.battery || 78,
+        }))
+      : neighbors.map((n, idx) => ({
           fp: n.fp,
-          name: `Node #${n.fp.slice(0, 4)}`,
-          triage: idx % 2 === 1 || n.fp.includes('8f2e') ? 'RED' : 'YELLOW',
+          name: `Survivor Node #${n.fp.slice(0, 4)}`,
+          triage: idx % 2 === 1 ? 'RED' : 'YELLOW',
           distM: Math.max(12, Math.min(80, Math.round(Math.abs(n.last_rssi || -68) * 0.52))),
           battery: n.battery || 78,
-        }))
-      : [
-          {
-            fp: '4a9b2c8f1e7d3a01',
-            name: 'Node #4a9b',
-            triage: 'YELLOW',
-            distM: 28,
-            battery: 84,
-          },
-          {
-            fp: '8f2e1a3b5c7d9e02',
-            name: 'Node #8f2e',
-            triage: 'RED',
-            distM: 42,
-            battery: 52,
-          },
-        ];
+        }));
 
   const handleSend = (textToSend?: string) => {
     const text = (textToSend || inputText).trim();
@@ -106,7 +99,9 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
               <View style={styles.headerSubRow}>
                 <View style={styles.onlineDot} />
                 <Text style={styles.headerSubtitle}>
-                  {activePeers.length + 1} Devices in Radio Range • Channel 38
+                  {activePeers.length > 0
+                    ? `${activePeers.length} Discovered Mesh Peers`
+                    : 'Listening on Emergency Mesh...'}
                 </Text>
               </View>
             </View>
@@ -163,37 +158,39 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
         </View>
       </View>
 
-      {/* 3. Discovered Mesh Peers Horizontal Bar */}
-      <View style={styles.peersBar}>
-        <Text style={styles.peersBarLabel}>CONNECTED PEERS:</Text>
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.peersList}
-        >
-          <View style={[styles.peerChip, styles.peerChipYou]}>
-            <Text style={styles.peerChipText}>📍 You (Host)</Text>
-          </View>
-          {activePeers.map(p => (
-            <View
-              key={p.fp}
-              style={[
-                styles.peerChip,
-                p.triage === 'RED' ? styles.peerChipRed : styles.peerChipYellow,
-              ]}
-            >
-              <Text style={styles.peerChipText}>
-                {p.triage === 'RED' ? '🔴' : '🟡'} {p.name} (~{p.distM}m • {p.battery}%)
-              </Text>
+      {/* 3. Discovered Mesh Peers Horizontal Bar - ONLY WHEN PEERS DISCOVERED */}
+      {activePeers.length > 0 && (
+        <View style={styles.peersBar}>
+          <Text style={styles.peersBarLabel}>CONNECTED PEERS:</Text>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.peersList}
+          >
+            <View style={[styles.peerChip, styles.peerChipYou]}>
+              <Text style={styles.peerChipText}>📍 You (Host)</Text>
             </View>
-          ))}
-          {assignedTeam && (
-            <View style={[styles.peerChip, styles.peerChipRescuer]}>
-              <Text style={styles.peerChipText}>🧑‍🚒 {assignedTeam} (ETA ~3m)</Text>
-            </View>
-          )}
-        </ScrollView>
-      </View>
+            {activePeers.map(p => (
+              <View
+                key={p.fp}
+                style={[
+                  styles.peerChip,
+                  p.triage === 'RED' ? styles.peerChipRed : styles.peerChipYellow,
+                ]}
+              >
+                <Text style={styles.peerChipText}>
+                  {p.triage === 'RED' ? '🔴' : '🟡'} {p.name} (~{p.distM}m • {p.battery}%)
+                </Text>
+              </View>
+            ))}
+            {assignedTeam && (
+              <View style={[styles.peerChip, styles.peerChipRescuer]}>
+                <Text style={styles.peerChipText}>🧑‍🚒 {assignedTeam}</Text>
+              </View>
+            )}
+          </ScrollView>
+        </View>
+      )}
 
       {/* 4. Messages Thread */}
       <ScrollView
@@ -215,8 +212,7 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
             <Text style={styles.emptyIcon}>📢</Text>
             <Text style={styles.emptyTitle}>Emergency Broadcast Channel Active</Text>
             <Text style={styles.emptyDesc}>
-              Any message sent here is instantly broadcast to all {activePeers.length + 1} survivor
-              devices and rescue units in radio range.
+              Messages sent here are broadcast locally over Bluetooth Low Energy mesh radio.
             </Text>
           </View>
         ) : (
@@ -230,13 +226,19 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
               minute: '2-digit',
             });
 
+            const matchedPeer = peers?.find((p: any) => p.fp === msg.sender_fp);
             const senderLabel = isMe
               ? 'You (Host Device)'
               : isRescuer
                 ? '🧑‍🚒 NDRF Tactical Team Alpha'
-                : msg.sender_fp
-                  ? `Survivor Node #${msg.sender_fp.slice(0, 4)}`
-                  : 'Nearby Survivor';
+                : matchedPeer?.name ||
+                  (msg.sender_fp === '4a9b2c8f1e7d3a01'
+                    ? 'Survivor Node #4a9b'
+                    : msg.sender_fp === '8f2e1a3b5c7d9e02'
+                      ? 'Survivor Node #8f2e'
+                      : msg.sender_fp
+                        ? `Survivor Node #${msg.sender_fp.slice(0, 4)}`
+                        : 'Nearby Survivor');
 
             return (
               <View
@@ -310,7 +312,7 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
           <TouchableOpacity
             style={styles.quickChip}
             onPress={() =>
-              handleSend('💧 [SUPPLIES]: Clean drinking water needed for 3 sheltered survivors.')
+              handleSend('💧 [SUPPLIES]: Clean drinking water needed urgently.')
             }
           >
             <Text style={styles.quickChipText}>💧 Request Water</Text>
@@ -333,7 +335,7 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
       <View style={styles.inputContainer}>
         <TouchableOpacity
           style={styles.attachBtn}
-          onPress={() => handleSend('🚨 Emergency Beacon Ping: Alive and listening on Channel 38.')}
+          onPress={() => handleSend('🚨 Emergency Beacon Ping: Alive and listening on mesh.')}
         >
           <Text style={styles.attachIcon}>📎</Text>
         </TouchableOpacity>

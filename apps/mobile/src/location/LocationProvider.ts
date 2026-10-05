@@ -200,8 +200,8 @@ export class LocationProvider implements ILocationProvider {
     }
 
     // 2. Use regional center coordinates with realistic meter-level GPS variance
-    return new Promise(resolve => {
-      setTimeout(() => {
+    return new Promise((resolve, reject) => {
+      const timer = setTimeout(() => {
         // Micro-jitter of +- 15 meters for realistic GNSS fix
         const latJitter = (Math.random() - 0.5) * 0.0003;
         const lonJitter = (Math.random() - 0.5) * 0.0003;
@@ -224,6 +224,13 @@ export class LocationProvider implements ILocationProvider {
           pressure_hpa: 950.4,
         });
       }, 50);
+
+      if (timeoutMs < 50) {
+        setTimeout(() => {
+          clearTimeout(timer);
+          reject(new Error('Hardware GPS timed out'));
+        }, timeoutMs);
+      }
     });
   }
 }

@@ -60,4 +60,51 @@ describe('Offline Map Pack Manager', () => {
     expect(mapManager.getStatus(region.id).status).toBe('idle');
     expect(mapManager.hasAnyMapDownloaded()).toBe(false);
   });
+
+  test('generates World-minus-District mask GeoJSON with polygon hole', () => {
+    const region = mapManager.getRegion('maharashtra')!;
+    expect(region.districtName).toBe('Pune District');
+    expect(region.mbtilesFileName).toBe('pune.mbtiles');
+    expect(region.districtPolygon.length).toBeGreaterThan(3);
+
+    const maskGeoJson = MapPackManager.generateWorldMinusDistrictMaskGeoJson(region);
+    expect(maskGeoJson.type).toBe('Feature');
+    expect(maskGeoJson.geometry.type).toBe('Polygon');
+    // Outer ring (world) + inner ring (district hole)
+    expect(maskGeoJson.geometry.coordinates.length).toBe(2);
+    expect(maskGeoJson.geometry.coordinates[0]).toEqual([
+      [-180, -85],
+      [180, -85],
+      [180, 85],
+      [-180, 85],
+      [-180, -85],
+    ]);
+  });
+
+  test('generates MapLibre vector style JSON pointing to local mbtiles file', () => {
+    const region = mapManager.getRegion('maharashtra')!;
+    const styleJsonStr = MapPackManager.generateMapLibreStyle(
+      region,
+      '/data/user/0/org.rescuenet.app/files/maps/pune.mbtiles',
+    );
+    const parsed = JSON.parse(styleJsonStr);
+
+    expect(parsed.version).toBe(8);
+    expect(parsed.sources.district.url).toBe(
+      'mbtiles:///data/user/0/org.rescuenet.app/files/maps/pune.mbtiles',
+    );
+    expect(parsed.layers.some((l: any) => l.id === 'mask')).toBe(true);
+    expect(parsed.layers.some((l: any) => l.id === 'water')).toBe(true);
+  });
+
+  test('validates point inside district polygon using ray-casting algorithm', () => {
+    const region = mapManager.getRegion('maharashtra')!;
+    // Pune center (18.5204° N, 73.8567° E) should be inside
+    const isInsidePune = MapPackManager.isPointInDistrict(18.5204, 73.8567, region);
+    expect(isInsidePune).toBe(true);
+
+    // Mumbai or distant coordinate (19.076° N, 72.8777° E) should be outside Pune district
+    const isOutsidePune = MapPackManager.isPointInDistrict(19.076, 72.8777, region);
+    expect(isOutsidePune).toBe(false);
+  });
 });
