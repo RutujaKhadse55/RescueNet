@@ -1,7 +1,7 @@
 import { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
 import { db } from '../../db/client';
 import { eventBus } from '../../services/eventBus';
-import { messagesStore, clearMessagesStore, addSystemChatMessage, ChatMessageDto } from './chat';
+import { messagesStore, clearMessagesStore, addSystemChatMessage } from './chat';
 import { latestLiveFix } from '../../services/ingestService';
 
 export interface SimulatedPeer {
@@ -262,7 +262,7 @@ export async function simulationRoutes(server: FastifyInstance) {
       eventBus.broadcastClusterEvent({
         type: 'cluster_created',
         clusterId: clusterId,
-        data: clusterRows[0],
+        data: clusterRows[0] ?? {},
         timestamp: new Date().toISOString(),
       });
 
