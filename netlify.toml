@@ -3,6 +3,9 @@
   publish = "dist"
   command = "pnpm --filter @rescuenet/dashboard build"
 
+[build.environment]
+  PNPM_FLAGS = "--no-frozen-lockfile"
+
 [[redirects]]
   from = "/*"
   to = "/index.html"
