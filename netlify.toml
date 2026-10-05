@@ -1,0 +1,9 @@
+[build]
+  base = "apps/dashboard"
+  publish = "dist"
+  command = "pnpm --filter @rescuenet/dashboard build"
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
