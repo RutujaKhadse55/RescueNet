@@ -5,6 +5,10 @@
   "description": "RescueNet Fastify REST and WebSocket ingestion API with PostGIS geospatial database",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
+  "files": [
+    "dist",
+    "migrations"
+  ],
   "scripts": {
     "build": "tsc",
     "typecheck": "tsc --noEmit",

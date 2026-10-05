@@ -28,6 +28,7 @@ RUN apk add --no-cache dumb-init
 
 # Copy built runtime assets with proper node ownership
 COPY --chown=node:node --from=builder /app/pruned-api /app
+COPY --chown=node:node --from=builder /app/services/api/dist /app/dist
 COPY --chown=node:node --from=builder /app/services/api/migrations /app/migrations
 
 # Switch to unprivileged non-root user

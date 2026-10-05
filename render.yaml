@@ -9,6 +9,8 @@ services:
     envVars:
       - key: PORT
         value: 3000
+      - key: HOST
+        value: 0.0.0.0
       - key: NODE_ENV
         value: production
       - key: DATABASE_URL
@@ -17,6 +19,14 @@ services:
           property: connectionString
       - key: JWT_SECRET
         generateValue: true
+      - key: AGENCY_CA_PUBLIC_KEY
+        value: MCowBQYDK2VwAyEAx5d3v90oP9zP+6U6r3N6LhHh5k2f1W9r5Q3j8K9d2A4=
+      - key: SMS_PROVIDER
+        value: mock
+      - key: SMS_WEBHOOK_SECRET
+        value: rescuenet_inbound_sms_hmac_secret_key_998877
+      - key: SMS_INBOUND_NUMBER
+        value: "+911123456789"
 
 databases:
   - name: rescuenet-db
